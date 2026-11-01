@@ -1,0 +1,83 @@
+{
+  "project": "A1 Swaara",
+  "branchName": "ralph/device-storage-local-music",
+  "description": "Native Device Storage Local Music Engine for on-device MP3/FLAC/M4A/WAV playback, MediaStore scanning, and Library integration in A1 Swaara v1.1.3",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Android Storage Permissions Architecture",
+      "description": "As a user, I want the app to gracefully request permission to access my device's audio files so that my local library can be indexed safely.",
+      "acceptanceCriteria": [
+        "Add READ_MEDIA_AUDIO permission to AndroidManifest.xml for SDK >= 33",
+        "Add READ_EXTERNAL_STORAGE permission with maxSdkVersion=32 for backward compatibility",
+        "Implement reactive runtime permission composable requesting media permissions",
+        "Gracefully handle permission rejection with an informative empty-state and settings launcher",
+        "Code compiles cleanly offline"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Target Android 13+ and backward compatibility verified"
+    },
+    {
+      "id": "US-002",
+      "title": "MediaStore Audio Scanner Engine",
+      "description": "As a user, I want the app to scan my device's music files and extract titles, artists, albums, durations, and album artwork.",
+      "acceptanceCriteria": [
+        "Create SwaaraDeviceMusicScanner.kt using ContentResolver and MediaStore.Audio.Media",
+        "Filter out ringtones, alarms, notifications, and audio shorter than 10 seconds",
+        "Extract title, artist, album, duration, content URI, and album art URI",
+        "Expose scan results via Kotlin Coroutines Flow on Dispatchers.IO",
+        "Support manual rescan and refresh triggers",
+        "Typecheck and lint pass"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Fast asynchronous scanning connected through musicFilesAsFlow"
+    },
+    {
+      "id": "US-003",
+      "title": "PlayerService Local Playback Routing",
+      "description": "As a user, I want tapping a local song to immediately start playback in the player with album art and seek bar support.",
+      "acceptanceCriteria": [
+        "Detect local audio tracks in PlayerService by content URI scheme",
+        "Bypass YouTube and Piped extraction for local tracks and set MediaItem URI directly",
+        "Ensure lock screen controls, notification, and seek scrub bar function correctly",
+        "Support next, previous, shuffle, and repeat operations on local songs",
+        "Zero network requests dispatched during local song playback"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Direct ExoPlayer hardware sink playback via NewPipeAudioMediaSourceFactory isLocal check"
+    },
+    {
+      "id": "US-004",
+      "title": "Dedicated On-Device Tab in Library Screen",
+      "description": "As a user, I want a dedicated section in my Library to browse, sort, and search my on-device songs.",
+      "acceptanceCriteria": [
+        "Add On-Device Files tab to Library screen navigation",
+        "Display song items with artwork thumbnails, duration, title, and artist",
+        "Provide sorting by title, artist, date added, and duration",
+        "Implement fast text filtering search bar",
+        "Add Play All and Shuffle All header actions",
+        "Typecheck and Compose lint pass"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Follows Swaara design system with gradient action buttons and Coil thumbnail loading"
+    },
+    {
+      "id": "US-005",
+      "title": "Offline Build and Release Verification",
+      "description": "As a developer, I want to verify that the entire local music pipeline builds cleanly in offline mode and outputs a verified v1.1.3 APK.",
+      "acceptanceCriteria": [
+        "./gradlew.bat --offline assembleHttp3Release completes with zero errors",
+        "Output release APK generated in app/build/outputs/apk/http3/release/app-http3-release.apk",
+        "Version bumped to 1.1.3 (versionCode 14) in build.gradle.kts and version.json",
+        "Zero regressions in online streaming or podcast player"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Verified build output 28.89 MB APK"
+    }
+  ]
+}

@@ -1,0 +1,2767 @@
+package com.varshudev.a1swaara.ui.screens.player
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import com.varshudev.a1swaara.player.SwaaraLoopCounter
+import com.varshudev.a1swaara.ui.components.SwaaraLoopCounterDialog
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import com.varshudev.a1swaara.ui.components.SwaaraAmbientBackground
+import com.varshudev.a1swaara.ui.components.LocalAmbientColors
+import com.varshudev.a1swaara.ui.components.SwaaraStudioEffectsSheet
+import android.content.res.Configuration
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.varshudev.a1swaara.downloader.SwaaraFastDownloader
+import com.varshudev.a1swaara.ui.components.SwaaraStoryCreatorSheet
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.a1swaara.core.data.enums.PlaylistSortBy
+import app.a1swaara.core.data.enums.SortOrder
+import com.varshudev.a1swaara.models.Playlist
+import com.varshudev.a1swaara.models.SongPlaylistMap
+import com.varshudev.a1swaara.ui.components.themed.TextFieldDialog
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import com.varshudev.a1swaara.Database
+import com.varshudev.a1swaara.LocalAppContainer
+import com.varshudev.a1swaara.LocalPlayerServiceBinder
+import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.preferences.DataPreferences
+import com.varshudev.a1swaara.preferences.PlayerPreferences
+import com.varshudev.a1swaara.ui.components.SwaaraEqualizerSheet
+import com.varshudev.a1swaara.ui.components.SwaaraFuturisticScrubBar
+import com.varshudev.a1swaara.ui.components.SwaaraGlassContainer
+import com.varshudev.a1swaara.ui.components.SwaaraPulsingPlayButton
+import com.varshudev.a1swaara.ui.components.SwaaraSleepTimerDialog
+import com.varshudev.a1swaara.ui.components.SwaaraBoomAudioEngine
+import com.varshudev.a1swaara.ui.components.SwaaraBoomAura
+import com.varshudev.a1swaara.ui.components.SwaaraBoomSpectrum
+import com.varshudev.a1swaara.ui.components.SwaaraBoomButton
+import com.varshudev.a1swaara.ui.components.SwaaraObsidian
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
+import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
+import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
+import com.varshudev.a1swaara.ui.components.SwaaraMagenta
+import com.varshudev.a1swaara.ui.components.SwaaraViolet
+import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.cloud.SwaaraCommunityCharts
+import com.varshudev.a1swaara.cloud.SwaaraJamEngine
+import com.varshudev.a1swaara.ui.screens.jamHubRoute
+import com.varshudev.a1swaara.ui.screens.liveJamRoute
+import com.varshudev.a1swaara.utils.playTrack
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import com.varshudev.a1swaara.service.PrecacheService
+import com.varshudev.a1swaara.utils.toast
+import com.varshudev.a1swaara.utils.forceSeekToNext
+import com.varshudev.a1swaara.utils.forceSeekToPrevious
+import com.varshudev.a1swaara.utils.shouldBePlaying
+import com.varshudev.a1swaara.utils.thumbnail
+import coil3.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOf
+import com.varshudev.a1swaara.LocalAppContainer
+import com.varshudev.a1swaara.ui.screens.albumRoute
+import com.varshudev.a1swaara.ui.screens.artistRoute
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwaaraNowPlayingScreen(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val container = LocalAppContainer.current
+    val localBinder = LocalPlayerServiceBinder.current
+    val activeBinder by com.varshudev.a1swaara.service.PlayerService.activeBinder.collectAsState()
+    val binder = localBinder ?: activeBinder
+
+    if (binder == null) {
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            try {
+                val serviceIntent = android.content.Intent(context, com.varshudev.a1swaara.service.PlayerService::class.java)
+                context.startService(serviceIntent)
+                context.bindService(
+                    serviceIntent,
+                    object : android.content.ServiceConnection {
+                        override fun onServiceConnected(name: android.content.ComponentName?, service: android.os.IBinder?) {
+                            if (service is com.varshudev.a1swaara.service.PlayerService.Binder) {
+                                com.varshudev.a1swaara.service.PlayerService.activeBinder.value = service
+                            }
+                        }
+                        override fun onServiceDisconnected(name: android.content.ComponentName?) {}
+                    },
+                    android.content.Context.BIND_AUTO_CREATE
+                )
+            } catch (_: Exception) {}
+        }
+
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color(0xFF07070B)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(
+                    color = SwaaraMagenta,
+                    modifier = Modifier.size(44.dp),
+                    strokeWidth = 3.dp
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+                Text(
+                    text = "Starting audio engine...",
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .clickable { onDismiss() }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Dismiss",
+                        color = Color.White,
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    val player = binder.player
+    val coroutineScope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val artworkSize = if (isLandscape) 180.dp else minOf(315.dp, (configuration.screenWidthDp - 64).dp)
+    val auraSize = artworkSize + 20.dp
+
+    var currentMediaItem by remember { mutableStateOf(player.currentMediaItem) }
+    var isPlaying by remember { mutableStateOf(player.shouldBePlaying) }
+    var isLoading by remember { mutableStateOf(player.playbackState == Player.STATE_BUFFERING) }
+    var currentPosition by remember { mutableLongStateOf(player.currentPosition) }
+    var duration by remember { mutableLongStateOf(player.duration.coerceAtLeast(1L)) }
+
+    // Real-time track transition listener
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                currentMediaItem = mediaItem
+            }
+            override fun onEvents(p: Player, events: Player.Events) {
+                currentMediaItem = p.currentMediaItem
+                isPlaying = p.shouldBePlaying
+                isLoading = p.playbackState == Player.STATE_BUFFERING
+            }
+        }
+        player.addListener(listener)
+        onDispose {
+            player.removeListener(listener)
+        }
+    }
+
+    LaunchedEffect(player) {
+        while (true) {
+            currentMediaItem = player.currentMediaItem
+            isPlaying = player.shouldBePlaying
+            isLoading = player.playbackState == Player.STATE_BUFFERING
+            currentPosition = player.currentPosition
+            duration = player.duration.coerceAtLeast(1L)
+            delay(250)
+        }
+    }
+
+    val metadata = currentMediaItem?.mediaMetadata
+    val videoId = currentMediaItem?.mediaId
+    val title = metadata?.title?.toString() ?: "No Song Playing"
+    val rawArtist = metadata?.artist?.toString() ?: "Unknown Artist"
+    val artist = rawArtist.replace(Regex("[,&\\s]{2,}"), ", ").trim(',', ' ')
+    val artworkUri = metadata?.artworkUri?.toString()?.thumbnail(1200)
+        ?: if (!videoId.isNullOrBlank()) "https://i.ytimg.com/vi/$videoId/hq720.jpg" else null
+
+    // Room DB Liked Status Flow
+    val likedAt by remember(videoId) {
+        if (videoId != null) Database.likedAt(videoId) else flowOf(null)
+    }.collectAsState(initial = null)
+    val isLiked = likedAt != null
+
+    // Sleep Timer Status
+    val sleepTimerMillisLeft = binder.sleepTimerMillisLeft?.collectAsState(initial = null)?.value
+    val isSleepTimerActive = sleepTimerMillisLeft != null && sleepTimerMillisLeft > 0
+
+    var isLyricsMode by remember { mutableStateOf(false) }
+    var isBoomMode by remember { mutableStateOf(false) }
+    var shouldShowSynchronizedLyrics by remember { mutableStateOf(true) }
+    var showQueueSheet by remember { mutableStateOf(false) }
+    var showEqSheet by remember { mutableStateOf(false) }
+    var showStudioEffectsSheet by remember { mutableStateOf(false) }
+    var isCarModeActive by remember { mutableStateOf(false) }
+    var showSleepTimerDialog by remember { mutableStateOf(false) }
+    var showStoryCreatorSheet by remember { mutableStateOf(false) }
+    var showShareSongSheet by remember { mutableStateOf(false) }
+    var showMoreSheet by remember { mutableStateOf(false) }
+    var showAddToPlaylistSheet by remember { mutableStateOf(false) }
+    var showLoopCounterDialog by remember { mutableStateOf(false) }
+    val remainingLoops by SwaaraLoopCounter.remainingCount.collectAsState()
+    val activeJamRoom by SwaaraJamEngine.currentRoom.collectAsState()
+    // Audio quality now backed by PlayerPreferences.audioQuality (Swaara Lossless Engine v1.1.4)
+    var audioQualityIndex by remember { mutableIntStateOf(PlayerPreferences.audioQuality.ordinal) }
+    var showAudioQualitySheet by remember { mutableStateOf(false) }
+    val audioQualities = remember { listOf("AUTO • OPTIMAL", "NORMAL • 128 KBPS", "HIGH • 192 KBPS", "MAX • LOSSLESS") }
+    val currentFormat by remember(videoId) {
+        if (videoId != null) Database.format(videoId) else flowOf(null)
+    }.collectAsState(initial = null)
+    val dynamicAudioBadgeText = remember(currentFormat, audioQualityIndex, videoId) {
+        if (videoId?.startsWith("local:") == true) {
+            val tier = currentFormat?.qualityTier ?: "LOSSLESS"
+            val codec = currentFormat?.codecDisplayName?.takeIf { it.isNotBlank() } ?: "LOCAL"
+            "$tier • $codec"
+        } else if (currentFormat != null && (currentFormat?.bitrate ?: 0L) > 0L) {
+            val tier = currentFormat?.qualityTier ?: "MAXIMUM"
+            val codec = currentFormat?.codecDisplayName?.takeIf { it.isNotBlank() } ?: "OPUS"
+            val rateText = currentFormat?.bitrateDisplayText
+            if (rateText != null) "$tier • $codec $rateText" else "$tier • $codec"
+        } else {
+            audioQualities.getOrElse(audioQualityIndex) { "MAX • LOSSLESS" }
+        }
+    }
+    var totalDrag by remember { mutableFloatStateOf(0f) }
+    var isDownloaded by remember(videoId, DataPreferences.downloadedSongIds) {
+        mutableStateOf(videoId != null && DataPreferences.isSongExplicitlyDownloaded(videoId) && binder.isCached(videoId))
+    }
+
+    val downloadProgressMap by SwaaraFastDownloader.downloadProgress.collectAsState()
+    val currentTrackProgress = videoId?.let { downloadProgressMap[it] } ?: -1
+    val isCurrentlyDownloading = currentTrackProgress in 0..99
+
+    LaunchedEffect(videoId, currentPosition, DataPreferences.downloadedSongIds) {
+        if (videoId != null) {
+            isDownloaded = DataPreferences.isSongExplicitlyDownloaded(videoId) && binder.isCached(videoId)
+        }
+    }
+
+    // Realtime Live Jam Host Playback Sync to SwaaraJamEngine
+    LaunchedEffect(activeJamRoom, videoId, isPlaying, (currentPosition / 3000)) {
+        activeJamRoom?.let { room ->
+            if (room.isHost && !videoId.isNullOrBlank()) {
+                coroutineScope.launch {
+                    SwaaraJamEngine.updatePlayback(
+                        songId = videoId,
+                        title = title,
+                        artist = artist,
+                        artworkUrl = artworkUri,
+                        isPlaying = isPlaying,
+                        positionMs = currentPosition
+                    )
+                }
+            }
+        }
+    }
+
+    // Realtime Live Jam Listener Playback Sync from SwaaraJamEngine
+    LaunchedEffect(activeJamRoom, activeJamRoom?.currentSongId, activeJamRoom?.isPlaying) {
+        val room = activeJamRoom
+        if (room != null && !room.isHost && room.currentSongId.isNotBlank()) {
+            if (videoId != room.currentSongId) {
+                binder.playTrack(
+                    videoId = room.currentSongId,
+                    title = room.currentTitle,
+                    artist = room.currentArtist,
+                    thumbnailUrl = room.currentArtworkUrl
+                )
+            }
+            val elapsed = if (room.isPlaying) (System.currentTimeMillis() - room.playbackUpdatedAt).coerceAtLeast(0) else 0L
+            val targetPos = room.playbackPositionMs + elapsed
+            if (kotlin.math.abs(currentPosition - targetPos) > 3000) {
+                player.seekTo(targetPos)
+            }
+            if (room.isPlaying && !player.shouldBePlaying) {
+                player.play()
+            } else if (!room.isPlaying && player.shouldBePlaying) {
+                player.pause()
+            }
+        }
+    }
+
+    // Crowdsourced Community Play Reporting (played > 15s)
+    LaunchedEffect(videoId) {
+        if (!videoId.isNullOrBlank()) {
+            delay(15000)
+            SwaaraCommunityCharts.reportSongPlay(
+                songId = videoId,
+                title = title,
+                artist = artist,
+                artworkUrl = artworkUri
+            )
+        }
+    }
+
+    val navigateToArtist: () -> Unit = {
+        coroutineScope.launch {
+            val targetVideoId = videoId
+            val targetArtistName = artist
+            val browseId = withContext(Dispatchers.IO) {
+                // 1. Check local DB
+                if (!targetVideoId.isNullOrBlank()) {
+                    val dbArtists = runCatching { Database.songArtistInfo(targetVideoId) }.getOrNull()
+                    val firstId = dbArtists?.firstOrNull()?.id
+                    if (!firstId.isNullOrBlank()) return@withContext firstId
+                }
+                // 2. Search online on YouTube Music
+                if (targetArtistName.isNotBlank() && targetArtistName != "Unknown Artist") {
+                    val searchResult = runCatching {
+                        container.searchResultRepository.searchArtists(targetArtistName.trim(), null)?.getOrNull()
+                    }.getOrNull()
+                    val artistKey = searchResult?.items?.firstOrNull()?.key
+                    if (!artistKey.isNullOrBlank()) return@withContext artistKey
+                }
+                null
+            }
+
+            if (!browseId.isNullOrBlank()) {
+                onDismiss()
+                artistRoute.global(browseId)
+            } else {
+                withContext(Dispatchers.Main) {
+                    context.toast("Could not locate artist page")
+                }
+            }
+        }
+    }
+
+    val navigateToAlbum: () -> Unit = {
+        coroutineScope.launch {
+            val targetVideoId = videoId
+            val targetTitle = title
+            val targetArtistName = artist
+            val browseId = withContext(Dispatchers.IO) {
+                // 1. Check local DB
+                if (!targetVideoId.isNullOrBlank()) {
+                    val dbAlbum = runCatching { Database.songAlbumInfo(targetVideoId) }.getOrNull()
+                    val firstId = dbAlbum?.firstOrNull()?.id
+                    if (!firstId.isNullOrBlank()) return@withContext firstId
+                }
+                // 2. Search online on YouTube Music
+                if (targetTitle.isNotBlank() && targetTitle != "No Song Playing") {
+                    val searchResult = runCatching {
+                        container.searchResultRepository.searchAlbums("$targetTitle $targetArtistName".trim(), null)?.getOrNull()
+                    }.getOrNull()
+                    val albumKey = searchResult?.items?.firstOrNull()?.key
+                    if (!albumKey.isNullOrBlank()) return@withContext albumKey
+                }
+                null
+            }
+
+            if (!browseId.isNullOrBlank()) {
+                onDismiss()
+                albumRoute.global(browseId)
+            } else {
+                withContext(Dispatchers.Main) {
+                    context.toast("Could not locate album")
+                }
+            }
+        }
+    }
+
+    // Dialogs & Sheets
+    if (showEqSheet) {
+        SwaaraEqualizerSheet(
+            audioSessionId = player.audioSessionId,
+            onDismiss = { showEqSheet = false }
+        )
+    }
+
+    if (showStudioEffectsSheet) {
+        SwaaraStudioEffectsSheet(
+            onDismiss = { showStudioEffectsSheet = false }
+        )
+    }
+
+    if (showSleepTimerDialog) {
+        SwaaraSleepTimerDialog(
+            millisLeft = sleepTimerMillisLeft,
+            onSetTimer = { delayMs -> binder.startSleepTimer(delayMs) },
+            onCancelTimer = { binder.cancelSleepTimer() },
+            onDismiss = { showSleepTimerDialog = false }
+        )
+    }
+
+    if (showStoryCreatorSheet) {
+        SwaaraStoryCreatorSheet(
+            title = title,
+            artist = artist,
+            artworkUrl = artworkUri,
+            songDurationMs = duration,
+            player = player,
+            videoId = videoId,
+            onDismiss = { showStoryCreatorSheet = false }
+        )
+    }
+
+    if (showShareSongSheet) {
+        com.varshudev.a1swaara.ui.components.SwaaraShareSongSheet(
+            title = title,
+            artist = artist,
+            artworkUrl = artworkUri,
+            videoId = videoId,
+            onOpenStoryCreator = { showStoryCreatorSheet = true },
+            onDismiss = { showShareSongSheet = false }
+        )
+    }
+
+    if (showLoopCounterDialog) {
+        SwaaraLoopCounterDialog(
+            player = player,
+            onDismiss = { showLoopCounterDialog = false }
+        )
+    }
+
+    // Swaara Boom Audio Engine (Sub-bass 1000% + 3D Surround Acoustics)
+    SwaaraBoomAudioEngine(
+        audioSessionId = player.audioSessionId,
+        isBoomActive = isBoomMode
+    )
+
+    // Audio Streaming Quality Bottom Sheet
+    if (showAudioQualitySheet) {
+        val qualitySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showAudioQualitySheet = false },
+            sheetState = qualitySheetState,
+            containerColor = SwaaraDeepSurface,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Brush.linearGradient(listOf(SwaaraViolet, SwaaraMagenta))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.equalizer),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Audio Streaming Quality",
+                            color = SwaaraPrimaryText,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Select your preferred acoustic bitrate and fidelity tier",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                val qualityOptions = listOf(
+                    Triple("AUTO • OPTIMAL", "Auto (Highest Available)", "Intelligently selects the best available stream. Equivalent to Maximum on most connections."),
+                    Triple("128 KBPS • NORMAL", "Normal (128 kbps)", "Standard quality compressed stream. Good for casual listening."),
+                    Triple("192 KBPS • HIGH", "High Fidelity (192 kbps)", "Crisp acoustic resolution with excellent clarity. Balanced for smooth playback."),
+                    Triple("256+ KBPS • MAXIMUM", "Maximum Fidelity", "Unthrottled highest-bitrate stream. OPUS 251kbps or AAC 256kbps -- the absolute peak quality YouTube provides. 32-bit float rendering.")
+                )
+
+                qualityOptions.forEachIndexed { idx, (code, qTitle, desc) ->
+                    val isSelected = audioQualityIndex == idx
+                    val borderGradient = if (isSelected) {
+                        Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraCyan))
+                    } else {
+                        Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.10f), Color.White.copy(alpha = 0.04f)))
+                    }
+                    val bgColor = if (isSelected) SwaaraElevatedSurface else SwaaraElevatedSurface.copy(alpha = 0.45f)
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(bgColor)
+                            .border(if (isSelected) 1.5.dp else 1.dp, borderGradient, RoundedCornerShape(16.dp))
+                            .clickable {
+                                audioQualityIndex = idx
+                                PlayerPreferences.audioQuality = PlayerPreferences.AudioQuality.entries[idx]
+                                context.toast("Audio Quality set to $qTitle")
+                                showAudioQualitySheet = false
+                            }
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = qTitle,
+                                        color = if (isSelected) SwaaraPrimaryText else SwaaraPrimaryText.copy(alpha = 0.85f),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(if (isSelected) SwaaraMagenta.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.06f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = code.split("•").first().trim(),
+                                            color = if (isSelected) SwaaraMagenta else SwaaraSecondaryText,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = desc,
+                                    color = SwaaraSecondaryText,
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) SwaaraMagenta else Color.Transparent)
+                                    .border(
+                                        2.dp,
+                                        if (isSelected) SwaaraMagenta else Color.White.copy(alpha = 0.3f),
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (idx < qualityOptions.size - 1) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    // Contextual "More" Bottom Sheet
+    if (showMoreSheet) {
+        val moreSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showMoreSheet = false },
+            sheetState = moreSheetState,
+            containerColor = SwaaraDeepSurface,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                Text(
+                    text = "Track Options",
+                    color = SwaaraPrimaryText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Add to Playlist
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            showAddToPlaylistSheet = true
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.playlist),
+                        contentDescription = null,
+                        tint = SwaaraMagenta,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Add to Playlist",
+                            color = SwaaraPrimaryText,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Save this track to your custom playlists",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // See Artist Profile
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            navigateToArtist()
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.person),
+                        contentDescription = null,
+                        tint = SwaaraCyan,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "See Artist Profile",
+                            color = SwaaraPrimaryText,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = artist,
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // View Full Album
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            navigateToAlbum()
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.disc),
+                        contentDescription = null,
+                        tint = SwaaraViolet,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "View Full Album",
+                            color = SwaaraPrimaryText,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Explore complete tracklist & releases",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // Studio Equalizer
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            showEqSheet = true
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.musical_notes),
+                        contentDescription = null,
+                        tint = SwaaraCyan,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Studio Equalizer",
+                        color = SwaaraPrimaryText,
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                // Studio Sound Lab (Slowed + Reverb, Nightcore)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            showStudioEffectsSheet = true
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.speed),
+                        contentDescription = null,
+                        tint = SwaaraViolet,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Studio Sound Lab",
+                            color = SwaaraPrimaryText,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Slowed + Reverb, Nightcore & Pitch Shift",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // Car Driving Mode
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            isCarModeActive = true
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.car),
+                        contentDescription = null,
+                        tint = SwaaraCyan,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Car Driving Mode",
+                            color = SwaaraPrimaryText,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Distraction-free giant touch controls",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // Share Song
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            showShareSongSheet = true
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.share_social),
+                        contentDescription = null,
+                        tint = SwaaraCyan,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Share Song",
+                            color = SwaaraPrimaryText,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Copy deep link or share track with friends",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // Share Story Card
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            showStoryCreatorSheet = true
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.share_social),
+                        contentDescription = null,
+                        tint = SwaaraMagenta,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Share Story Card",
+                        color = SwaaraPrimaryText,
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                // Listen Together (Live Jam)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            if (activeJamRoom != null) {
+                                liveJamRoute.global()
+                            } else {
+                                jamHubRoute.global()
+                            }
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.radio),
+                        contentDescription = null,
+                        tint = SwaaraViolet,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Listen Together (Live Jam)",
+                            color = SwaaraPrimaryText,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = if (activeJamRoom != null) "Active Jam: ${activeJamRoom!!.roomCode}" else "Sync real-time playback across multiple devices",
+                            color = SwaaraCyan,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                // Sleep Timer
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showMoreSheet = false
+                            showSleepTimerDialog = true
+                        }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.time),
+                        contentDescription = null,
+                        tint = SwaaraViolet,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Sleep Timer",
+                        color = SwaaraPrimaryText,
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                if (isDownloaded) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                showMoreSheet = false
+                                videoId?.let { id ->
+                                    DataPreferences.removeDownloadedSongId(id)
+                                    binder.removeDownloadedSong(id)
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        Database.song(id).firstOrNull()?.let { Database.delete(it) }
+                                    }
+                                    isDownloaded = false
+                                    context.toast("Removed \"$title\" from downloads")
+                                }
+                            }
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.trash),
+                            contentDescription = null,
+                            tint = Color(0xFFFF5252),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Remove from Downloads",
+                            color = Color(0xFFFF5252),
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    if (showAddToPlaylistSheet) {
+        SwaaraAddToPlaylistSheet(
+            mediaItem = currentMediaItem,
+            onDismiss = { showAddToPlaylistSheet = false },
+            onCreatedOrAdded = { playlistName ->
+                context.toast("Added to \"$playlistName\"")
+            }
+        )
+    }
+
+    // Periodic Progress Updater
+    LaunchedEffect(player) {
+        while (true) {
+            isPlaying = player.shouldBePlaying
+            isLoading = player.playbackState == Player.STATE_BUFFERING
+            currentMediaItem = player.currentMediaItem
+            currentPosition = player.currentPosition
+            duration = player.duration.coerceAtLeast(1L)
+            delay(300)
+        }
+    }
+
+    // Draggable Play Queue Modal Bottom Sheet
+    if (showQueueSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showQueueSheet = false },
+            sheetState = sheetState,
+            containerColor = SwaaraObsidian,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 10.dp, bottom = 6.dp)
+                        .width(44.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.White.copy(alpha = 0.20f))
+                )
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                var queueStateVersion by remember { mutableIntStateOf(0) }
+                DisposableEffect(player) {
+                    val listener = object : androidx.media3.common.Player.Listener {
+                        override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+                            queueStateVersion++
+                        }
+                    }
+                    player.addListener(listener)
+                    onDispose {
+                        player.removeListener(listener)
+                    }
+                }
+
+                val timeline = player.currentTimeline
+                val queueSize = timeline.windowCount
+                val mediaItems = remember(queueSize, player.currentMediaItemIndex, queueStateVersion) {
+                    (0 until queueSize).mapNotNull { idx ->
+                        runCatching { player.getMediaItemAt(idx) }.getOrNull()
+                    }
+                }
+
+                // Header with Track Count and Action Badges
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Up Next • Play Queue",
+                            color = SwaaraPrimaryText,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.3.sp
+                        )
+                        Text(
+                            text = "$queueSize tracks scheduled",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // Shuffle Button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(SwaaraElevatedSurface)
+                            .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(12.dp))
+                            .clickable {
+                                player.shuffleModeEnabled = !player.shuffleModeEnabled
+                                context.toast(if (player.shuffleModeEnabled) "Queue shuffled" else "Shuffle off")
+                            }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.shuffle),
+                                contentDescription = "Shuffle",
+                                tint = if (player.shuffleModeEnabled) SwaaraCyan else SwaaraSecondaryText,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = if (player.shuffleModeEnabled) "Shuffled" else "Shuffle",
+                                color = if (player.shuffleModeEnabled) SwaaraCyan else SwaaraSecondaryText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Auto-Fill Queue button if only 1 song is scheduled
+                if (mediaItems.size <= 1 && videoId != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Brush.horizontalGradient(listOf(SwaaraViolet.copy(alpha = 0.40f), SwaaraMagenta.copy(alpha = 0.40f))))
+                            .border(1.dp, SwaaraMagenta.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+                            .clickable {
+                                binder.setupRadio(app.a1swaara.providers.youtubemusic.innertube.models.NavigationEndpoint.Endpoint.Watch(videoId = videoId))
+                                context.toast("Generating smart queue recommendations...")
+                            }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.sparkles),
+                                contentDescription = null,
+                                tint = SwaaraCyan,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Auto-Fill Queue with Related Tracks",
+                                color = Color.White,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                if (mediaItems.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Queue is empty",
+                            color = SwaaraSecondaryText,
+                            fontSize = 14.sp
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(420.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(mediaItems) { idx, item ->
+                            val isCurrent = idx == player.currentMediaItemIndex
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(
+                                        if (isCurrent) SwaaraMagenta.copy(alpha = 0.15f)
+                                        else SwaaraDeepSurface
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isCurrent) SwaaraMagenta.copy(alpha = 0.45f)
+                                        else Color.White.copy(alpha = 0.06f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .clickable {
+                                        player.seekToDefaultPosition(idx)
+                                        player.play()
+                                        showQueueSheet = false
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Track number or Playing indicator
+                                Box(
+                                    modifier = Modifier.size(24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isCurrent) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.volume_up),
+                                            contentDescription = "Playing",
+                                            tint = SwaaraMagenta,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "${idx + 1}",
+                                            color = SwaaraSecondaryText,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                AsyncImage(
+                                    model = item.mediaMetadata.artworkUri,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(SwaaraElevatedSurface)
+                                )
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = item.mediaMetadata.title?.toString() ?: "Track",
+                                        color = if (isCurrent) Color.White else SwaaraPrimaryText,
+                                        fontSize = 14.sp,
+                                        fontWeight = if (isCurrent) FontWeight.Black else FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = item.mediaMetadata.artist?.toString()?.replace(Regex("[,&\\s]{2,}"), ", ") ?: "Unknown Artist",
+                                        color = if (isCurrent) SwaaraCyan else SwaaraSecondaryText,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                if (!isCurrent) {
+                                    IconButton(
+                                        onClick = {
+                                            runCatching {
+                                                player.removeMediaItem(idx)
+                                                context.toast("Removed from queue")
+                                            }
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.close),
+                                            contentDescription = "Remove",
+                                            tint = SwaaraSecondaryText.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (isCarModeActive) {
+        SwaaraCarModeScreen(
+            onExitCarMode = { isCarModeActive = false },
+            modifier = modifier
+        )
+        return
+    }
+
+    SwaaraAmbientBackground(
+        artworkUri = artworkUri,
+        modifier = modifier
+    ) {
+        // Main Foreground Content (Responsive Edge-to-Edge with Center Alignment)
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp)
+        ) {
+            val screenHeight = maxHeight
+            val screenWidth = maxWidth
+            val isCompactOrLandscape = isLandscape || screenHeight < 620.dp
+            val ambientColors = LocalAmbientColors.current
+
+            // Multi-tier auto-adjustable sizing
+            val dynamicArtworkSize = when {
+                isLandscape -> 170.dp
+                screenHeight >= 780.dp -> (screenHeight * 0.40f).coerceIn(280.dp, 360.dp).coerceAtMost(screenWidth - 44.dp)
+                screenHeight >= 640.dp -> (screenHeight * 0.36f).coerceIn(240.dp, 300.dp).coerceAtMost(screenWidth - 48.dp)
+                else -> (screenHeight * 0.30f).coerceIn(180.dp, 230.dp).coerceAtMost(screenWidth - 56.dp)
+            }
+            val dynamicAuraSize = dynamicArtworkSize + 16.dp
+
+            if (!isCompactOrLandscape) {
+                // Centered Column constrained to ideal max width (430dp) so controls don't overspread on wider phones
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = 430.dp)
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                        .align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // 1. Sleek Floating Frosted Top Navigation Bar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp, bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Dismiss / Collapse Pill Button
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(SwaaraElevatedSurface.copy(alpha = 0.85f))
+                                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.chevron_back),
+                                contentDescription = "Back",
+                                tint = SwaaraPrimaryText,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // Player / Lyrics Dual-Segment Capsule with Neon Glow Accent
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(SwaaraDeepSurface.copy(alpha = 0.92f))
+                                .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(22.dp))
+                                .padding(4.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                // Player Segment
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(
+                                            if (!isLyricsMode) Brush.horizontalGradient(
+                                                listOf(
+                                                    SwaaraMagenta.copy(alpha = 0.28f),
+                                                    SwaaraViolet.copy(alpha = 0.20f)
+                                                )
+                                            )
+                                            else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (!isLyricsMode) SwaaraMagenta.copy(alpha = 0.65f)
+                                            else Color.Transparent,
+                                            RoundedCornerShape(18.dp)
+                                        )
+                                        .clickable { isLyricsMode = false }
+                                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.disc),
+                                            contentDescription = null,
+                                            tint = if (!isLyricsMode) SwaaraMagenta else SwaaraSecondaryText,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Text(
+                                            text = "Player",
+                                            color = if (!isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (!isLyricsMode) FontWeight.Bold else FontWeight.Medium
+                                        )
+                                    }
+                                }
+
+                                // Lyrics Segment
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(
+                                            if (isLyricsMode) Brush.horizontalGradient(
+                                                listOf(
+                                                    SwaaraMagenta.copy(alpha = 0.28f),
+                                                    SwaaraViolet.copy(alpha = 0.20f)
+                                                )
+                                            )
+                                            else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (isLyricsMode) SwaaraMagenta.copy(alpha = 0.65f)
+                                            else Color.Transparent,
+                                            RoundedCornerShape(18.dp)
+                                        )
+                                        .clickable { isLyricsMode = true }
+                                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.musical_notes),
+                                            contentDescription = null,
+                                            tint = if (isLyricsMode) SwaaraMagenta else SwaaraSecondaryText,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Text(
+                                            text = "Lyrics",
+                                            color = if (isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isLyricsMode) FontWeight.Bold else FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Quick Action Button: Add to Playlist
+                        IconButton(
+                            onClick = { showAddToPlaylistSheet = true },
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(SwaaraElevatedSurface.copy(alpha = 0.85f))
+                                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.bookmark_outline),
+                                contentDescription = "Add to Playlist",
+                                tint = SwaaraPrimaryText,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
+                    }
+
+                    // Live Jam Room Active Badge (if in a session)
+                    if (activeJamRoom != null) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            SwaaraViolet.copy(alpha = 0.35f),
+                                            SwaaraCyan.copy(alpha = 0.20f)
+                                        )
+                                    )
+                                )
+                                .border(1.dp, SwaaraViolet.copy(alpha = 0.7f), RoundedCornerShape(14.dp))
+                                .clickable { liveJamRoute.global() }
+                                .padding(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.radio),
+                                    contentDescription = null,
+                                    tint = SwaaraCyan,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Live Jam: ${activeJamRoom!!.roomCode}",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(0.35f))
+
+                    // 2. High-Fidelity Album Artwork Showcase or Synchronized Lyrics
+                    if (!isLyricsMode) {
+                        Box(
+                            modifier = Modifier.size(dynamicAuraSize),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Atmospheric Radial Aura Pulse with Dynamic Palette Theming
+                            if (isPlaying) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(dynamicArtworkSize + 28.dp)
+                                        .clip(RoundedCornerShape(38.dp))
+                                        .background(
+                                            Brush.radialGradient(
+                                                listOf(
+                                                    ambientColors.vibrant.copy(alpha = 0.45f),
+                                                    ambientColors.dominant.copy(alpha = 0.25f),
+                                                    Color.Transparent
+                                                )
+                                            )
+                                        )
+                                )
+                            }
+
+                            // Artwork Container with Spring Shadow and Gesture Support
+                            Box(
+                                modifier = Modifier
+                                    .size(dynamicArtworkSize)
+                                    .shadow(
+                                        elevation = 32.dp,
+                                        shape = RoundedCornerShape(28.dp),
+                                        ambientColor = Color.Black.copy(alpha = 0.85f),
+                                        spotColor = ambientColors.dominant.copy(alpha = 0.55f)
+                                    )
+                                    .clip(RoundedCornerShape(28.dp))
+                                    .background(SwaaraElevatedSurface)
+                                    .border(
+                                        1.5.dp,
+                                        Brush.verticalGradient(
+                                            listOf(
+                                                Color.White.copy(alpha = 0.18f),
+                                                Color.White.copy(alpha = 0.04f)
+                                            )
+                                        ),
+                                        RoundedCornerShape(28.dp)
+                                    )
+                                    .pointerInput(Unit) {
+                                        detectHorizontalDragGestures(
+                                            onDragStart = { totalDrag = 0f },
+                                            onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
+                                            onDragEnd = {
+                                                // Swipe right -> Next Track, Swipe left -> Previous Track
+                                                if (totalDrag > 60f) {
+                                                    player.forceSeekToNext()
+                                                } else if (totalDrag < -60f) {
+                                                    player.forceSeekToPrevious()
+                                                }
+                                            }
+                                        )
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // Fallback Abstract Vinyl Backdrop
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(
+                                                    SwaaraDeepSurface,
+                                                    SwaaraElevatedSurface,
+                                                    Color(0xFF222234),
+                                                    SwaaraElevatedSurface,
+                                                    SwaaraDeepSurface
+                                                )
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(76.dp)
+                                                .clip(CircleShape)
+                                                .background(SwaaraDeepSurface)
+                                                .border(1.dp, SwaaraMagenta.copy(alpha = 0.4f), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.musical_notes),
+                                                contentDescription = null,
+                                                tint = SwaaraMagenta,
+                                                modifier = Modifier.size(36.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                AsyncImage(
+                                    model = artworkUri ?: if (!videoId.isNullOrBlank()) "https://i.ytimg.com/vi/$videoId/hqdefault.jpg" else null,
+                                    contentDescription = title,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.matchParentSize()
+                                )
+                            }
+                        }
+                    } else {
+                        // Synchronized Karaoke Lyrics View
+                        SwaaraGlassContainer(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(dynamicAuraSize.coerceAtLeast(270.dp))
+                                .padding(2.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            backgroundColor = SwaaraDeepSurface.copy(alpha = 0.94f),
+                            borderColor = SwaaraMagenta.copy(alpha = 0.40f)
+                        ) {
+                            if (videoId != null && currentMediaItem != null) {
+                                Lyrics(
+                                    mediaId = videoId,
+                                    isDisplayed = true,
+                                    onDismiss = { isLyricsMode = false },
+                                    mediaMetadataProvider = { currentMediaItem!!.mediaMetadata },
+                                    durationProvider = { player.duration.takeIf { it > 0 } ?: C.TIME_UNSET },
+                                    ensureSongInserted = { currentMediaItem?.let { Database.insert(it) } },
+                                    shouldShowSynchronizedLyrics = shouldShowSynchronizedLyrics,
+                                    setShouldShowSynchronizedLyrics = { shouldShowSynchronizedLyrics = it },
+                                    modifier = Modifier.fillMaxSize().padding(14.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(0.45f))
+
+                    // 3. Typographic Information Hierarchy (Song Title, Clickable Artist Pill, Audio Quality Badge)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = title,
+                            color = SwaaraPrimaryText,
+                            fontSize = if (title.length > 28) 19.sp else 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 26.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Clickable Artist Pill (Bounded width to prevent edge overflow)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .widthIn(max = screenWidth - 48.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable(onClick = navigateToArtist)
+                                .background(Color.White.copy(alpha = 0.07f))
+                                .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.person),
+                                contentDescription = null,
+                                tint = SwaaraCyan,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = artist,
+                                color = SwaaraPrimaryText,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.chevron_forward),
+                                contentDescription = "See Artist",
+                                tint = SwaaraCyan.copy(alpha = 0.7f),
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Studio Audio Spec Pill with Clear Dropdown & Change Affordance
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(SwaaraDeepSurface.copy(alpha = 0.90f))
+                                .border(
+                                    1.dp,
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            SwaaraViolet.copy(alpha = 0.60f),
+                                            SwaaraMagenta.copy(alpha = 0.35f)
+                                        )
+                                    ),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clickable { showAudioQualitySheet = true }
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.equalizer),
+                                contentDescription = null,
+                                tint = SwaaraViolet,
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = dynamicAudioBadgeText,
+                                color = SwaaraViolet,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                painter = painterResource(id = R.drawable.chevron_down),
+                                contentDescription = "Change Audio Quality",
+                                tint = SwaaraViolet.copy(alpha = 0.75f),
+                                modifier = Modifier.size(11.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(0.65f))
+
+                    // 4. Waveform Spectrum Scrub Bar
+                    SwaaraFuturisticScrubBar(
+                        currentPosition = currentPosition,
+                        duration = duration,
+                        onSeek = { targetMs -> player.seekTo(targetMs) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // 5. Primary Playback Command Row (Balanced 5-Column Grid)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Col 1: Shuffle
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = { player.shuffleModeEnabled = !player.shuffleModeEnabled },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.shuffle),
+                                    contentDescription = "Shuffle",
+                                    tint = if (player.shuffleModeEnabled) SwaaraMagenta else SwaaraSecondaryText,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        // Col 2: Previous Track (Swipe Left on Artwork or Tap)
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    context.toast("Swipe left on artwork for previous track")
+                                    player.forceSeekToPrevious()
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.play_skip_back),
+                                    contentDescription = "Previous Track (Swipe Left)",
+                                    tint = SwaaraPrimaryText,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
+                        // Col 3: Center Dominant Play/Pause Halo
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SwaaraPulsingPlayButton(
+                                isPlaying = isPlaying,
+                                isLoading = isLoading,
+                                onClick = {
+                                    if (player.shouldBePlaying) player.pause() else player.play()
+                                },
+                                size = 68
+                            )
+                        }
+
+                        // Col 4: Next Track (Swipe Right on Artwork or Tap)
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    context.toast("Swipe right on artwork for next track")
+                                    player.forceSeekToNext()
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.play_skip_forward),
+                                    contentDescription = "Next Track (Swipe Right)",
+                                    tint = SwaaraPrimaryText,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
+                        // Col 5: Tactile Animated Loop Button
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SwaaraAnimatedLoopButton(
+                                repeatMode = player.repeatMode,
+                                onLongClick = { showLoopCounterDialog = true },
+                                loopCount = remainingLoops,
+                                onClick = {
+                                    if (remainingLoops > 0) {
+                                        SwaaraLoopCounter.clear()
+                                        context.toast("Loop counter cancelled")
+                                    }
+                                    player.repeatMode = when (player.repeatMode) {
+                                        Player.REPEAT_MODE_OFF -> {
+                                            context.toast("Repeat all tracks")
+                                            Player.REPEAT_MODE_ALL
+                                        }
+                                        Player.REPEAT_MODE_ALL -> {
+                                            context.toast("Repeat current track")
+                                            Player.REPEAT_MODE_ONE
+                                        }
+                                        else -> {
+                                            context.toast("Repeat off")
+                                            Player.REPEAT_MODE_OFF
+                                        }
+                                    }
+                                },
+                                size = 48.dp,
+                                iconSize = 24.dp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // 6. Secondary Studio Utility Row (Matching 5-Column Grid Alignment)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Col 1: Play Queue Sheet
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = { showQueueSheet = true },
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.playlist),
+                                    contentDescription = "Queue",
+                                    tint = SwaaraSecondaryText,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+
+                        // Col 2: Fast Offline Downloader
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    currentMediaItem?.let { mediaItem ->
+                                        if (!isDownloaded && !isCurrentlyDownloading) {
+                                            SwaaraFastDownloader.download(
+                                                context = context,
+                                                mediaItem = mediaItem,
+                                                onFinished = { success ->
+                                                    if (success) isDownloaded = true
+                                                }
+                                            )
+                                        } else if (isCurrentlyDownloading) {
+                                            context.toast("Downloading \"$title\" ($currentTrackProgress%)...")
+                                        } else {
+                                            context.toast("\"$title\" is saved offline in HQ (320 kbps)")
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                if (isCurrentlyDownloading) {
+                                    CircularProgressIndicator(
+                                        progress = { (currentTrackProgress.coerceAtLeast(5)) / 100f },
+                                        modifier = Modifier.size(20.dp),
+                                        color = SwaaraCyan,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.download),
+                                        contentDescription = "Download Offline",
+                                        tint = if (isDownloaded) SwaaraCyan else SwaaraSecondaryText,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Col 3: Like / Favorite
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    currentMediaItem?.mediaId?.let { id ->
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            val liked = Database.likedAtNow(id)
+                                            Database.like(id, if (liked == null) System.currentTimeMillis() else null)
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = if (isLiked) R.drawable.heart else R.drawable.heart_outline),
+                                    contentDescription = "Favorite",
+                                    tint = if (isLiked) SwaaraMagenta else SwaaraSecondaryText,
+                                    modifier = Modifier.size(23.dp)
+                                )
+                            }
+                        }
+
+                        // Col 4: Sleep Timer
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = { showSleepTimerDialog = true },
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.time),
+                                    contentDescription = "Sleep Timer",
+                                    tint = if (isSleepTimerActive) SwaaraMagenta else SwaaraSecondaryText,
+                                    modifier = Modifier.size(21.dp)
+                                )
+                            }
+                        }
+
+                        // Col 5: Contextual Track Options
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = { showMoreSheet = true },
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ellipsis_horizontal),
+                                    contentDescription = "More Options",
+                                    tint = SwaaraSecondaryText,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Responsive Column for Landscape or Compact Dimensions
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = 440.dp)
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                        .align(Alignment.Center)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Top Bar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(SwaaraElevatedSurface.copy(alpha = 0.85f))
+                                .border(1.dp, Color.White.copy(alpha = 0.10f), CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.chevron_back),
+                                contentDescription = "Back",
+                                tint = SwaaraPrimaryText,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(SwaaraDeepSurface.copy(alpha = 0.90f))
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
+                                .padding(3.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (!isLyricsMode) SwaaraMagenta.copy(alpha = 0.25f) else Color.Transparent)
+                                        .clickable { isLyricsMode = false }
+                                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Player",
+                                        color = if (!isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (isLyricsMode) SwaaraMagenta.copy(alpha = 0.25f) else Color.Transparent)
+                                        .clickable { isLyricsMode = true }
+                                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Lyrics",
+                                        color = if (isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        IconButton(
+                            onClick = { showAddToPlaylistSheet = true },
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(SwaaraElevatedSurface.copy(alpha = 0.85f))
+                                .border(1.dp, Color.White.copy(alpha = 0.10f), CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.bookmark_outline),
+                                contentDescription = "Add to Playlist",
+                                tint = SwaaraPrimaryText,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (!isLyricsMode) {
+                        Box(
+                            modifier = Modifier
+                                .size(dynamicArtworkSize)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(SwaaraElevatedSurface)
+                                .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(22.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = artworkUri ?: if (!videoId.isNullOrBlank()) "https://i.ytimg.com/vi/$videoId/hqdefault.jpg" else null,
+                                contentDescription = title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.matchParentSize()
+                            )
+                        }
+                    } else {
+                        SwaaraGlassContainer(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            backgroundColor = SwaaraDeepSurface.copy(alpha = 0.94f),
+                            borderColor = SwaaraMagenta.copy(alpha = 0.40f)
+                        ) {
+                            if (videoId != null && currentMediaItem != null) {
+                                Lyrics(
+                                    mediaId = videoId,
+                                    isDisplayed = true,
+                                    onDismiss = { isLyricsMode = false },
+                                    mediaMetadataProvider = { currentMediaItem!!.mediaMetadata },
+                                    durationProvider = { player.duration.takeIf { it > 0 } ?: C.TIME_UNSET },
+                                    ensureSongInserted = { currentMediaItem?.let { Database.insert(it) } },
+                                    shouldShowSynchronizedLyrics = shouldShowSynchronizedLyrics,
+                                    setShouldShowSynchronizedLyrics = { shouldShowSynchronizedLyrics = it },
+                                    modifier = Modifier.fillMaxSize().padding(10.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Title & Artist & Quality in compact mode
+                    Text(
+                        text = title,
+                        color = SwaaraPrimaryText,
+                        fontSize = if (title.length > 28) 17.sp else 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = artist,
+                        color = SwaaraSecondaryText,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SwaaraDeepSurface.copy(alpha = 0.90f))
+                            .border(
+                                1.dp,
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        SwaaraViolet.copy(alpha = 0.60f),
+                                        SwaaraMagenta.copy(alpha = 0.35f)
+                                    )
+                                ),
+                                RoundedCornerShape(10.dp)
+                            )
+                            .clickable { showAudioQualitySheet = true }
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.equalizer),
+                            contentDescription = null,
+                            tint = SwaaraViolet,
+                            modifier = Modifier.size(10.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = dynamicAudioBadgeText,
+                            color = SwaaraViolet,
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Icon(
+                            painter = painterResource(id = R.drawable.chevron_down),
+                            contentDescription = "Change Audio Quality",
+                            tint = SwaaraViolet.copy(alpha = 0.75f),
+                            modifier = Modifier.size(10.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    SwaaraFuturisticScrubBar(
+                        currentPosition = currentPosition,
+                        duration = duration,
+                        onSeek = { player.seekTo(it) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Primary Controls
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = { player.shuffleModeEnabled = !player.shuffleModeEnabled }) {
+                                Icon(painterResource(id = R.drawable.shuffle), null, tint = if (player.shuffleModeEnabled) SwaaraMagenta else SwaaraSecondaryText, modifier = Modifier.size(22.dp))
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = { player.forceSeekToPrevious() }) {
+                                Icon(painterResource(id = R.drawable.play_skip_back), null, tint = SwaaraPrimaryText, modifier = Modifier.size(26.dp))
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            SwaaraPulsingPlayButton(isPlaying = isPlaying, isLoading = isLoading, onClick = { if (player.shouldBePlaying) player.pause() else player.play() }, size = 62)
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = { player.forceSeekToNext() }) {
+                                Icon(painterResource(id = R.drawable.play_skip_forward), null, tint = SwaaraPrimaryText, modifier = Modifier.size(26.dp))
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            SwaaraAnimatedLoopButton(
+                                repeatMode = player.repeatMode,
+                                onLongClick = { showLoopCounterDialog = true },
+                                loopCount = remainingLoops,
+                                onClick = {
+                                    if (remainingLoops > 0) {
+                                        SwaaraLoopCounter.clear()
+                                        context.toast("Loop counter cancelled")
+                                    }
+                                    player.repeatMode = when (player.repeatMode) {
+                                        Player.REPEAT_MODE_OFF -> {
+                                            context.toast("Repeat all tracks")
+                                            Player.REPEAT_MODE_ALL
+                                        }
+                                        Player.REPEAT_MODE_ALL -> {
+                                            context.toast("Repeat current track")
+                                            Player.REPEAT_MODE_ONE
+                                        }
+                                        else -> {
+                                            context.toast("Repeat off")
+                                            Player.REPEAT_MODE_OFF
+                                        }
+                                    }
+                                },
+                                size = 44.dp,
+                                iconSize = 22.dp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Bottom Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = { showQueueSheet = true }) {
+                                Icon(painterResource(id = R.drawable.playlist), null, tint = SwaaraSecondaryText, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = {
+                                currentMediaItem?.let { mediaItem ->
+                                    if (!isDownloaded && !isCurrentlyDownloading) {
+                                        SwaaraFastDownloader.download(context, mediaItem) { success -> if (success) isDownloaded = true }
+                                    }
+                                }
+                            }) {
+                                Icon(painterResource(id = R.drawable.download), null, tint = if (isDownloaded) SwaaraCyan else SwaaraSecondaryText, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = {
+                                currentMediaItem?.mediaId?.let { id ->
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        val liked = Database.likedAtNow(id)
+                                        Database.like(id, if (liked == null) System.currentTimeMillis() else null)
+                                    }
+                                }
+                            }) {
+                                Icon(painterResource(id = if (isLiked) R.drawable.heart else R.drawable.heart_outline), null, tint = if (isLiked) SwaaraMagenta else SwaaraSecondaryText, modifier = Modifier.size(21.dp))
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = { showSleepTimerDialog = true }) {
+                                Icon(painterResource(id = R.drawable.time), null, tint = if (isSleepTimerActive) SwaaraMagenta else SwaaraSecondaryText, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = { showMoreSheet = true }) {
+                                Icon(painterResource(id = R.drawable.ellipsis_horizontal), null, tint = SwaaraSecondaryText, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SwaaraAnimatedLoopButton(
+    repeatMode: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    loopCount: Int = 0,
+    size: Dp = 48.dp,
+    iconSize: Dp = 23.dp
+) {
+    var rotationAngle by remember { mutableFloatStateOf(0f) }
+    var previousMode by remember { mutableIntStateOf(repeatMode) }
+
+    LaunchedEffect(repeatMode) {
+        if (repeatMode != previousMode) {
+            rotationAngle += 360f
+            previousMode = repeatMode
+        }
+    }
+
+    val animatedRotation by animateFloatAsState(
+        targetValue = rotationAngle,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "loop_rotation"
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = if (repeatMode != Player.REPEAT_MODE_OFF || loopCount > 0) 1.08f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "loop_scale"
+    )
+
+    val activeColor = when {
+        loopCount > 0 -> SwaaraMagenta
+        repeatMode == Player.REPEAT_MODE_ONE -> SwaaraMagenta
+        repeatMode == Player.REPEAT_MODE_ALL -> SwaaraCyan
+        else -> SwaaraSecondaryText
+    }
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onLongPress = { onLongClick?.invoke() }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.scale(scale)
+        ) {
+            // Glow aura for active repeat modes or active loop count
+            if (repeatMode != Player.REPEAT_MODE_OFF || loopCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .size(iconSize + 14.dp)
+                        .clip(CircleShape)
+                        .background(activeColor.copy(alpha = 0.14f))
+                )
+            }
+
+            // Rotating loop icon
+            Icon(
+                painter = painterResource(id = R.drawable.sync),
+                contentDescription = when {
+                    loopCount > 0 -> "Repeat $loopCount Times"
+                    repeatMode == Player.REPEAT_MODE_ONE -> "Repeat Current Track"
+                    repeatMode == Player.REPEAT_MODE_ALL -> "Repeat All Tracks"
+                    else -> "Repeat Off"
+                },
+                tint = activeColor,
+                modifier = Modifier
+                    .size(iconSize)
+                    .rotate(animatedRotation)
+            )
+
+            // Loop count badge or "1" badge
+            if (loopCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(15.dp)
+                        .clip(CircleShape)
+                        .background(SwaaraMagenta)
+                        .border(1.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "${loopCount}x",
+                        color = Color.White,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        lineHeight = 8.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else if (repeatMode == Player.REPEAT_MODE_ONE) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(11.dp)
+                        .clip(CircleShape)
+                        .background(SwaaraMagenta)
+                        .border(0.8.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "1",
+                        color = Color.White,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        lineHeight = 8.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwaaraAddToPlaylistSheet(
+    mediaItem: MediaItem?,
+    onDismiss: () -> Unit,
+    onCreatedOrAdded: (playlistName: String) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope = rememberCoroutineScope()
+    var isCreatingNewPlaylist by remember { mutableStateOf(false) }
+
+    val userPlaylists by Database.playlistPreviews(
+        PlaylistSortBy.DateAdded,
+        SortOrder.Descending
+    ).collectAsState(initial = emptyList())
+
+    if (isCreatingNewPlaylist) {
+        TextFieldDialog(
+            hintText = "Enter playlist name",
+            onDismiss = { isCreatingNewPlaylist = false },
+            onAccept = { name ->
+                isCreatingNewPlaylist = false
+                if (name.isNotBlank()) {
+                    val trimmedName = name.trim()
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val playlistId = Database.insert(Playlist(name = trimmedName))
+                        mediaItem?.let { item ->
+                            Database.insert(item)
+                            Database.insert(
+                                SongPlaylistMap(
+                                    songId = item.mediaId,
+                                    playlistId = playlistId,
+                                    position = 0
+                                )
+                            )
+                        }
+                    }
+                    onCreatedOrAdded(trimmedName)
+                    onDismiss()
+                }
+            }
+        )
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = SwaaraDeepSurface,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Add to Playlist",
+                        color = SwaaraPrimaryText,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Choose a playlist or create a new one",
+                        color = SwaaraSecondaryText,
+                        fontSize = 12.sp
+                    )
+                }
+
+                // New Playlist Button
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SwaaraElevatedSurface)
+                        .border(1.dp, SwaaraCyan.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                        .clickable { isCreatingNewPlaylist = true }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.add),
+                        contentDescription = "New Playlist",
+                        tint = SwaaraCyan,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "New",
+                        color = SwaaraCyan,
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Current Track Card
+            mediaItem?.let { item ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SwaaraElevatedSurface.copy(alpha = 0.5f))
+                        .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val artUri = item.mediaMetadata.artworkUri?.toString()
+                        ?: "https://i.ytimg.com/vi/${item.mediaId}/hqdefault.jpg"
+                    AsyncImage(
+                        model = artUri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = item.mediaMetadata.title?.toString() ?: "Unknown Title",
+                            color = SwaaraPrimaryText,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = item.mediaMetadata.artist?.toString() ?: "Unknown Artist",
+                            color = SwaaraSecondaryText,
+                            fontSize = 11.5.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (userPlaylists.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.playlist),
+                            contentDescription = null,
+                            tint = SwaaraSecondaryText.copy(alpha = 0.6f),
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Text(
+                            text = "No custom playlists found",
+                            color = SwaaraSecondaryText,
+                            fontSize = 13.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(SwaaraMagenta.copy(alpha = 0.15f))
+                                .border(1.dp, SwaaraMagenta.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .clickable { isCreatingNewPlaylist = true }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Create First Playlist",
+                                color = SwaaraMagenta,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 380.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(userPlaylists) { preview ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    mediaItem?.let { item ->
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            Database.insert(item)
+                                            Database.insert(
+                                                SongPlaylistMap(
+                                                    songId = item.mediaId,
+                                                    playlistId = preview.playlist.id,
+                                                    position = preview.songCount
+                                                )
+                                            )
+                                        }
+                                    }
+                                    onCreatedOrAdded(preview.playlist.name)
+                                    onDismiss()
+                                }
+                                .background(SwaaraElevatedSurface.copy(alpha = 0.35f))
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(SwaaraMagenta.copy(alpha = 0.15f))
+                                    .border(1.dp, SwaaraMagenta.copy(alpha = 0.35f), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.playlist),
+                                    contentDescription = null,
+                                    tint = SwaaraMagenta,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = preview.playlist.name,
+                                    color = SwaaraPrimaryText,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "${preview.songCount} ${if (preview.songCount == 1) "song" else "songs"}",
+                                    color = SwaaraSecondaryText,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Icon(
+                                painter = painterResource(id = R.drawable.add),
+                                contentDescription = "Add",
+                                tint = SwaaraCyan,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}

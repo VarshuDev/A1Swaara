@@ -1,0 +1,25 @@
+# Ralph Progress Log
+Started: 2026-10-28 20:06:00
+---
+
+## Codebase Patterns
+- Audio stream selection uses `audioStreamComparator` in `NewPipeExtractorClient.kt` (line 337).
+- Codec quality rank: MP3=0, WEBMA=1, M4A=2, OPUS=3. Comparator picks max (format rank, then bitrate).
+- ExoPlayer renderer built in `createRendersFactory()` in `PlayerService.kt`.
+- DefaultAudioSink with forced 32-bit float output passthrough on capable hardware.
+- Expanded playback buffers: 60s min, 240s max for uninterrupted high-bitrate streaming.
+- Silence threshold set to 0 in lossless mode to bypass silence skipping and preserve pristine signal paths.
+- Local files bypass network with `isLocal` check in `NewPipeAudioMediaSourceFactory.createMediaSource`.
+- Format entity enriched with `codec`, `sampleRate`, `channelCount`, and computed `qualityTier` / `codecDisplayName` / `bitrateDisplayText`.
+- Player UI (`SwaaraNowPlayingScreen.kt`) features real-time badge displaying live codec, bitrate, and quality tier.
+
+## 2026-10-28 - US-001 through US-007: Lossless Audio Engine Complete (v1.1.4)
+- Added `PlayerPreferences.AudioQuality` with Maximum, Auto, High, Normal tiers and `losslessMode` toggle.
+- Modified `NewPipeExtractorClient.kt` stream selection logic to respect target bitrates and rank OPUS highest.
+- Configured audiophile ExoPlayer pipeline in `PlayerService.kt` with 32-bit float output and expanded buffering.
+- Implemented real-time dynamic audio badge in `SwaaraNowPlayingScreen.kt` for both streaming and local tracks.
+- Added dedicated Audio Quality configuration section in `PlayerSettings.kt`.
+- Bumped app version to 1.1.4 (versionCode 15).
+- Compiled release binary offline: `./gradlew.bat --offline assembleHttp3Release` (0 errors).
+- Generated release artifact: `A1_Swaara_v1.1.4.apk` (28.89 MB).
+<promise>COMPLETE</promise>

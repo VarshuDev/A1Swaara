@@ -1,0 +1,17 @@
+# Ralph Progress Log
+Started: 2026-10-28 19:15:00
+---
+
+## Codebase Patterns
+- Device storage audio uses prefix `local:<media_id>` to distinguish from YouTube video IDs.
+- ExoPlayer routing in `NewPipeAudioMediaSourceFactory` bypasses remote DASH manifest resolution when `mediaItem.isLocal` or `dataSpec.isLocal` is true.
+- Android 13+ requires `READ_MEDIA_AUDIO`; Android 8-12 requires `READ_EXTERNAL_STORAGE`. Both are declared and guarded reactively.
+- Artwork for local tracks is queried via `content://media/external/audio/albumart/<album_id>` and rendered seamlessly via Coil.
+
+## 2026-10-28 - US-001 through US-005: Device Storage Local Music Engine Complete
+- Implemented reactive permission guard in `SwaaraLibraryScreen.kt` for granular media permissions.
+- Connected Android `MediaStore.Audio.Media` scanner with automatic Room database indexing.
+- Added dedicated "Device Files" tab into `SwaaraLibraryScreen.kt` with instant Play All, Shuffle All, and real-time search filtering.
+- Verified offline compilation (`./gradlew.bat --offline assembleHttp3Release`) with zero errors.
+- Generated release binary: `A1_Swaara_v1.1.3.apk` (28.89 MB).
+<promise>COMPLETE</promise>
