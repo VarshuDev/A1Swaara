@@ -107,6 +107,8 @@ import com.varshudev.a1swaara.cloud.SwaaraGoogleAuthManager
 import com.varshudev.a1swaara.cloud.SupabaseUser
 import com.varshudev.a1swaara.cloud.SwaaraRemoteConfig
 import com.varshudev.a1swaara.cloud.SwaaraAnnouncement
+import com.varshudev.a1swaara.cloud.SwaaraFestiveVibe
+import androidx.compose.ui.platform.LocalUriHandler
 import com.varshudev.a1swaara.ui.components.SwaaraCommunityShelf
 import com.varshudev.a1swaara.ui.components.SwaaraJamRoomDialog
 
@@ -136,6 +138,7 @@ fun SwaaraHomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     val container = LocalAppContainer.current
     val binder = LocalPlayerServiceBinder.current
     val openNowPlaying = LocalOpenNowPlaying.current
@@ -1066,6 +1069,30 @@ fun SwaaraHomeScreen(
             Spacer(modifier = Modifier.height(6.dp))
         }
 
+        // Cloud Festive Live Broadcast (Flipkart/Amazon Festive Vibe)
+        val activeFestiveVibe: SwaaraFestiveVibe? = remoteConfigState.festiveVibe
+        if (activeFestiveVibe != null) {
+            SwaaraFestiveCard(
+                festiveVibe = activeFestiveVibe,
+                onDismiss = {
+                    SwaaraRemoteConfig.dismissFestiveVibe(context, activeFestiveVibe.id)
+                },
+                onClick = {
+                    val url = activeFestiveVibe.actionUrl
+                    if (!url.isNullOrBlank()) {
+                        if (url.startsWith("http://") || url.startsWith("https://")) {
+                            uriHandler.openUri(url)
+                        } else {
+                            searchRoute.global(url)
+                        }
+                    } else {
+                        searchRoute.global("${activeFestiveVibe.festivalName} songs")
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
         if (selectedFeedMode == SwaaraFeedMode.PODCASTS) {
             SwaaraPodcastEnvironment()
         } else {
@@ -1378,6 +1405,172 @@ fun SwaaraHomeScreen(
                 }
             }
         }
+        }
+    }
+}
+
+@Composable
+fun SwaaraFestiveCard(
+    festiveVibe: SwaaraFestiveVibe,
+    onDismiss: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val accentColor = remember(festiveVibe.accentColorHex) {
+        try {
+            Color(android.graphics.Color.parseColor(festiveVibe.accentColorHex))
+        } catch (_: Exception) {
+            Color(0xFFFFD700)
+        }
+    }
+    val secondaryColor = remember(festiveVibe.secondaryColorHex) {
+        try {
+            Color(android.graphics.Color.parseColor(festiveVibe.secondaryColorHex))
+        } catch (_: Exception) {
+            Color(0xFFFF2DAA)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        accentColor.copy(alpha = 0.22f),
+                        secondaryColor.copy(alpha = 0.16f),
+                        SwaaraElevatedSurface
+                    )
+                )
+            )
+            .border(
+                width = 1.2.dp,
+                brush = Brush.horizontalGradient(
+                    listOf(
+                        accentColor.copy(alpha = 0.85f),
+                        secondaryColor.copy(alpha = 0.65f),
+                        accentColor.copy(alpha = 0.3f)
+                    )
+                ),
+                shape = RoundedCornerShape(18.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(14.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Header Row: Festive Pill Tag and Dismiss action
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(accentColor.copy(alpha = 0.22f))
+                        .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.sparkles),
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = festiveVibe.badgeText.uppercase(),
+                            color = accentColor,
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.6.sp
+                        )
+                    }
+                }
+
+                if (festiveVibe.isDismissible) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.close),
+                        contentDescription = "Dismiss",
+                        tint = SwaaraSecondaryText,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .clickable(onClick = onDismiss)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Body: Content Column + Graphic/Image
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = festiveVibe.title,
+                        color = SwaaraPrimaryText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.3).sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = festiveVibe.message,
+                        color = SwaaraSecondaryText,
+                        fontSize = 12.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Festive CTA Button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(accentColor)
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.play),
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = festiveVibe.actionText,
+                                color = Color.Black,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                if (!festiveVibe.bannerImageUrl.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    AsyncImage(
+                        model = festiveVibe.bannerImageUrl,
+                        contentDescription = festiveVibe.festivalName,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                }
+            }
         }
     }
 }
