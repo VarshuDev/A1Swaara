@@ -186,6 +186,7 @@ fun SwaaraHomeScreen(
         }
         coroutineScope.launch(Dispatchers.IO) {
             SwaaraRemoteConfig.fetchAndApply(context)
+            com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.checkAndPostNotifications(context)
         }
     }
 
@@ -650,7 +651,11 @@ fun SwaaraHomeScreen(
                         .clickable {
                             if (!isRefreshing && !isLoadingFeed) {
                                 isRefreshing = true
-                                context.toast("Refreshing chartbusters...")
+                                context.toast("Refreshing chartbusters & cloud feed...")
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    SwaaraRemoteConfig.fetchAndApply(context)
+                                    com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.checkAndPostNotifications(context)
+                                }
                                 loadLiveFeed(selectedLanguage, true)
                             }
                         },

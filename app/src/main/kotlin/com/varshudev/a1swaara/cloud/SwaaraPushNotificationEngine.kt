@@ -148,6 +148,16 @@ object SwaaraPushNotificationEngine {
                 }
                 this
             }
+
+            kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    android.widget.Toast.makeText(
+                        context,
+                        "${notification.title}\n${notification.message}",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                } catch (_: Exception) {}
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error posting system notification", e)
         }
