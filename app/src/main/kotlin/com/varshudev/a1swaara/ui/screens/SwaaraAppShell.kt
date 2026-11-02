@@ -56,8 +56,6 @@ import com.varshudev.a1swaara.ui.screens.builtInPlaylistRoute
 import com.varshudev.a1swaara.ui.screens.mood.MoodScreen
 import com.varshudev.a1swaara.ui.screens.moodRoute
 import kotlinx.coroutines.delay
-import com.varshudev.a1swaara.cloud.SwaaraGoogleAuthManager
-import com.varshudev.a1swaara.ui.components.SwaaraInAppGoogleSignInDialog
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -258,12 +256,6 @@ fun SwaaraAppShell() {
             )
         }
 
-        // In-App Google Sign-In Popup Dialog (No external browser redirection)
-        if (SwaaraGoogleAuthManager.isSignInPopupVisible.value) {
-            SwaaraInAppGoogleSignInDialog(
-                onDismiss = { SwaaraGoogleAuthManager.closeSignInPopup() }
-            )
-        }
         }
     }
 }

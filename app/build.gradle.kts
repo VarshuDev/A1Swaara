@@ -51,12 +51,12 @@ android {
     val googleWebClientId = localProperties.getProperty("SWAARA_GOOGLE_WEB_CLIENT_ID")
         ?: providers.gradleProperty("SWAARA_GOOGLE_WEB_CLIENT_ID").orNull
         ?: System.getenv("SWAARA_GOOGLE_WEB_CLIENT_ID")
-        ?: "899397486076-7opo34vsigm6pk02judsj3qi4j3foaq3.apps.googleusercontent.com"
+        ?: "802934415744-ssl232avsu163ae84g51umbjemuj0o3h.apps.googleusercontent.com"
 
     val googleAndroidClientId = localProperties.getProperty("SWAARA_GOOGLE_ANDROID_CLIENT_ID")
         ?: providers.gradleProperty("SWAARA_GOOGLE_ANDROID_CLIENT_ID").orNull
         ?: System.getenv("SWAARA_GOOGLE_ANDROID_CLIENT_ID")
-        ?: "899397486076-37f77el6fkqa68vtr2ctblsqmnkr03u2.apps.googleusercontent.com"
+        ?: "802934415744-skp3ib5irae43ouu6hcsq0fpq7nt4359.apps.googleusercontent.com"
 
     defaultConfig {
         applicationId = appId
