@@ -412,12 +412,14 @@ fun SwaaraLeaderboardScreen(
                     }
                 } else {
                     items(globalLeaders) { leader ->
+                        val isMe = (auth.isSignedIn && leader.userId == auth.userId)
                         LeaderboardRow(
                             rank = leader.rank,
                             title = leader.displayName,
                             subtitle = "${leader.totalHours} stream hours • ${leader.totalTracks} tracks",
                             badge = if (leader.rank == 1) "CHAMPION" else if (leader.rank <= 3) "PODIUM" else null,
-                            avatarUrl = leader.avatarUrl
+                            avatarUrl = leader.avatarUrl,
+                            isCurrentUser = isMe
                         )
                     }
                 }
@@ -429,18 +431,25 @@ fun SwaaraLeaderboardScreen(
                     item {
                         val msg = if (artistQuery.isBlank()) "No recorded artist streams found yet in the community."
                         else "No recorded streams for \"$artistQuery\" yet. Be the first to listen!"
-                        EmptyLeaderboardNotice(msg)
+                        EmptyLeaderboardNotice(
+                            message = msg,
+                            onSelectArtist = { selected ->
+                                artistQuery = selected
+                            }
+                        )
                     }
                 } else {
                     items(artistLeaders) { fan ->
                         val hours = Math.round((fan.totalSeconds / 3600.0) * 10.0) / 10.0
                         val artistTag = if (fan.artistName.isNotBlank() && artistQuery.isBlank()) " • ${fan.artistName}" else ""
+                        val isMe = (auth.isSignedIn && fan.userId == auth.userId)
                         LeaderboardRow(
                             rank = fan.rank,
                             title = fan.displayName,
                             subtitle = "$hours hrs • ${fan.playCount} plays$artistTag",
                             badge = fan.badge,
-                            avatarUrl = fan.avatarUrl
+                            avatarUrl = fan.avatarUrl,
+                            isCurrentUser = isMe
                         )
                     }
                 }
@@ -455,13 +464,29 @@ private fun LeaderboardRow(
     title: String,
     subtitle: String,
     badge: String?,
-    avatarUrl: String?
+    avatarUrl: String?,
+    isCurrentUser: Boolean = false
 ) {
     val rankColor = when (rank) {
         1 -> SwaaraColors.Gold
-        2 -> Color(0xFFC0C0C0) // Silver
-        3 -> Color(0xFFCD7F32) // Bronze
+        2 -> Color(0xFFC0C0C0)
+        3 -> Color(0xFFCD7F32)
         else -> SwaaraColors.SecondaryText
+    }
+
+    val borderColor = when {
+        isCurrentUser -> SwaaraColors.Cyan.copy(alpha = 0.8f)
+        rank == 1 -> SwaaraColors.Gold.copy(alpha = 0.5f)
+        rank == 2 -> Color(0xFFC0C0C0).copy(alpha = 0.4f)
+        rank == 3 -> Color(0xFFCD7F32).copy(alpha = 0.4f)
+        else -> SwaaraColors.CardBorder
+    }
+
+    val backgroundBrush = when (rank) {
+        1 -> Brush.horizontalGradient(listOf(SwaaraColors.Gold.copy(alpha = 0.12f), SwaaraColors.ElevatedSurface))
+        2 -> Brush.horizontalGradient(listOf(Color(0xFFC0C0C0).copy(alpha = 0.08f), SwaaraColors.ElevatedSurface))
+        3 -> Brush.horizontalGradient(listOf(Color(0xFFCD7F32).copy(alpha = 0.08f), SwaaraColors.ElevatedSurface))
+        else -> Brush.horizontalGradient(listOf(SwaaraColors.ElevatedSurface, SwaaraColors.ElevatedSurface))
     }
 
     Box(
@@ -469,24 +494,21 @@ private fun LeaderboardRow(
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(SwaaraColors.ElevatedSurface)
-            .border(
-                1.dp,
-                if (rank == 1) SwaaraColors.Gold.copy(alpha = 0.4f) else SwaaraColors.CardBorder,
-                RoundedCornerShape(16.dp)
-            )
+            .background(backgroundBrush)
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .padding(14.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Rank Number
+            // Rank Number or Podium Indicator
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
-                    .background(rankColor.copy(alpha = 0.15f)),
+                    .background(rankColor.copy(alpha = 0.18f))
+                    .border(1.dp, rankColor.copy(alpha = 0.4f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -499,12 +521,17 @@ private fun LeaderboardRow(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Avatar
+            // Avatar with Podium Ring
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
-                    .background(SwaaraColors.DeepSurface),
+                    .background(SwaaraColors.DeepSurface)
+                    .border(
+                        if (rank in 1..3) 1.5.dp else 1.dp,
+                        if (rank in 1..3) rankColor.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.1f),
+                        CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 if (!avatarUrl.isNullOrBlank()) {
@@ -528,14 +555,32 @@ private fun LeaderboardRow(
 
             // Name and Details
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = SwaaraColors.PrimaryText,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        color = SwaaraColors.PrimaryText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (isCurrentUser) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(SwaaraColors.Cyan.copy(alpha = 0.2f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "YOU",
+                                color = SwaaraColors.Cyan,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+                }
                 Text(
                     text = subtitle,
                     color = SwaaraColors.SecondaryText,
@@ -545,21 +590,48 @@ private fun LeaderboardRow(
                 )
             }
 
-            // Badge
-            if (badge != null) {
+            // Badge / Podium Tag
+            val podiumTag = when (rank) {
+                1 -> "GOLD"
+                2 -> "SILVER"
+                3 -> "BRONZE"
+                else -> null
+            }
+            val displayTag = badge ?: podiumTag
+
+            if (displayTag != null) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .background(
-                            if (rank == 1) SwaaraColors.Gold.copy(alpha = 0.2f)
-                            else SwaaraColors.Cyan.copy(alpha = 0.15f)
+                            when (rank) {
+                                1 -> SwaaraColors.Gold.copy(alpha = 0.2f)
+                                2 -> Color(0xFFC0C0C0).copy(alpha = 0.2f)
+                                3 -> Color(0xFFCD7F32).copy(alpha = 0.2f)
+                                else -> SwaaraColors.Cyan.copy(alpha = 0.15f)
+                            }
+                        )
+                        .border(
+                            1.dp,
+                            when (rank) {
+                                1 -> SwaaraColors.Gold.copy(alpha = 0.4f)
+                                2 -> Color(0xFFC0C0C0).copy(alpha = 0.4f)
+                                3 -> Color(0xFFCD7F32).copy(alpha = 0.4f)
+                                else -> SwaaraColors.Cyan.copy(alpha = 0.3f)
+                            },
+                            RoundedCornerShape(8.dp)
                         )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = badge,
-                        color = if (rank == 1) SwaaraColors.Gold else SwaaraColors.Cyan,
+                        text = displayTag,
+                        color = when (rank) {
+                            1 -> SwaaraColors.Gold
+                            2 -> Color(0xFFC0C0C0)
+                            3 -> Color(0xFFCD7F32)
+                            else -> SwaaraColors.Cyan
+                        },
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 0.5.sp
@@ -571,21 +643,95 @@ private fun LeaderboardRow(
 }
 
 @Composable
-private fun EmptyLeaderboardNotice(message: String) {
+private fun EmptyLeaderboardNotice(
+    message: String,
+    onSelectArtist: ((String) -> Unit)? = null
+) {
+    val suggestions = remember {
+        listOf("Vasuki Vaibhav", "Sachin Basrur", "Sanjith Hegde", "Arijit Singh")
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 24.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .padding(horizontal = 20.dp, vertical = 20.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(SwaaraColors.ElevatedSurface)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
+            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(18.dp))
+            .padding(20.dp)
     ) {
-        Text(
-            text = message,
-            color = SwaaraColors.SecondaryText,
-            fontSize = 13.sp,
-            textAlign = TextAlign.Center
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(SwaaraColors.Violet.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.musical_notes),
+                    contentDescription = null,
+                    tint = SwaaraColors.Magenta,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = message,
+                color = SwaaraColors.PrimaryText,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Stream tracks to claim the top listener throne on the Hall of Fame.",
+                color = SwaaraColors.SecondaryText,
+                fontSize = 11.5.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 16.sp
+            )
+
+            if (onSelectArtist != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "POPULAR LEADERBOARDS",
+                    color = SwaaraColors.SecondaryText,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(suggestions) { artist ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(SwaaraColors.DeepSurface)
+                                .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(10.dp))
+                                .clickable { onSelectArtist(artist) }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = artist,
+                                color = SwaaraColors.PrimaryText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
