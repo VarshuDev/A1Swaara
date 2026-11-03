@@ -209,6 +209,9 @@ object SwaaraTopListenerManager {
                 put("user_id", userId)
                 put("total_seconds", mergedSec)
                 put("total_tracks_played", mergedTracks)
+                put("last_listened_at", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }.format(java.util.Date()))
             }
             SwaaraSupabaseClient.upsert(
                 "global_listening_stats",
@@ -216,9 +219,52 @@ object SwaaraTopListenerManager {
                 "user_id",
                 token
             )
+
+            // 2. Sync all accumulated artist listening stats
+            val allEntries = sp.all
+            val artistKeys = allEntries.keys
+                .filter { it.startsWith("artist_") && it.endsWith("_raw_name") }
+                .map { it.removeSuffix("_raw_name") }
+
+            for (key in artistKeys) {
+                val rawArtistName = sp.getString("${key}_raw_name", "") ?: ""
+                val localArtistSec = sp.getLong("${key}_sec", 0L)
+                val localArtistPlays = sp.getInt("${key}_plays", 0)
+
+                if (rawArtistName.isNotBlank() && localArtistSec > 0L) {
+                    val encodedArtist = URLEncoder.encode(rawArtistName, "UTF-8").replace("+", "%20")
+                    val existingArtist = SwaaraSupabaseClient.get(
+                        "user_artist_stats",
+                        "user_id=eq.$userId&artist_name=eq.$encodedArtist",
+                        token
+                    )
+                    var remArtistSec = 0L
+                    var remArtistPlays = 0
+                    if (existingArtist != null && existingArtist.length() > 0) {
+                        val row = existingArtist.getJSONObject(0)
+                        remArtistSec = row.optLong("total_listen_seconds", 0L)
+                        remArtistPlays = row.optInt("play_count", 0)
+                    }
+
+                    val artistPayload = JSONObject().apply {
+                        put("user_id", userId)
+                        put("artist_name", rawArtistName)
+                        put("total_listen_seconds", remArtistSec + localArtistSec)
+                        put("play_count", remArtistPlays + localArtistPlays)
+                    }
+
+                    SwaaraSupabaseClient.upsert(
+                        "user_artist_stats",
+                        JSONArray().put(artistPayload).toString(),
+                        "user_id,artist_name",
+                        token
+                    )
+                }
+            }
+
             // Clear local accumulation after successful sync
             sp.edit().clear().apply()
-            Log.i(TAG, "Successfully synced local listening stats to Supabase for $userId")
+            Log.i(TAG, "Successfully synced local global and artist listening stats to Supabase for $userId")
         } catch (e: Exception) {
             Log.w(TAG, "Failed to sync local stats to Supabase", e)
         }

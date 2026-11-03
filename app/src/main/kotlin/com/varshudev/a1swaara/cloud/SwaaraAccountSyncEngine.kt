@@ -54,6 +54,13 @@ object SwaaraAccountSyncEngine {
         val userId = auth.userId
         val token = auth.accessToken
 
+        // Sync local offline listening metrics to Supabase
+        try {
+            SwaaraTopListenerManager.syncLocalStatsOnSignIn(context)
+        } catch (e: Exception) {
+            Log.w(TAG, "Notice during local stats sync: ${e.message}")
+        }
+
         try {
             var totalSyncedFavs = 0
             var totalSyncedPlaylists = 0
