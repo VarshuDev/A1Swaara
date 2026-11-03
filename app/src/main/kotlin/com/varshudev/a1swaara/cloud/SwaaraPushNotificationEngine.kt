@@ -86,10 +86,13 @@ object SwaaraPushNotificationEngine {
                 _activeNotification.value = notification
 
                 val lastShownId = prefs.getString(KEY_LAST_SHOWN_ID, "")
+                val permitted = hasNotificationPermission(context)
                 if (id != lastShownId) {
-                    Log.i(TAG, "New cloud push notification received: [$id] $title")
+                    Log.i(TAG, "New cloud push notification received: [$id] $title (permitted=$permitted)")
                     showSystemNotification(context, notification)
-                    prefs.edit().putString(KEY_LAST_SHOWN_ID, id).apply()
+                    if (permitted) {
+                        prefs.edit().putString(KEY_LAST_SHOWN_ID, id).apply()
+                    }
                 } else {
                     Log.d(TAG, "Notification $id already displayed previously.")
                 }
@@ -101,6 +104,17 @@ object SwaaraPushNotificationEngine {
         }
 
         null
+    }
+
+    /**
+     * Checks whether system notification posting is permitted by user/system settings.
+     */
+    fun hasNotificationPermission(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else {
+            androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
     }
 
     /**
