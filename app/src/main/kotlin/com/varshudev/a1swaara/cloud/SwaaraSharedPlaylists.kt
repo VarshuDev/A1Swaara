@@ -88,7 +88,7 @@ object SwaaraSharedPlaylists {
 
             val success = SwaaraCloudConfig.setDocument("shared_playlists/$code", docData)
             if (success) {
-                val shareUrl = "https://a1swaara.vercel.app/p/$code"
+                val shareUrl = "https://github.com/VarshuDev/A1Swaara_apk#playlist=$code"
                 PublishResult(
                     success = true,
                     code = code,

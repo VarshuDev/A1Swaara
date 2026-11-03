@@ -79,7 +79,7 @@ object SwaaraAccountSyncEngine {
                     // If not present in local, restore into local Room
                     val title = item.optString("title", "Track")
                     val artist = item.optString("artist", "Unknown")
-                    val artworkUrl = item.optString("artwork_url", null).takeIf { !it.isNullOrBlank() && it != "null" }
+                    val artworkUrl = item.optString("artwork_url").takeIf { it.isNotBlank() && it != "null" }
 
                     val song = Song(
                         id = songId,
@@ -141,7 +141,7 @@ object SwaaraAccountSyncEngine {
                             val sId = track.getString("song_id")
                             val sTitle = track.optString("title", "Track")
                             val sArtist = track.optString("artist", "Unknown")
-                            val sArtwork = track.optString("artwork_url", null).takeIf { !it.isNullOrBlank() && it != "null" }
+                            val sArtwork = track.optString("artwork_url").takeIf { it.isNotBlank() && it != "null" }
                             val pos = track.optInt("position", t)
 
                             val song = Song(

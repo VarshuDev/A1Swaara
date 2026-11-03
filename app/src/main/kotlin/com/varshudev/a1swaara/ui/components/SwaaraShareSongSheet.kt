@@ -51,7 +51,7 @@ fun SwaaraShareSongSheet(
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val shareUrl = "https://swaara.app/song?id=${videoId.orEmpty()}"
+    val shareUrl = if (!videoId.isNullOrBlank()) "https://youtube.com/watch?v=$videoId" else "https://github.com/VarshuDev/A1Swaara_apk"
     val deepLinkUrl = "swaara://song?id=${videoId.orEmpty()}"
 
     ModalBottomSheet(

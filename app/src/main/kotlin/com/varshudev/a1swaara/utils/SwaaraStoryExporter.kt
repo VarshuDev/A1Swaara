@@ -41,7 +41,7 @@ import java.nio.ByteBuffer
 
 object SwaaraStoryExporter {
     private const val TAG = "SwaaraStoryExporter"
-    const val WEB_SHARE_BASE = "https://a1swaara.vercel.app/s"
+    const val WEB_SHARE_BASE = "https://youtube.com/watch?v="
 
     /** Loads artwork bitmap asynchronously from URL or cache with software config */
     suspend fun loadArtworkBitmap(context: Context, artworkUrl: String?): Bitmap? = withContext(Dispatchers.IO) {
@@ -608,8 +608,8 @@ object SwaaraStoryExporter {
     }
 
     fun buildSongShareUrl(videoId: String?, title: String = "", artist: String = "", artworkUrl: String? = null): String {
-        if (videoId.isNullOrBlank()) return "https://a1swaara.vercel.app"
-        return "$WEB_SHARE_BASE/$videoId"
+        if (videoId.isNullOrBlank()) return "https://github.com/VarshuDev/A1Swaara_apk"
+        return "$WEB_SHARE_BASE$videoId"
     }
 
 

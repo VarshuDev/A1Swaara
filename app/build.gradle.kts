@@ -179,9 +179,6 @@ androidComponents {
 
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
-    compilerOptions {
-        freeCompilerArgs.add("-Xannotation-default-target=param-property")
-    }
 }
 
 ksp {

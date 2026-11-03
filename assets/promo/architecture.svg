@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 230" width="100%" height="100%">
+  <defs>
+    <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3ddc84"/>
+      <stop offset="50%" stop-color="#20cfff"/>
+      <stop offset="100%" stop-color="#ff2daa"/>
+    </linearGradient>
+
+    <pattern id="arch-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#171929"/>
+    </pattern>
+
+    <style>
+      @keyframes dash {
+        to { stroke-dashoffset: -40; }
+      }
+      @keyframes pulse-dsp {
+        0%, 100% { filter: drop-shadow(0 0 4px rgba(32, 207, 255, 0.4)); }
+        50% { filter: drop-shadow(0 0 14px rgba(255, 45, 170, 0.8)); }
+      }
+      .flowing-signal {
+        stroke-dasharray: 6, 6;
+        animation: dash 1.3s linear infinite;
+      }
+      .active-dsp {
+        animation: pulse-dsp 2.5s ease-in-out infinite;
+      }
+    </style>
+  </defs>
+
+  <rect width="920" height="230" rx="14" fill="#080a12" stroke="#1a1e30" stroke-width="1"/>
+  <rect width="920" height="230" rx="14" fill="url(#arch-grid)"/>
+
+  <!-- Connecting Animated Signal Wires -->
+  <path class="flowing-signal" d="M 230 115 L 330 115" stroke="url(#flowGrad)" stroke-width="2.5" fill="none"/>
+  <path class="flowing-signal" d="M 590 115 L 690 115" stroke="url(#flowGrad)" stroke-width="2.5" fill="none"/>
+
+  <!-- Layer 1: Presentation & UI -->
+  <g transform="translate(30, 40)">
+    <rect width="200" height="150" rx="10" fill="#0d111d" stroke="#1d263f" stroke-width="1.5"/>
+    <rect x="15" y="15" width="28" height="28" rx="6" fill="#1b253d"/>
+    <text x="29" y="34" fill="#3ddc84" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="700" text-anchor="middle">01</text>
+    <text x="52" y="34" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="700">COMPOSE M3 UI</text>
+    
+    <text x="15" y="70" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• Monet Dynamic Album Blur</text>
+    <text x="15" y="92" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• Synced Karaoke Scroller</text>
+    <text x="15" y="114" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• 9:16 Social Story Canvas</text>
+    <text x="15" y="136" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• Real-Time Listening Jam</text>
+    <rect x="15" y="145" width="170" height="2" fill="#3ddc84" opacity="0.6"/>
+  </g>
+
+  <!-- Layer 2: Audio DSP & Playback Core -->
+  <g class="active-dsp" transform="translate(330, 30)">
+    <rect width="260" height="170" rx="12" fill="#121424" stroke="#ff2daa" stroke-width="1.8"/>
+    <rect x="18" y="16" width="32" height="32" rx="7" fill="#2d1b3e"/>
+    <text x="34" y="37" fill="#ff70c9" font-family="'JetBrains Mono', monospace" font-size="15" font-weight="800" text-anchor="middle">02</text>
+    <text x="60" y="37" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14" font-weight="800">MEDIA3 EXOPLAYER</text>
+    
+    <text x="18" y="76" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="11.5">⚡ 32-Bit Float PCM Audio</text>
+    <text x="18" y="98" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="11.5">⚡ 10-Band Parametric EQ</text>
+    <text x="18" y="120" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="11.5">⚡ Resonant Sub-Bass Pump</text>
+    <text x="18" y="142" fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="11.5">⚡ Gapless Crossfade Engine</text>
+    <rect x="18" y="156" width="224" height="2" fill="url(#flowGrad)"/>
+  </g>
+
+  <!-- Layer 3: Data, Extractor & Cloud -->
+  <g transform="translate(690, 40)">
+    <rect width="200" height="150" rx="10" fill="#0d111d" stroke="#1d263f" stroke-width="1.5"/>
+    <rect x="15" y="15" width="28" height="28" rx="6" fill="#1b253d"/>
+    <text x="29" y="34" fill="#20cfff" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="700" text-anchor="middle">03</text>
+    <text x="52" y="34" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="700">DATA &amp; CLOUD</text>
+    
+    <text x="15" y="70" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• NewPipe VisionOS Engine</text>
+    <text x="15" y="92" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• Room Local SQLite Store</text>
+    <text x="15" y="114" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• Supabase Cloud Leaderboard</text>
+    <text x="15" y="136" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">• WorkManager Sync Worker</text>
+    <rect x="15" y="145" width="170" height="2" fill="#20cfff" opacity="0.6"/>
+  </g>
+</svg>

@@ -33,7 +33,7 @@ data class SwaaraFestiveVibe(
 )
 
 data class RemoteConfigState(
-    val pipedInstances: List<String> = listOf("https://pipedapi.kavin.rocks"),
+    val pipedInstances: List<String> = listOf("https://pipedapi.ducks.party"),
     val streamProxyMode: String = "direct",
     val announcement: SwaaraAnnouncement? = null,
     val festiveVibe: SwaaraFestiveVibe? = null,
@@ -57,7 +57,7 @@ object SwaaraRemoteConfig {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         try {
             val doc = SwaaraCloudConfig.getDocument("remote_config/app")
-            var instances = listOf("https://pipedapi.kavin.rocks")
+            var instances = listOf("https://pipedapi.ducks.party")
             var streamMode = "direct"
             var minVer = "1.0.0"
             var bitrate = "320kbps"
@@ -66,7 +66,7 @@ object SwaaraRemoteConfig {
             if (doc != null) {
                 @Suppress("UNCHECKED_CAST")
                 instances = (doc["activePipedInstances"] as? List<String>)?.filter { it.isNotBlank() }
-                    ?: listOf("https://pipedapi.kavin.rocks")
+                    ?: listOf("https://pipedapi.ducks.party")
                 streamMode = doc["streamProxyMode"] as? String ?: "direct"
                 minVer = doc["minRequiredVersion"] as? String ?: "1.0.0"
                 bitrate = doc["recommendedBitrate"] as? String ?: "320kbps"

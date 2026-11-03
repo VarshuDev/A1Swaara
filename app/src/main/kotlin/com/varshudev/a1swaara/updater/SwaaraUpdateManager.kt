@@ -110,8 +110,8 @@ object SwaaraUpdateManager {
     const val REPO_URL = "https://github.com/VarshuDev/A1Swaara_apk"
     const val RELEASES_URL = "https://github.com/VarshuDev/A1Swaara_apk/releases/latest"
     const val VERSION_JSON_URL = "https://raw.githubusercontent.com/VarshuDev/A1Swaara_apk/main/version.json"
-    const val SUPABASE_VERSION_URL = "https://vdfwhjsjkvmcoalgjtke.supabase.co/storage/v1/object/public/releases/version.json"
-    const val DEFAULT_DOWNLOAD_URL = "https://raaga-music-8e1f2.web.app/A1_Swaara_latest.apk"
+    const val SUPABASE_VERSION_URL = "https://raw.githubusercontent.com/VarshuDev/A1Swaara_apk/main/version.json"
+    const val DEFAULT_DOWNLOAD_URL = "https://github.com/VarshuDev/A1Swaara_apk/raw/main/A1_Swaara_v1.0.apk"
 
     private const val TAG = "SwaaraUpdateManager"
 

@@ -178,7 +178,7 @@ object PlaylistImporter {
         val html = withContext(Dispatchers.IO) {
             httpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) error("Failed to fetch Spotify playlist (HTTP ${response.code})")
-                response.body?.string() ?: error("Empty response from Spotify")
+                response.body.string().ifBlank { error("Empty response from Spotify") }
             }
         }
 

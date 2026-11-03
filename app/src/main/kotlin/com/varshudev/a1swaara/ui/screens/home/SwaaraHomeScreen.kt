@@ -293,11 +293,14 @@ fun SwaaraHomeScreen(
                                 .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
                                 .clickable {
                                     showNotificationDialog = false
-                                    readBroadcastId = currentBroadcast!!.id
+                                    readBroadcastId = currentBroadcast.id
                                     userPrefs.edit().putString("swaara_read_broadcast_id", currentBroadcast.id).apply()
-                                    try {
-                                        uriHandler.openUri(currentBroadcast.actionUrl!!)
-                                    } catch (_: Exception) {}
+                                    val targetUrl = currentBroadcast.actionUrl
+                                    if (!targetUrl.isNullOrBlank()) {
+                                        try {
+                                            uriHandler.openUri(targetUrl)
+                                        } catch (_: Exception) {}
+                                    }
                                 },
                             contentAlignment = Alignment.Center
                         ) {
