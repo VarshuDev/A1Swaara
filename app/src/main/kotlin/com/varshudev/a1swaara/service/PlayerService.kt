@@ -479,6 +479,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         updateRepeatMode()
         maybeRestorePlayerQueue()
+        com.varshudev.a1swaara.audio.SwaaraAudioEngine.bindAudioSession(this@PlayerService, player.audioSessionId)
 
         mediaSession = MediaLibraryService.MediaLibrarySession.Builder(this, player, AutoSessionCallback())
             .setSessionActivity(activityPendingIntent<MainActivity>())
@@ -584,6 +585,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             safeUnregisterReceiver(notificationActionReceiver)
 
+            com.varshudev.a1swaara.audio.SwaaraAudioEngine.releaseHardwareEffects()
             mediaSession.release()
             loudnessEnhancer?.release()
             preferenceUpdaterJob?.cancel()
@@ -670,6 +672,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
 
         com.varshudev.a1swaara.player.SwaaraCrossfadeEngine.onTrackTransition(coroutineScope, player)
+        com.varshudev.a1swaara.downloader.SwaaraPrecacheEngine.onTrackTransition(this@PlayerService, player)
 
         if (
             AppearancePreferences.hideExplicit &&
@@ -1086,6 +1089,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             sendCloseEqualizerIntent()
             ServiceNotifications.default.cancel(this)
             return
+        }
+
+        if (player.audioSessionId > 0) {
+            com.varshudev.a1swaara.audio.SwaaraAudioEngine.bindAudioSession(this@PlayerService, player.audioSessionId)
         }
 
         if (player.shouldBePlaying && !isNotificationStarted) {

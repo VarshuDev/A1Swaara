@@ -1,8 +1,5 @@
 package com.varshudev.a1swaara.ui.components
 
-import android.media.audiofx.BassBoost
-import android.media.audiofx.Equalizer
-import android.media.audiofx.Virtualizer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -32,25 +28,21 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.varshudev.a1swaara.R
-
-data class EqPreset(val name: String, val levels: List<Float>)
+import com.varshudev.a1swaara.audio.SwaaraAudioEngine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,42 +50,23 @@ fun SwaaraEqualizerSheet(
     audioSessionId: Int,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var isEqEnabled by remember { mutableStateOf(true) }
-    var bassBoostLevel by remember { mutableFloatStateOf(650f) }
-    var virtualizerLevel by remember { mutableFloatStateOf(400f) }
-
-    val bandFrequencies = remember { listOf("60 Hz", "230 Hz", "910 Hz", "3.6 kHz", "14 kHz") }
-    var bandLevels by remember { mutableStateOf(listOf(0f, 0f, 0f, 0f, 0f)) }
-    var selectedPresetIndex by remember { mutableIntStateOf(0) }
-
-    val presets = remember {
-        listOf(
-            EqPreset("Flat", listOf(0f, 0f, 0f, 0f, 0f)),
-            EqPreset("Bass Heavy", listOf(6f, 4f, 1f, -1f, -2f)),
-            EqPreset("Electronic", listOf(4f, 2f, -1f, 3f, 5f)),
-            EqPreset("Rock", listOf(5f, 3f, -1f, 2f, 4f)),
-            EqPreset("Pop", listOf(-1f, 2f, 5f, 3f, -1f)),
-            EqPreset("Acoustic", listOf(3f, 2f, 2f, 3f, 2f)),
-            EqPreset("Vocal Boost", listOf(-2f, -1f, 4f, 4f, 1f))
-        )
-    }
-
-    // Audio effects controller
-    DisposableEffect(audioSessionId) {
-        if (audioSessionId <= 0) return@DisposableEffect onDispose {}
-
-        val equalizer = runCatching { Equalizer(0, audioSessionId).apply { enabled = isEqEnabled } }.getOrNull()
-        val bassBoost = runCatching { BassBoost(0, audioSessionId).apply { enabled = isEqEnabled; setStrength(bassBoostLevel.toInt().toShort()) } }.getOrNull()
-        val virtualizer = runCatching { Virtualizer(0, audioSessionId).apply { enabled = isEqEnabled; setStrength(virtualizerLevel.toInt().toShort()) } }.getOrNull()
-
-        onDispose {
-            runCatching { equalizer?.release() }
-            runCatching { bassBoost?.release() }
-            runCatching { virtualizer?.release() }
+    LaunchedEffect(audioSessionId) {
+        if (audioSessionId > 0) {
+            SwaaraAudioEngine.bindAudioSession(context, audioSessionId)
         }
     }
+
+    val isEqEnabled by SwaaraAudioEngine.isEqEnabled.collectAsState()
+    val selectedPresetIndex by SwaaraAudioEngine.presetIndex.collectAsState()
+    val bandLevels by SwaaraAudioEngine.bandLevels.collectAsState()
+    val bassBoostLevel by SwaaraAudioEngine.bassBoostLevel.collectAsState()
+    val virtualizerLevel by SwaaraAudioEngine.virtualizerLevel.collectAsState()
+
+    val presets = SwaaraAudioEngine.DEFAULT_PRESETS
+    val bandFrequencies = SwaaraAudioEngine.BAND_FREQUENCIES
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -162,7 +135,7 @@ fun SwaaraEqualizerSheet(
 
                 Switch(
                     checked = isEqEnabled,
-                    onCheckedChange = { isEqEnabled = it },
+                    onCheckedChange = { SwaaraAudioEngine.setEqEnabled(it) },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = SwaaraMagenta,
@@ -206,8 +179,7 @@ fun SwaaraEqualizerSheet(
                                 RoundedCornerShape(16.dp)
                             )
                             .clickable {
-                                selectedPresetIndex = idx
-                                bandLevels = preset.levels
+                                SwaaraAudioEngine.setPreset(idx)
                             }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
@@ -274,9 +246,7 @@ fun SwaaraEqualizerSheet(
                             Slider(
                                 value = currentDb,
                                 onValueChange = { newVal ->
-                                    val updated = bandLevels.toMutableList()
-                                    updated[bandIdx] = newVal
-                                    bandLevels = updated
+                                    SwaaraAudioEngine.setBandLevel(bandIdx, newVal)
                                 },
                                 valueRange = -10f..10f,
                                 enabled = isEqEnabled,
@@ -333,7 +303,7 @@ fun SwaaraEqualizerSheet(
                         )
                         Slider(
                             value = bassBoostLevel,
-                            onValueChange = { bassBoostLevel = it },
+                            onValueChange = { SwaaraAudioEngine.setBassBoost(it) },
                             valueRange = 0f..1000f,
                             enabled = isEqEnabled,
                             colors = SliderDefaults.colors(
@@ -371,7 +341,7 @@ fun SwaaraEqualizerSheet(
                         )
                         Slider(
                             value = virtualizerLevel,
-                            onValueChange = { virtualizerLevel = it },
+                            onValueChange = { SwaaraAudioEngine.setVirtualizer(it) },
                             valueRange = 0f..1000f,
                             enabled = isEqEnabled,
                             colors = SliderDefaults.colors(

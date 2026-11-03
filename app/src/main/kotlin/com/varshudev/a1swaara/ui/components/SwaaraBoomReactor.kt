@@ -57,32 +57,12 @@ fun SwaaraBoomAudioEngine(
     audioSessionId: Int,
     isBoomActive: Boolean
 ) {
-    DisposableEffect(audioSessionId, isBoomActive) {
-        if (audioSessionId <= 0) return@DisposableEffect onDispose {}
-
-        var bassBoost: BassBoost? = null
-        var virtualizer: Virtualizer? = null
-
-        if (isBoomActive) {
-            bassBoost = runCatching {
-                BassBoost(0, audioSessionId).apply {
-                    enabled = true
-                    setStrength(1000.toShort())
-                }
-            }.getOrNull()
-
-            virtualizer = runCatching {
-                Virtualizer(0, audioSessionId).apply {
-                    enabled = true
-                    setStrength(950.toShort())
-                }
-            }.getOrNull()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(audioSessionId, isBoomActive) {
+        if (audioSessionId > 0) {
+            com.varshudev.a1swaara.audio.SwaaraAudioEngine.bindAudioSession(context, audioSessionId)
         }
-
-        onDispose {
-            runCatching { bassBoost?.release() }
-            runCatching { virtualizer?.release() }
-        }
+        com.varshudev.a1swaara.audio.SwaaraAudioEngine.setBoomActive(isBoomActive)
     }
 }
 

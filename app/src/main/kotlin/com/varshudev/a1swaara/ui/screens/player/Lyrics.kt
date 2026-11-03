@@ -64,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
@@ -613,20 +614,25 @@ fun Lyrics(
                     ) { index, sentence ->
                         val isCurrent = index == synchronizedLyrics.index
                         val color by animateColorAsState(
-                            targetValue = if (isCurrent) Color.White else colorPalette.textDisabled.copy(alpha = 0.45f),
+                            targetValue = if (isCurrent) Color.White else colorPalette.textDisabled.copy(alpha = 0.38f),
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
                             ),
                             label = "lyrics_color_$index"
                         )
                         val scale by animateFloatAsState(
-                            targetValue = if (isCurrent) 1.05f else 0.96f,
+                            targetValue = if (isCurrent) 1.05f else 0.94f,
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
                             ),
                             label = "lyrics_scale_$index"
+                        )
+                        val alpha by animateFloatAsState(
+                            targetValue = if (isCurrent) 1.0f else 0.40f,
+                            animationSpec = androidx.compose.animation.core.tween(durationMillis = 350),
+                            label = "lyrics_alpha_$index"
                         )
 
                         val timestamp = synchronizedLyrics.timestamps.getOrNull(index)
@@ -638,15 +644,25 @@ fun Lyrics(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .scale(scale)
-                                .clip(RoundedCornerShape(18.dp))
+                                .alpha(alpha)
+                                .clip(RoundedCornerShape(20.dp))
                                 .background(
-                                    if (isCurrent) SwaaraMagenta.copy(alpha = 0.22f)
-                                    else Color.Transparent
+                                    if (isCurrent) {
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                SwaaraMagenta.copy(alpha = 0.28f),
+                                                SwaaraCyan.copy(alpha = 0.16f),
+                                                SwaaraMagenta.copy(alpha = 0.24f)
+                                            )
+                                        )
+                                    } else {
+                                        Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent))
+                                    }
                                 )
                                 .border(
                                     width = if (isCurrent) 1.5.dp else 0.dp,
-                                    color = if (isCurrent) SwaaraMagenta.copy(alpha = 0.55f) else Color.Transparent,
-                                    shape = RoundedCornerShape(18.dp)
+                                    brush = if (isCurrent) Brush.horizontalGradient(listOf(SwaaraMagenta.copy(alpha = 0.70f), SwaaraCyan.copy(alpha = 0.70f))) else Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent)),
+                                    shape = RoundedCornerShape(20.dp)
                                 )
                                 .clickable(
                                     enabled = timestamp != null && binder?.player != null,
@@ -659,7 +675,7 @@ fun Lyrics(
                                         context.toast("Seek to $timeFormatted")
                                     }
                                 }
-                                .padding(vertical = 10.dp, horizontal = 20.dp),
+                                .padding(vertical = 12.dp, horizontal = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             if (sentence.isBlank()) {
@@ -679,25 +695,29 @@ fun Lyrics(
                                         text = sentence,
                                         style = typography.xs.center.medium.copy(
                                             color = color,
-                                            fontSize = if (isCurrent) 19.sp else 15.sp,
-                                            fontWeight = if (isCurrent) FontWeight.Black else FontWeight.Normal,
+                                            fontSize = if (isCurrent) 21.sp else 16.sp,
+                                            fontWeight = if (isCurrent) FontWeight.Black else FontWeight.SemiBold,
+                                            lineHeight = if (isCurrent) 28.sp else 22.sp,
+                                            letterSpacing = if (isCurrent) (-0.3).sp else 0.sp,
                                             textAlign = TextAlign.Center
                                         ),
                                         modifier = Modifier.weight(1f, fill = false)
                                     )
                                     if (isCurrent && timestamp != null) {
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Spacer(modifier = Modifier.width(10.dp))
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(SwaaraCyan.copy(alpha = 0.20f))
-                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                .background(Brush.horizontalGradient(listOf(SwaaraCyan.copy(alpha = 0.25f), SwaaraMagenta.copy(alpha = 0.25f))))
+                                                .border(1.dp, SwaaraCyan.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                                .padding(horizontal = 7.dp, vertical = 3.dp)
                                         ) {
                                             BasicText(
                                                 text = timeFormatted,
                                                 style = typography.xxs.medium.copy(
                                                     color = SwaaraCyan,
-                                                    fontSize = 11.sp
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold
                                                 )
                                             )
                                         }

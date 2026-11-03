@@ -484,15 +484,17 @@ fun SwaaraDownloadsScreen(
                                 // Offline Badge
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(SwaaraCyan.copy(alpha = 0.14f))
-                                        .padding(horizontal = 5.dp, vertical = 1.5.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Brush.horizontalGradient(listOf(SwaaraCyan.copy(alpha = 0.22f), SwaaraMagenta.copy(alpha = 0.22f))))
+                                        .border(0.8.dp, SwaaraCyan.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = "HQ",
+                                        text = "LOSSLESS 320K",
                                         color = SwaaraCyan,
                                         fontSize = 9.sp,
-                                        fontWeight = FontWeight.ExtraBold
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.4.sp
                                     )
                                 }
 
