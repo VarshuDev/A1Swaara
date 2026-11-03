@@ -169,7 +169,14 @@ fun SwaaraHomeScreen(
     var isLoadingFeed by remember {
         mutableStateOf(!SwaaraHomeFeedCache.hasDataFor(initialPrefs.second))
     }
+    val userPrefs = remember { context.getSharedPreferences("swaara_prefs", Context.MODE_PRIVATE) }
     var showJamDialog by remember { mutableStateOf(false) }
+    var showNotificationDialog by remember { mutableStateOf(false) }
+    val activeBroadcast by com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.activeNotification.collectAsState()
+    var readBroadcastId by remember {
+        mutableStateOf(userPrefs.getString("swaara_read_broadcast_id", "") ?: "")
+    }
+    val hasUnreadBroadcast = activeBroadcast != null && activeBroadcast?.id != readBroadcastId
 
     val currentJamRoom by SwaaraListenTogether.currentRoom.collectAsState()
     val remoteConfigState by SwaaraRemoteConfig.configState.collectAsState()
@@ -192,7 +199,6 @@ fun SwaaraHomeScreen(
 
     val cloudAuth = remember { SwaaraCloudAuth.getInstance(context) }
     val isSignedInFlowVal by cloudAuth.isSignedInFlow.collectAsState()
-    val userPrefs = remember { context.getSharedPreferences("swaara_prefs", Context.MODE_PRIVATE) }
     var showSignInModal by remember {
         mutableStateOf(!cloudAuth.isSignedIn && !userPrefs.getBoolean("google_signin_prompt_dismissed", false))
     }
@@ -209,6 +215,128 @@ fun SwaaraHomeScreen(
 
     if (showJamDialog) {
         SwaaraJamRoomDialog(onDismiss = { showJamDialog = false })
+    }
+
+    if (showNotificationDialog) {
+        val currentBroadcast = activeBroadcast
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = {
+                showNotificationDialog = false
+                currentBroadcast?.let { b ->
+                    readBroadcastId = b.id
+                    userPrefs.edit().putString("swaara_read_broadcast_id", b.id).apply()
+                }
+            }
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(SwaaraElevatedSurface)
+                    .border(1.dp, SwaaraMagenta.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+                    .padding(24.dp)
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(Brush.linearGradient(listOf(SwaaraViolet, SwaaraMagenta))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_notification_bell),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = "ANNOUNCEMENT",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SwaaraMagenta,
+                        letterSpacing = 1.2.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = currentBroadcast?.title ?: "No new announcements",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SwaaraPrimaryText,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = currentBroadcast?.message
+                            ?: "You are up to date! Live broadcast messages and festive announcements will appear here.",
+                        fontSize = 13.sp,
+                        color = SwaaraSecondaryText,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+
+                    if (!currentBroadcast?.actionUrl.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
+                                .clickable {
+                                    showNotificationDialog = false
+                                    readBroadcastId = currentBroadcast!!.id
+                                    userPrefs.edit().putString("swaara_read_broadcast_id", currentBroadcast.id).apply()
+                                    try {
+                                        uriHandler.openUri(currentBroadcast.actionUrl!!)
+                                    } catch (_: Exception) {}
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "View Details",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.06f))
+                            .clickable {
+                                showNotificationDialog = false
+                                currentBroadcast?.let { b ->
+                                    readBroadcastId = b.id
+                                    userPrefs.edit().putString("swaara_read_broadcast_id", b.id).apply()
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Dismiss",
+                            color = SwaaraSecondaryText,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
     }
 
     if (showSignInModal) {
@@ -673,6 +801,38 @@ fun SwaaraHomeScreen(
                             contentDescription = "Refresh Feed",
                             tint = SwaaraPrimaryText,
                             modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                // Broadcast & Notification Beacon
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(SwaaraElevatedSurface)
+                        .border(
+                            1.dp,
+                            if (hasUnreadBroadcast) SwaaraMagenta.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.08f),
+                            CircleShape
+                        )
+                        .clickable { showNotificationDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_notification_bell),
+                        contentDescription = "Announcements",
+                        tint = if (hasUnreadBroadcast) SwaaraMagenta else SwaaraPrimaryText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    if (hasUnreadBroadcast) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(SwaaraMagenta)
                         )
                     }
                 }
