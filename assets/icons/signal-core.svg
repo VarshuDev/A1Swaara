@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#20cfff"/>
+      <stop offset="100%" stop-color="#ff2daa"/>
+    </linearGradient>
+    <style>
+      @keyframes pulse-bolt {
+        0%, 100% { filter: drop-shadow(0 0 3px rgba(32, 207, 255, 0.6)); opacity: 0.9; }
+        50% { filter: drop-shadow(0 0 8px rgba(255, 45, 170, 1)); opacity: 1; transform: scale(1.05); }
+      }
+      .bolt {
+        animation: pulse-bolt 1.5s ease-in-out infinite;
+        transform-origin: 12px 12px;
+      }
+    </style>
+  </defs>
+  <path class="bolt" d="M 13 2 L 4 13 L 11 13 L 9 22 L 20 10 L 13 10 Z" fill="url(#boltGrad)"/>
+</svg>

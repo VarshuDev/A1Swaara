@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <style>
+      @keyframes story-glow {
+        0%, 100% { stroke: #ff2daa; }
+        50% { stroke: #7f52ff; }
+      }
+      @keyframes wave-pop {
+        0%, 100% { transform: scaleY(0.6); }
+        50% { transform: scaleY(1.2); }
+      }
+      .story-frame {
+        animation: story-glow 2s ease-in-out infinite;
+      }
+      .wave-line {
+        animation: wave-pop 1.2s ease-in-out infinite;
+        transform-origin: 12px 14px;
+      }
+    </style>
+  </defs>
+  <rect class="story-frame" x="6" y="2" width="12" height="20" rx="2.5" fill="#0d101a" stroke="#ff2daa" stroke-width="1.6"/>
+  <!-- Story circle avatar -->
+  <circle cx="12" cy="7" r="2.5" fill="#20cfff"/>
+  <!-- Story waveform -->
+  <path class="wave-line" d="M 8 14 L 10 12 L 12 15 L 14 13 L 16 14" fill="none" stroke="#20cfff" stroke-width="1.4" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <style>
+      @keyframes crown-glow {
+        0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 42, 95, 0.5)); stroke: #ff2daa; }
+        50% { filter: drop-shadow(0 0 8px rgba(32, 207, 255, 0.9)); stroke: #20cfff; }
+      }
+      .crown {
+        animation: crown-glow 2s ease-in-out infinite;
+      }
+    </style>
+  </defs>
+  <path class="crown" d="M 4 18 L 2 7 L 8 11 L 12 4 L 16 11 L 22 7 L 20 18 Z" fill="#0d101a" stroke="#ff2daa" stroke-width="1.6" stroke-linejoin="round"/>
+  <circle cx="12" cy="14" r="2" fill="#ffffff"/>
+</svg>

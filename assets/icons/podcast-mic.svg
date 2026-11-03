@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <style>
+      @keyframes broadcast-pulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+      .arc-pulse {
+        animation: broadcast-pulse 1.6s ease-in-out infinite;
+      }
+    </style>
+  </defs>
+  <!-- Center mic node -->
+  <circle cx="12" cy="12" r="3" fill="#ff2daa"/>
+  <!-- Broadcast rings -->
+  <path class="arc-pulse" d="M 7 7 A 7 7 0 0 1 17 7 M 7 17 A 7 7 0 0 0 17 17" fill="none" stroke="#20cfff" stroke-width="1.8" stroke-linecap="round"/>
+  <path class="arc-pulse" d="M 4 4 A 11 11 0 0 1 20 4 M 4 20 A 11 11 0 0 0 20 20" fill="none" stroke="#7f52ff" stroke-width="1.4" stroke-linecap="round" opacity="0.7" style="animation-delay: 0.4s;"/>
+</svg>

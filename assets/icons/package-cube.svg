@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <style>
+      @keyframes float-cube {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2px); }
+      }
+      .cube {
+        animation: float-cube 2.2s ease-in-out infinite;
+      }
+    </style>
+  </defs>
+  <g class="cube">
+    <!-- Isometric Cube Facets -->
+    <polygon points="12,2 21,7 12,12 3,7" fill="#131626" stroke="#20cfff" stroke-width="1.5"/>
+    <polygon points="3,7 12,12 12,22 3,17" fill="#0d101d" stroke="#ff2daa" stroke-width="1.5"/>
+    <polygon points="12,12 21,7 21,17 12,22" fill="#181b30" stroke="#7f52ff" stroke-width="1.5"/>
+    <circle cx="12" cy="12" r="1.5" fill="#ffffff"/>
+  </g>
+</svg>

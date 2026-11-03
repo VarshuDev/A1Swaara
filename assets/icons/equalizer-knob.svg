@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <style>
+      @keyframes slide-1 { 0%, 100% { cy: 8px; } 50% { cy: 16px; } }
+      @keyframes slide-2 { 0%, 100% { cy: 16px; } 50% { cy: 6px; } }
+      @keyframes slide-3 { 0%, 100% { cy: 11px; } 50% { cy: 17px; } }
+      .t1 { animation: slide-1 1.6s ease-in-out infinite; }
+      .t2 { animation: slide-2 1.9s ease-in-out infinite; }
+      .t3 { animation: slide-3 1.4s ease-in-out infinite; }
+    </style>
+  </defs>
+  <!-- Vertical slider rails -->
+  <line x1="6" y1="3" x2="6" y2="21" stroke="#252b42" stroke-width="2" stroke-linecap="round"/>
+  <line x1="12" y1="3" x2="12" y2="21" stroke="#252b42" stroke-width="2" stroke-linecap="round"/>
+  <line x1="18" y1="3" x2="18" y2="21" stroke="#252b42" stroke-width="2" stroke-linecap="round"/>
+  <!-- Glowing slider thumbs -->
+  <circle class="t1" cx="6" cy="8" r="3.5" fill="#20cfff"/>
+  <circle class="t2" cx="12" cy="16" r="3.5" fill="#ff2daa"/>
+  <circle class="t3" cx="18" cy="11" r="3.5" fill="#7f52ff"/>
+</svg>

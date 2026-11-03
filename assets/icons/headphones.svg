@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <style>
+      @keyframes pulse-phones {
+        0%, 100% { stroke: #20cfff; filter: drop-shadow(0 0 2px rgba(32, 207, 255, 0.4)); }
+        50% { stroke: #ff2daa; filter: drop-shadow(0 0 7px rgba(255, 45, 170, 0.8)); }
+      }
+      .headband {
+        animation: pulse-phones 2.2s ease-in-out infinite;
+      }
+    </style>
+  </defs>
+  <path class="headband" d="M 3 14 A 9 9 0 0 1 21 14" fill="none" stroke="#20cfff" stroke-width="2" stroke-linecap="round"/>
+  <!-- Left Ear Cup -->
+  <rect x="2" y="13" width="4" height="7" rx="2" fill="#ff2daa"/>
+  <!-- Right Ear Cup -->
+  <rect x="18" y="13" width="4" height="7" rx="2" fill="#ff2daa"/>
+</svg>

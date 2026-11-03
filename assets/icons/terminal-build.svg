@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <style>
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      .cursor {
+        animation: blink 1s step-end infinite;
+      }
+    </style>
+  </defs>
+  <rect x="2" y="3" width="20" height="18" rx="3" fill="#0d101a" stroke="#252b42" stroke-width="1.5"/>
+  <circle cx="5" cy="6" r="1" fill="#ff2daa"/>
+  <circle cx="8" cy="6" r="1" fill="#f59e0b"/>
+  <circle cx="11" cy="6" r="1" fill="#10b981"/>
+  <!-- Terminal Prompt -->
+  <path d="M 5 12 L 8 14 L 5 16" fill="none" stroke="#20cfff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <line class="cursor" x1="11" y1="16" x2="15" y2="16" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
