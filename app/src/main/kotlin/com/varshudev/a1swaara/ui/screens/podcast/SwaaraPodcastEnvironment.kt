@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -64,11 +63,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import coil3.compose.AsyncImage
-import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.LocalPlayerServiceBinder
 import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.podcast.SwaaraPodcastEpisode
+import com.varshudev.a1swaara.podcast.SwaaraPodcastFeedClient
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
 import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
 import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
@@ -77,76 +76,51 @@ import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
 import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
 import com.varshudev.a1swaara.ui.components.SwaaraViolet
 import com.varshudev.a1swaara.ui.screens.LocalOpenNowPlaying
-import com.varshudev.a1swaara.ui.screens.playlistRoute
-import com.varshudev.a1swaara.ui.screens.searchRoute
 import com.varshudev.a1swaara.utils.playTrackWithService
-import com.varshudev.a1swaara.utils.thumbnail
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.sin
-
-data class PodcastGenre(
-    val id: String,
-    val title: String,
-    val showQuery: String,
-    val episodeQuery: String
-)
-
-val defaultPodcastGenres = listOf(
-    PodcastGenre("raj_shamani", "Raj Shamani", "Figuring Out with Raj Shamani", "Figuring Out with Raj Shamani podcast episode"),
-    PodcastGenre("all", "All Shows", "Figuring Out with Raj Shamani podcast playlist", "trending Indian podcast episodes Figuring Out"),
-    PodcastGenre("business", "Business & Money", "Raj Shamani business podcast Nikhil Kamath", "Figuring Out Raj Shamani finance startup episode"),
-    PodcastGenre("mindset", "Mindset & Growth", "Raj Shamani Ranveer motivation life podcast", "Figuring Out mindset discipline episode"),
-    PodcastGenre("tech", "Tech & AI", "technology artificial intelligence podcast India", "AI technology podcast episode"),
-    PodcastGenre("crime", "True Crime", "true crime investigation podcast Desi Crime", "true crime case podcast episode"),
-    PodcastGenre("comedy", "Comedy & Talk", "comedy interview conversation podcast", "comedy talk show podcast episode"),
-    PodcastGenre("horror", "Horror & Stories", "horror ghost stories supernatural podcast", "horror real stories podcast episode")
-)
 
 @Composable
 fun SwaaraPodcastEnvironment(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val container = LocalAppContainer.current
     val binder = LocalPlayerServiceBinder.current
     val openNowPlaying = LocalOpenNowPlaying.current
-    val coroutineScope = rememberCoroutineScope()
 
+    val genres = remember { SwaaraPodcastFeedClient.GENRES }
     var selectedGenreIndex by remember { mutableIntStateOf(0) }
-    val currentGenre = defaultPodcastGenres[selectedGenreIndex]
+    val currentGenre = genres[selectedGenreIndex]
 
-    var podcastShows by remember { mutableStateOf<List<YoutubeMusicInnertube.PlaylistItem>>(emptyList()) }
-    var podcastEpisodes by remember { mutableStateOf<List<YoutubeMusicInnertube.SongItem>>(emptyList()) }
+    var podcastEpisodes by remember { mutableStateOf<List<SwaaraPodcastEpisode>>(emptyList()) }
     var isLoadingFeed by remember { mutableStateOf(true) }
 
     LaunchedEffect(currentGenre) {
         isLoadingFeed = true
-        withContext(Dispatchers.IO) {
-            val shows = runCatching {
-                container.searchResultRepository.searchPlaylists(currentGenre.showQuery, null)?.getOrNull()?.items
-            }.getOrNull() ?: emptyList()
-
-            val episodes = runCatching {
-                container.searchResultRepository.searchSongs(currentGenre.episodeQuery, null)?.getOrNull()?.items
-            }.getOrNull() ?: emptyList()
-
-            withContext(Dispatchers.Main) {
-                podcastShows = shows
-                podcastEpisodes = episodes
-                isLoadingFeed = false
-            }
-        }
+        val episodes = SwaaraPodcastFeedClient.fetchPodcasts(currentGenre.query)
+        podcastEpisodes = episodes
+        isLoadingFeed = false
     }
 
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
-        // 1. Pure Animated Soundwave Hero Showcase (Zero Stock/AI Images)
+        // 1. Pure Animated Soundwave Hero Showcase
         SwaaraAnimatedSoundwaveHero(
             onExplore = {
-                searchRoute.global(currentGenre.episodeQuery)
+                val firstEp = podcastEpisodes.firstOrNull()
+                if (firstEp != null) {
+                    playTrackWithService(
+                        context = context,
+                        binder = binder,
+                        videoId = firstEp.id,
+                        title = firstEp.title,
+                        artist = firstEp.author,
+                        thumbnailUrl = firstEp.thumbnailUrl,
+                        durationText = firstEp.durationText,
+                        isPodcast = true,
+                        onStarted = { openNowPlaying() }
+                    )
+                }
             }
         )
         Spacer(modifier = Modifier.height(14.dp))
@@ -154,28 +128,34 @@ fun SwaaraPodcastEnvironment(
         // 2. Featured Creator Spotlight: Figuring Out with Raj Shamani
         SwaaraRajShamaniSpotlightBanner(
             onPlayLatest = {
-                podcastEpisodes.firstOrNull()?.let { ep ->
-                    coroutineScope.launch {
-                        container.onlineSearchRepository.saveHistory(ep.info?.name ?: "Figuring Out with Raj Shamani")
-                    }
+                val latestEp = podcastEpisodes.firstOrNull { it.author.contains("Raj Shamani", ignoreCase = true) }
+                    ?: podcastEpisodes.firstOrNull()
+
+                if (latestEp != null) {
                     playTrackWithService(
                         context = context,
                         binder = binder,
-                        videoId = ep.key,
-                        title = ep.info?.name ?: "Figuring Out with Raj Shamani",
-                        artist = ep.authors?.joinToString { it.name.orEmpty() } ?: "Raj Shamani",
-                        thumbnailUrl = ep.thumbnail?.url?.thumbnail(800),
+                        videoId = latestEp.id,
+                        title = latestEp.title,
+                        artist = latestEp.author,
+                        thumbnailUrl = latestEp.thumbnailUrl,
+                        durationText = latestEp.durationText,
+                        isPodcast = true,
                         onStarted = { openNowPlaying() }
                     )
-                } ?: searchRoute.global("Figuring Out with Raj Shamani")
+                }
             },
             onViewShow = {
-                searchRoute.global("Figuring Out with Raj Shamani")
+                // Switch category to Raj Shamani inside the podcast feed
+                val rajIndex = genres.indexOfFirst { it.id == "raj_shamani" }
+                if (rajIndex >= 0) {
+                    selectedGenreIndex = rajIndex
+                }
             }
         )
         Spacer(modifier = Modifier.height(18.dp))
 
-        // 3. Animated Category Filter Rail
+        // 3. Category Filter Rail
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -183,7 +163,7 @@ fun SwaaraPodcastEnvironment(
                 .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            defaultPodcastGenres.forEachIndexed { index, genre ->
+            genres.forEachIndexed { index, genre ->
                 val isSelected = selectedGenreIndex == index
                 val chipBg by animateColorAsState(
                     targetValue = if (isSelected) SwaaraElevatedSurface else SwaaraDeepSurface,
@@ -238,7 +218,7 @@ fun SwaaraPodcastEnvironment(
         }
         Spacer(modifier = Modifier.height(20.dp))
 
-        if (isLoadingFeed) {
+        if (isLoadingFeed && podcastEpisodes.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -253,15 +233,15 @@ fun SwaaraPodcastEnvironment(
                     )
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "Calibrating ${currentGenre.title} frequencies...",
+                        text = "Calibrating ${currentGenre.title} feeds...",
                         color = SwaaraSecondaryText,
                         fontSize = 13.sp
                     )
                 }
             }
         } else {
-            // 3. Featured Series & Shows Carousel
-            if (podcastShows.isNotEmpty()) {
+            // 4. Featured Episodes Showcase (Horizontal Scroll)
+            if (podcastEpisodes.size > 3) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
@@ -272,13 +252,13 @@ fun SwaaraPodcastEnvironment(
                     ) {
                         Column {
                             Text(
-                                text = "Popular Series & Shows",
+                                text = "Featured Masterclasses",
                                 color = SwaaraPrimaryText,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Full channel catalogues & serialized content",
+                                text = "Full-length episodes curated for ${currentGenre.title}",
                                 color = SwaaraSecondaryText,
                                 fontSize = 11.5.sp
                             )
@@ -291,20 +271,30 @@ fun SwaaraPodcastEnvironment(
                         contentPadding = PaddingValues(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        items(podcastShows.take(14)) { show ->
-                            SwaaraPodcastShowCard(
-                                show = show,
+                        items(podcastEpisodes.take(6)) { episode ->
+                            SwaaraFeaturedPodcastCard(
+                                episode = episode,
                                 onClick = {
-                                    playlistRoute.global(show.key, null, null, false)
+                                    playTrackWithService(
+                                        context = context,
+                                        binder = binder,
+                                        videoId = episode.id,
+                                        title = episode.title,
+                                        artist = episode.author,
+                                        thumbnailUrl = episode.thumbnailUrl,
+                                        durationText = episode.durationText,
+                                        isPodcast = true,
+                                        onStarted = { openNowPlaying() }
+                                    )
                                 }
                             )
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // 4. Latest Trending Episodes (Instant Stream)
+            // 5. Authentic Podcast Episodes Feed
             if (podcastEpisodes.isNotEmpty()) {
                 Column(
                     modifier = Modifier
@@ -318,13 +308,13 @@ fun SwaaraPodcastEnvironment(
                     ) {
                         Column {
                             Text(
-                                text = "Trending Episodes",
+                                text = "Episodes & Talk Shows",
                                 color = SwaaraPrimaryText,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Tap to stream individual episodes directly",
+                                text = "High-fidelity audio stream with optional video view",
                                 color = SwaaraSecondaryText,
                                 fontSize = 11.5.sp
                             )
@@ -332,14 +322,16 @@ fun SwaaraPodcastEnvironment(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(SwaaraViolet.copy(alpha = 0.25f))
+                                .background(SwaaraCyan.copy(alpha = 0.20f))
+                                .border(1.dp, SwaaraCyan.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = "320 KBPS",
-                                color = SwaaraViolet,
+                                text = "AUDIO ONLY",
+                                color = SwaaraCyan,
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.5.sp
                             )
                         }
                     }
@@ -347,26 +339,18 @@ fun SwaaraPodcastEnvironment(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 podcastEpisodes.forEach { episode ->
-                    val videoId = episode.key
-                    val title = episode.info?.name ?: "Podcast Episode"
-                    val author = episode.authors?.joinToString { it.name.orEmpty() }?.replace(Regex("[,&\\s]{2,}"), ", ")?.trim(',', ' ') ?: "Podcast Creator"
-                    val thumb = episode.thumbnail?.url?.thumbnail(800)
-
                     SwaaraPodcastEpisodeRow(
-                        title = title,
-                        author = author,
-                        thumbnailUrl = thumb,
+                        episode = episode,
                         onPlay = {
-                            coroutineScope.launch {
-                                container.onlineSearchRepository.saveHistory(title)
-                            }
                             playTrackWithService(
                                 context = context,
                                 binder = binder,
-                                videoId = videoId,
-                                title = title,
-                                artist = author,
-                                thumbnailUrl = thumb,
+                                videoId = episode.id,
+                                title = episode.title,
+                                artist = episode.author,
+                                thumbnailUrl = episode.thumbnailUrl,
+                                durationText = episode.durationText,
+                                isPodcast = true,
                                 onStarted = { openNowPlaying() }
                             )
                         }
@@ -427,7 +411,6 @@ fun SwaaraAnimatedSoundwaveHero(
                 onClick = onExplore
             )
     ) {
-        // Dynamic Sine Wave Visualizer Canvas in Background (Zero Static Stock Images)
         Canvas(
             modifier = Modifier
                 .matchParentSize()
@@ -436,7 +419,6 @@ fun SwaaraAnimatedSoundwaveHero(
             val width = size.width
             val height = size.height
 
-            // 1. Radiant glow in center
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(SwaaraCyan.copy(alpha = 0.15f * auraPulse), SwaaraViolet.copy(alpha = 0.08f), Color.Transparent),
@@ -445,11 +427,9 @@ fun SwaaraAnimatedSoundwaveHero(
                 )
             )
 
-            // 2. Multi-harmonic sine waves
             val path1 = Path()
             val path2 = Path()
             val step = 10f
-
             val midY1 = height * 0.70f
             val midY2 = height * 0.82f
 
@@ -477,7 +457,6 @@ fun SwaaraAnimatedSoundwaveHero(
             )
         }
 
-        // Foreground Content
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -507,7 +486,7 @@ fun SwaaraAnimatedSoundwaveHero(
                     SwaaraSpeechWaveBars(color = SwaaraCyan)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "LIVE FEEDS",
+                        text = "VERIFIED FEEDS",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = SwaaraCyan,
@@ -538,7 +517,7 @@ fun SwaaraAnimatedSoundwaveHero(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Pure talk shows, investigative journalism, technology, and neuroscience streams. Zero musical cross-mixing.",
+                text = "Full-length episodes, investigative journalism, technology, and neuroscience streams. Audio-only default with optional video mode.",
                 color = Color.White.copy(alpha = 0.75f),
                 fontSize = 11.5.sp,
                 lineHeight = 16.sp,
@@ -562,7 +541,7 @@ fun SwaaraAnimatedSoundwaveHero(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             painter = painterResource(id = R.drawable.play),
-                            contentDescription = "Explore",
+                            contentDescription = "Play",
                             tint = Color.Black,
                             modifier = Modifier.size(13.dp)
                         )
@@ -578,7 +557,7 @@ fun SwaaraAnimatedSoundwaveHero(
                 }
 
                 Text(
-                    text = "Tap to search shows",
+                    text = "Tap episode to listen",
                     color = SwaaraSecondaryText,
                     fontSize = 11.sp
                 )
@@ -588,8 +567,8 @@ fun SwaaraAnimatedSoundwaveHero(
 }
 
 @Composable
-fun SwaaraPodcastShowCard(
-    show: YoutubeMusicInnertube.PlaylistItem,
+fun SwaaraFeaturedPodcastCard(
+    episode: SwaaraPodcastEpisode,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -598,17 +577,12 @@ fun SwaaraPodcastShowCard(
     val cardScale by animateFloatAsState(
         targetValue = if (isPressed) 0.93f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "show_card_scale"
+        label = "featured_scale"
     )
-
-    val title = show.info?.name ?: "Podcast Show"
-    val channel = show.channel?.name ?: "Curated Series"
-    val count = show.songCount?.let { "$it episodes" } ?: "Podcast Series"
-    val thumb = show.thumbnail?.url?.thumbnail(800)
 
     Column(
         modifier = modifier
-            .width(155.dp)
+            .width(220.dp)
             .scale(cardScale)
             .clickable(
                 interactionSource = interactionSource,
@@ -618,67 +592,57 @@ fun SwaaraPodcastShowCard(
     ) {
         Box(
             modifier = Modifier
-                .size(155.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(SwaaraDeepSurface)
-                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+                .fillMaxWidth()
+                .height(124.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(SwaaraElevatedSurface)
+                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
         ) {
-            if (!thumb.isNullOrBlank()) {
-                AsyncImage(
-                    model = thumb,
-                    contentDescription = title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                // Programmatic Generative Fallback Art (No Stock AI Images)
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawRect(
-                        brush = Brush.linearGradient(listOf(Color(0xFF131A2E), Color(0xFF1F1235)))
-                    )
-                    drawCircle(
-                        color = SwaaraCyan.copy(alpha = 0.25f),
-                        radius = size.width * 0.35f,
-                        center = center
+            AsyncImage(
+                model = episode.thumbnailUrl,
+                contentDescription = episode.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize()
+            )
+
+            if (episode.durationText.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color.Black.copy(alpha = 0.85f))
+                        .border(0.8.dp, SwaaraCyan.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = episode.durationText,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(8.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color.Black.copy(alpha = 0.80f))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = "SERIES",
-                    color = SwaaraCyan,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                )
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = title,
-            color = Color.White,
-            fontSize = 13.5.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            text = episode.title,
+            color = SwaaraPrimaryText,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            lineHeight = 17.sp
         )
 
         Spacer(modifier = Modifier.height(2.dp))
 
         Text(
-            text = "$channel • $count",
+            text = episode.author,
             color = SwaaraSecondaryText,
-            fontSize = 11.sp,
+            fontSize = 11.5.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -687,9 +651,7 @@ fun SwaaraPodcastShowCard(
 
 @Composable
 fun SwaaraPodcastEpisodeRow(
-    title: String,
-    author: String,
-    thumbnailUrl: String?,
+    episode: SwaaraPodcastEpisode,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -719,43 +681,31 @@ fun SwaaraPodcastEpisodeRow(
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(72.dp, 52.dp)
+                .clip(RoundedCornerShape(12.dp))
                 .background(SwaaraDeepSurface)
         ) {
-            if (!thumbnailUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = thumbnailUrl,
-                    contentDescription = title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.matchParentSize()
-                )
-            } else {
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    drawRect(
-                        brush = Brush.linearGradient(listOf(Color(0xFF10192E), Color(0xFF18102B)))
-                    )
-                }
-            }
+            AsyncImage(
+                model = episode.thumbnailUrl,
+                contentDescription = episode.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize()
+            )
 
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(Color.Black.copy(alpha = 0.25f)),
-                contentAlignment = Alignment.Center
-            ) {
+            if (episode.durationText.isNotBlank()) {
                 Box(
                     modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(SwaaraCyan.copy(alpha = 0.9f)),
-                    contentAlignment = Alignment.Center
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.Black.copy(alpha = 0.82f))
+                        .padding(horizontal = 4.dp, vertical = 1.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.play),
-                        contentDescription = "Play Episode",
-                        tint = Color.Black,
-                        modifier = Modifier.size(11.dp)
+                    Text(
+                        text = episode.durationText,
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -764,41 +714,34 @@ fun SwaaraPodcastEpisodeRow(
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = episode.title,
+                color = SwaaraPrimaryText,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 17.5.sp
+            )
+            Spacer(modifier = Modifier.height(3.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(SwaaraCyan.copy(alpha = 0.25f))
-                        .padding(horizontal = 5.dp, vertical = 1.dp)
-                ) {
-                    Text(
-                        text = "EPISODE",
-                        color = SwaaraCyan,
-                        fontSize = 8.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                }
-                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = author,
-                    color = SwaaraSecondaryText,
-                    fontSize = 11.sp,
+                    text = episode.author,
+                    color = SwaaraCyan,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                if (!episode.viewCountText.isNullOrBlank()) {
+                    Text(
+                        text = " • ${episode.viewCountText}",
+                        color = SwaaraSecondaryText,
+                        fontSize = 11.sp,
+                        maxLines = 1
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            Text(
-                text = title,
-                color = SwaaraPrimaryText,
-                fontSize = 13.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -807,14 +750,14 @@ fun SwaaraPodcastEpisodeRow(
             modifier = Modifier
                 .size(34.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.04f)),
+                .background(Brush.horizontalGradient(listOf(SwaaraCyan, SwaaraViolet))),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.chevron_forward),
+                painter = painterResource(id = R.drawable.play),
                 contentDescription = "Play",
-                tint = Color.White.copy(alpha = 0.45f),
-                modifier = Modifier.size(14.dp)
+                tint = Color.Black,
+                modifier = Modifier.size(13.dp)
             )
         }
     }

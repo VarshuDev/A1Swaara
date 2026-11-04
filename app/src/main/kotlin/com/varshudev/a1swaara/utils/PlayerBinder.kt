@@ -39,7 +39,8 @@ fun PlayerService.Binder?.playTrack(
     title: String,
     artist: String?,
     thumbnailUrl: String?,
-    durationText: String? = null
+    durationText: String? = null,
+    isPodcast: Boolean = false
 ) {
     if (this == null) return
     val cleanArtist = artist?.replace(Regex("[,&\\s]{2,}"), ", ")?.trim(',', ' ') ?: "Artist"
@@ -58,6 +59,8 @@ fun PlayerService.Binder?.playTrack(
                         this.artistNames = listOf(cleanArtist)
                         this.durationText = durationText
                         this.isFromPersistentQueue = false
+                    }.apply {
+                        putBoolean("is_podcast", isPodcast)
                     }
                 )
                 .build()
@@ -80,11 +83,12 @@ fun playTrackWithService(
     artist: String?,
     thumbnailUrl: String?,
     durationText: String? = null,
+    isPodcast: Boolean = false,
     onStarted: () -> Unit = {}
 ) {
     val active = binder ?: PlayerService.activeBinder.value
     if (active != null) {
-        active.playTrack(videoId, title, artist, thumbnailUrl, durationText)
+        active.playTrack(videoId, title, artist, thumbnailUrl, durationText, isPodcast)
         onStarted()
         return
     }
@@ -109,7 +113,7 @@ fun playTrackWithService(
         try {
             withTimeout(5000L) {
                 val resolved = PlayerService.activeBinder.filterNotNull().first()
-                resolved.playTrack(videoId, title, artist, thumbnailUrl, durationText)
+                resolved.playTrack(videoId, title, artist, thumbnailUrl, durationText, isPodcast)
                 onStarted()
             }
         } catch (e: Exception) {

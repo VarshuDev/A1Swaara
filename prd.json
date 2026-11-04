@@ -1,0 +1,65 @@
+{
+  "project": "A1Swaara",
+  "branchName": "ralph/pure-youtube-podcast-mode",
+  "description": "Sovereign YouTube Podcast Hub & Audio/Video Player Mode",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Implement YouTube Podcast Feed Extractor",
+      "description": "As a user, I want A1 Swaara to fetch authentic podcast video metadata from YouTube so I see real talk shows and interviews instead of random songs.",
+      "acceptanceCriteria": [
+        "Query YouTube search endpoint using YouTube client to retrieve video results for podcast queries",
+        "Parse video title, videoId, channel/author name, duration, and thumbnail",
+        "Provide curated category queries for podcast genres",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Completed. SwaaraPodcastFeedClient connects to YouTube InnerTube search API with curated categories."
+    },
+    {
+      "id": "US-002",
+      "title": "Redesign Podcast Environment on Homepage",
+      "description": "As a user, I want a clean, dedicated podcast feed on the homepage when selecting the Podcasts tab without global music search clutter.",
+      "acceptanceCriteria": [
+        "Redesign SwaaraPodcastEnvironment.kt to display real YouTube podcast episodes",
+        "Interactive category chip filter updates feed seamlessly",
+        "Tapping an episode starts instant audio playback",
+        "No global music search routing triggered from podcast cards",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Completed. SwaaraPodcastEnvironment updated with category chips, duration badges, and direct audio playback."
+    },
+    {
+      "id": "US-003",
+      "title": "Audio-Only Default Playback with Interactive Video Mode Toggle",
+      "description": "As a user, I want podcasts to play audio-only by default, but have a View Video button to watch the episode when desired.",
+      "acceptanceCriteria": [
+        "Default to audio-only playback when a podcast item is tapped",
+        "Add an Audio Mode / Video Mode toggle switch in Now Playing screen for podcasts",
+        "In Video Mode, display the video stream or web player surface",
+        "In Audio Mode, display the standard audio album art / animated soundwave",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Completed. SwaaraNowPlayingScreen updated with segmented mode switcher and embedded video player for podcasts."
+    },
+    {
+      "id": "US-004",
+      "title": "Build & Distribution Verification",
+      "description": "As a maintainer, I want the updated application to build cleanly offline and package into the release APK.",
+      "acceptanceCriteria": [
+        "Run ./gradlew.bat --offline assembleHttp3Release successfully",
+        "Copy fresh release APK to A1_Swaara_v1.0.apk",
+        "Commit changes cleanly in both Git repositories with author VarshuDev <varshudev@veloriolabs.internal>",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Completed. Offline release build assembleHttp3Release passed. Release APK copied to A1Swaara_apk."
+    }
+  ]
+}

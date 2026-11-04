@@ -94,6 +94,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.compose.ui.viewinterop.AndroidView
 import com.varshudev.a1swaara.Database
 import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.LocalPlayerServiceBinder
@@ -265,6 +266,23 @@ fun SwaaraNowPlayingScreen(
     val artworkUri = metadata?.artworkUri?.toString()?.thumbnail(1200)
         ?: if (!videoId.isNullOrBlank()) "https://i.ytimg.com/vi/$videoId/hq720.jpg" else null
 
+    val isPodcast = remember(metadata, title, rawArtist) {
+        metadata?.extras?.getBoolean("is_podcast") == true ||
+        title.contains("podcast", ignoreCase = true) ||
+        rawArtist.contains("podcast", ignoreCase = true) ||
+        rawArtist.contains("Ranveer Allahbadia", ignoreCase = true) ||
+        rawArtist.contains("Raj Shamani", ignoreCase = true) ||
+        rawArtist.contains("Lex Fridman", ignoreCase = true) ||
+        rawArtist.contains("Huberman", ignoreCase = true) ||
+        rawArtist.contains("The Joe Rogan", ignoreCase = true) ||
+        rawArtist.contains("Nikhil Kamath", ignoreCase = true)
+    }
+    var isPodcastVideoMode by remember { mutableStateOf(false) }
+
+    LaunchedEffect(videoId) {
+        isPodcastVideoMode = false
+    }
+
     // Room DB Liked Status Flow
     val likedAt by remember(videoId) {
         if (videoId != null) Database.likedAt(videoId) else flowOf(null)
@@ -297,8 +315,12 @@ fun SwaaraNowPlayingScreen(
     val currentFormat by remember(videoId) {
         if (videoId != null) Database.format(videoId) else flowOf(null)
     }.collectAsState(initial = null)
-    val dynamicAudioBadgeText = remember(currentFormat, audioQualityIndex, videoId) {
-        if (videoId?.startsWith("local:") == true) {
+    val dynamicAudioBadgeText = remember(currentFormat, audioQualityIndex, videoId, isPodcast, isPodcastVideoMode) {
+        if (isPodcast && isPodcastVideoMode) {
+            "VIDEO STREAM • YOUTUBE HD"
+        } else if (isPodcast) {
+            "PODCAST AUDIO • ORIGINAL"
+        } else if (videoId?.startsWith("local:") == true) {
             val tier = currentFormat?.qualityTier ?: "LOSSLESS"
             val codec = currentFormat?.codecDisplayName?.takeIf { it.isNotBlank() } ?: "LOCAL"
             "$tier • $codec"
@@ -1398,7 +1420,7 @@ fun SwaaraNowPlayingScreen(
                             )
                         }
 
-                        // Player / Lyrics Dual-Segment Capsule with Neon Glow Accent
+                        // Dual-Segment Mode Capsule (Podcast: Audio/Video, Music: Player/Lyrics)
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(22.dp))
@@ -1406,91 +1428,188 @@ fun SwaaraNowPlayingScreen(
                                 .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(22.dp))
                                 .padding(4.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                // Player Segment
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(18.dp))
-                                        .background(
-                                            if (!isLyricsMode) Brush.horizontalGradient(
-                                                listOf(
-                                                    SwaaraMagenta.copy(alpha = 0.28f),
-                                                    SwaaraViolet.copy(alpha = 0.20f)
-                                                )
-                                            )
-                                            else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
-                                        )
-                                        .border(
-                                            1.dp,
-                                            if (!isLyricsMode) SwaaraMagenta.copy(alpha = 0.65f)
-                                            else Color.Transparent,
-                                            RoundedCornerShape(18.dp)
-                                        )
-                                        .clickable { isLyricsMode = false }
-                                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
+                            if (isPodcast) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    // Audio Only Segment
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(
+                                                if (!isPodcastVideoMode) Brush.horizontalGradient(
+                                                    listOf(
+                                                        SwaaraMagenta.copy(alpha = 0.28f),
+                                                        SwaaraViolet.copy(alpha = 0.20f)
+                                                    )
+                                                )
+                                                else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (!isPodcastVideoMode) SwaaraMagenta.copy(alpha = 0.65f)
+                                                else Color.Transparent,
+                                                RoundedCornerShape(18.dp)
+                                            )
+                                            .clickable {
+                                                isPodcastVideoMode = false
+                                                if (!player.shouldBePlaying) player.play()
+                                            }
+                                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.disc),
-                                            contentDescription = null,
-                                            tint = if (!isLyricsMode) SwaaraMagenta else SwaaraSecondaryText,
-                                            modifier = Modifier.size(13.dp)
-                                        )
-                                        Text(
-                                            text = "Player",
-                                            color = if (!isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
-                                            fontSize = 12.sp,
-                                            fontWeight = if (!isLyricsMode) FontWeight.Bold else FontWeight.Medium
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.musical_notes),
+                                                contentDescription = null,
+                                                tint = if (!isPodcastVideoMode) SwaaraMagenta else SwaaraSecondaryText,
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Text(
+                                                text = "Audio Only",
+                                                color = if (!isPodcastVideoMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                                fontSize = 12.sp,
+                                                fontWeight = if (!isPodcastVideoMode) FontWeight.Bold else FontWeight.Medium
+                                            )
+                                        }
+                                    }
+
+                                    // Watch Video Segment
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(
+                                                if (isPodcastVideoMode) Brush.horizontalGradient(
+                                                    listOf(
+                                                        SwaaraCyan.copy(alpha = 0.28f),
+                                                        SwaaraViolet.copy(alpha = 0.20f)
+                                                    )
+                                                )
+                                                else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (isPodcastVideoMode) SwaaraCyan.copy(alpha = 0.65f)
+                                                else Color.Transparent,
+                                                RoundedCornerShape(18.dp)
+                                            )
+                                            .clickable {
+                                                isPodcastVideoMode = true
+                                                if (player.shouldBePlaying) player.pause()
+                                            }
+                                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.film),
+                                                contentDescription = null,
+                                                tint = if (isPodcastVideoMode) SwaaraCyan else SwaaraSecondaryText,
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Text(
+                                                text = "Watch Video",
+                                                color = if (isPodcastVideoMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                                fontSize = 12.sp,
+                                                fontWeight = if (isPodcastVideoMode) FontWeight.Bold else FontWeight.Medium
+                                            )
+                                        }
                                     }
                                 }
-
-                                // Lyrics Segment
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(18.dp))
-                                        .background(
-                                            if (isLyricsMode) Brush.horizontalGradient(
-                                                listOf(
-                                                    SwaaraMagenta.copy(alpha = 0.28f),
-                                                    SwaaraViolet.copy(alpha = 0.20f)
-                                                )
-                                            )
-                                            else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
-                                        )
-                                        .border(
-                                            1.dp,
-                                            if (isLyricsMode) SwaaraMagenta.copy(alpha = 0.65f)
-                                            else Color.Transparent,
-                                            RoundedCornerShape(18.dp)
-                                        )
-                                        .clickable { isLyricsMode = true }
-                                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    // Player Segment
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(
+                                                if (!isLyricsMode) Brush.horizontalGradient(
+                                                    listOf(
+                                                        SwaaraMagenta.copy(alpha = 0.28f),
+                                                        SwaaraViolet.copy(alpha = 0.20f)
+                                                    )
+                                                )
+                                                else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (!isLyricsMode) SwaaraMagenta.copy(alpha = 0.65f)
+                                                else Color.Transparent,
+                                                RoundedCornerShape(18.dp)
+                                            )
+                                            .clickable { isLyricsMode = false }
+                                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.musical_notes),
-                                            contentDescription = null,
-                                            tint = if (isLyricsMode) SwaaraMagenta else SwaaraSecondaryText,
-                                            modifier = Modifier.size(13.dp)
-                                        )
-                                        Text(
-                                            text = "Lyrics",
-                                            color = if (isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
-                                            fontSize = 12.sp,
-                                            fontWeight = if (isLyricsMode) FontWeight.Bold else FontWeight.Medium
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.disc),
+                                                contentDescription = null,
+                                                tint = if (!isLyricsMode) SwaaraMagenta else SwaaraSecondaryText,
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Text(
+                                                text = "Player",
+                                                color = if (!isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                                fontSize = 12.sp,
+                                                fontWeight = if (!isLyricsMode) FontWeight.Bold else FontWeight.Medium
+                                            )
+                                        }
+                                    }
+
+                                    // Lyrics Segment
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(
+                                                if (isLyricsMode) Brush.horizontalGradient(
+                                                    listOf(
+                                                        SwaaraMagenta.copy(alpha = 0.28f),
+                                                        SwaaraViolet.copy(alpha = 0.20f)
+                                                    )
+                                                )
+                                                else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (isLyricsMode) SwaaraMagenta.copy(alpha = 0.65f)
+                                                else Color.Transparent,
+                                                RoundedCornerShape(18.dp)
+                                            )
+                                            .clickable { isLyricsMode = true }
+                                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.musical_notes),
+                                                contentDescription = null,
+                                                tint = if (isLyricsMode) SwaaraMagenta else SwaaraSecondaryText,
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Text(
+                                                text = "Lyrics",
+                                                color = if (isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                                fontSize = 12.sp,
+                                                fontWeight = if (isLyricsMode) FontWeight.Bold else FontWeight.Medium
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -1552,8 +1671,79 @@ fun SwaaraNowPlayingScreen(
 
                     Spacer(modifier = Modifier.weight(0.35f))
 
-                    // 2. High-Fidelity Album Artwork Showcase or Synchronized Lyrics
-                    if (!isLyricsMode) {
+                    // 2. High-Fidelity Album Artwork Showcase, Video Embed or Synchronized Lyrics
+                    if (isPodcast && isPodcastVideoMode && !videoId.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier.size(dynamicAuraSize),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(dynamicArtworkSize)
+                                    .shadow(
+                                        elevation = 28.dp,
+                                        shape = RoundedCornerShape(24.dp),
+                                        ambientColor = Color.Black.copy(alpha = 0.85f),
+                                        spotColor = SwaaraCyan.copy(alpha = 0.45f)
+                                    )
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(Color.Black)
+                                    .border(
+                                        1.5.dp,
+                                        Brush.verticalGradient(
+                                            listOf(
+                                                SwaaraCyan.copy(alpha = 0.6f),
+                                                SwaaraViolet.copy(alpha = 0.3f)
+                                            )
+                                        ),
+                                        RoundedCornerShape(24.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AndroidView(
+                                    factory = { ctx ->
+                                        android.webkit.WebView(ctx).apply {
+                                            layoutParams = android.view.ViewGroup.LayoutParams(
+                                                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                                                android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                                            )
+                                            settings.javaScriptEnabled = true
+                                            settings.domStorageEnabled = true
+                                            settings.mediaPlaybackRequiresUserGesture = false
+                                            settings.loadWithOverviewMode = true
+                                            settings.useWideViewPort = true
+                                            webChromeClient = android.webkit.WebChromeClient()
+                                            val embedHtml = """
+                                                <!DOCTYPE html>
+                                                <html>
+                                                <head>
+                                                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                                                <style>
+                                                  body, html { margin:0; padding:0; width:100%; height:100%; background:#000; overflow:hidden; }
+                                                  iframe { border:0; width:100%; height:100%; }
+                                                </style>
+                                                </head>
+                                                <body>
+                                                <iframe src="https://www.youtube-nocookie.com/embed/$videoId?autoplay=1&playsinline=1&controls=1&rel=0"
+                                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                  allowfullscreen>
+                                                </iframe>
+                                                </body>
+                                                </html>
+                                            """.trimIndent()
+                                            loadDataWithBaseURL("https://www.youtube-nocookie.com", embedHtml, "text/html", "UTF-8", null)
+                                        }
+                                    },
+                                    onRelease = { webView ->
+                                        webView.stopLoading()
+                                        webView.loadUrl("about:blank")
+                                        webView.destroy()
+                                    },
+                                    modifier = Modifier.matchParentSize()
+                                )
+                            }
+                        }
+                    } else if (!isLyricsMode) {
                         Box(
                             modifier = Modifier.size(dynamicAuraSize),
                             contentAlignment = Alignment.Center
@@ -1857,7 +2047,10 @@ fun SwaaraNowPlayingScreen(
                                 isPlaying = isPlaying,
                                 isLoading = isLoading,
                                 onClick = {
-                                    if (player.shouldBePlaying) player.pause() else player.play()
+                                    if (player.shouldBePlaying) player.pause() else {
+                                        isPodcastVideoMode = false
+                                        player.play()
+                                    }
                                 },
                                 size = 68
                             )
@@ -2093,39 +2286,83 @@ fun SwaaraNowPlayingScreen(
                                 .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
                                 .padding(3.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(if (!isLyricsMode) SwaaraMagenta.copy(alpha = 0.25f) else Color.Transparent)
-                                        .clickable { isLyricsMode = false }
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                    contentAlignment = Alignment.Center
+                            if (isPodcast) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
-                                    Text(
-                                        text = "Player",
-                                        color = if (!isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (!isPodcastVideoMode) SwaaraMagenta.copy(alpha = 0.25f) else Color.Transparent)
+                                            .clickable {
+                                                isPodcastVideoMode = false
+                                                if (!player.shouldBePlaying) player.play()
+                                            }
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Audio",
+                                            color = if (!isPodcastVideoMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (isPodcastVideoMode) SwaaraCyan.copy(alpha = 0.25f) else Color.Transparent)
+                                            .clickable {
+                                                isPodcastVideoMode = true
+                                                if (player.shouldBePlaying) player.pause()
+                                            }
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Video",
+                                            color = if (isPodcastVideoMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(if (isLyricsMode) SwaaraMagenta.copy(alpha = 0.25f) else Color.Transparent)
-                                        .clickable { isLyricsMode = true }
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                    contentAlignment = Alignment.Center
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Text(
-                                        text = "Lyrics",
-                                        color = if (isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (!isLyricsMode) SwaaraMagenta.copy(alpha = 0.25f) else Color.Transparent)
+                                            .clickable { isLyricsMode = false }
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Player",
+                                            color = if (!isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (isLyricsMode) SwaaraMagenta.copy(alpha = 0.25f) else Color.Transparent)
+                                            .clickable { isLyricsMode = true }
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Lyrics",
+                                            color = if (isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -2149,7 +2386,58 @@ fun SwaaraNowPlayingScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    if (!isLyricsMode) {
+                    if (isPodcast && isPodcastVideoMode && !videoId.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .size(dynamicArtworkSize)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(Color.Black)
+                                .border(1.dp, SwaaraCyan.copy(alpha = 0.40f), RoundedCornerShape(22.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AndroidView(
+                                factory = { ctx ->
+                                    android.webkit.WebView(ctx).apply {
+                                        layoutParams = android.view.ViewGroup.LayoutParams(
+                                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                                            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                                        )
+                                        settings.javaScriptEnabled = true
+                                        settings.domStorageEnabled = true
+                                        settings.mediaPlaybackRequiresUserGesture = false
+                                        settings.loadWithOverviewMode = true
+                                        settings.useWideViewPort = true
+                                        webChromeClient = android.webkit.WebChromeClient()
+                                        val embedHtml = """
+                                            <!DOCTYPE html>
+                                            <html>
+                                            <head>
+                                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                                            <style>
+                                              body, html { margin:0; padding:0; width:100%; height:100%; background:#000; overflow:hidden; }
+                                              iframe { border:0; width:100%; height:100%; }
+                                            </style>
+                                            </head>
+                                            <body>
+                                            <iframe src="https://www.youtube-nocookie.com/embed/$videoId?autoplay=1&playsinline=1&controls=1&rel=0"
+                                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                              allowfullscreen>
+                                            </iframe>
+                                            </body>
+                                            </html>
+                                        """.trimIndent()
+                                        loadDataWithBaseURL("https://www.youtube-nocookie.com", embedHtml, "text/html", "UTF-8", null)
+                                    }
+                                },
+                                onRelease = { webView ->
+                                    webView.stopLoading()
+                                    webView.loadUrl("about:blank")
+                                    webView.destroy()
+                                },
+                                modifier = Modifier.matchParentSize()
+                            )
+                        }
+                    } else if (!isLyricsMode) {
                         Box(
                             modifier = Modifier
                                 .size(dynamicArtworkSize)
@@ -2281,7 +2569,7 @@ fun SwaaraNowPlayingScreen(
                             }
                         }
                         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                            SwaaraPulsingPlayButton(isPlaying = isPlaying, isLoading = isLoading, onClick = { if (player.shouldBePlaying) player.pause() else player.play() }, size = 62)
+                            SwaaraPulsingPlayButton(isPlaying = isPlaying, isLoading = isLoading, onClick = { if (player.shouldBePlaying) player.pause() else { isPodcastVideoMode = false; player.play() } }, size = 62)
                         }
                         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                             IconButton(onClick = { player.forceSeekToNext() }) {
