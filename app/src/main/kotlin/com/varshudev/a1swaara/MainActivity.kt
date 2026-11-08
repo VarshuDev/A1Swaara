@@ -58,6 +58,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import com.varshudev.a1swaara.bugreport.SwaaraBugReportSheet
+import com.varshudev.a1swaara.bugreport.SwaaraShakeDetector
 import com.varshudev.a1swaara.preferences.AppearancePreferences
 import com.varshudev.a1swaara.service.PlayerService
 import com.varshudev.a1swaara.service.downloadState
@@ -120,6 +122,8 @@ class MainViewModel : ViewModel() {
 class MainActivity : ComponentActivity(), MonetColorsChangedListener {
     private val vm: MainViewModel by viewModels()
     private val appContainer get() = applicationContext.appContainer
+    private var shakeDetector: SwaaraShakeDetector? = null
+    private var isBugReportSheetOpen by mutableStateOf(false)
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -140,6 +144,16 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
 
     private var _monet: MonetCompat? by mutableStateOf(null)
     private val monet get() = _monet ?: throw MonetActivityAccessException()
+
+    override fun onResume() {
+        super.onResume()
+        shakeDetector?.start()
+    }
+
+    override fun onPause() {
+        shakeDetector?.stop()
+        super.onPause()
+    }
 
     override fun onStart() {
         super.onStart()
@@ -172,6 +186,11 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
 
         intent?.let { handleIntent(it) }
         addOnNewIntentListener(::handleIntent)
+        shakeDetector = SwaaraShakeDetector(this) {
+            runOnUiThread {
+                isBugReportSheetOpen = true
+            }
+        }
 
         // Request runtime notification permission on Android 13+ (API 33+) so system tray notifications are permitted
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -341,6 +360,13 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
                 }
+            }
+
+            if (isBugReportSheetOpen) {
+                SwaaraBugReportSheet(
+                    onDismiss = { isBugReportSheetOpen = false },
+                    binder = vm.binder
+                )
             }
 
             vm.binder?.player.DisposableListener {

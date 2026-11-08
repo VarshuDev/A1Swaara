@@ -188,6 +188,16 @@ fun About() = SettingsCategoryScreen(
     }
 
     SettingsGroup(title = "Support & Feedback") {
+        var isShakeReportingEnabled by remember { mutableStateOf(DataPreferences.isShakeToReportEnabled) }
+        SwitchSettingsEntry(
+            title = "Shake Phone to Report",
+            text = "Shake your phone twice rapidly anywhere in the app to open the bug reporter",
+            isChecked = isShakeReportingEnabled,
+            onCheckedChange = {
+                isShakeReportingEnabled = it
+                DataPreferences.isShakeToReportEnabled = it
+            }
+        )
         SettingsEntry(
             title = "Report an Issue",
             text = "Report bugs or playback problems directly to developer",
