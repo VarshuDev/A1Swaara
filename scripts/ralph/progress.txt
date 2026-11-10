@@ -35,3 +35,11 @@ Started: 11/10/2026 23:11:54
   - `TextField` in `ui/components/themed/TextField.kt` is declared as `ColumnScope.TextField` / `RowScope.TextField`, so any glass wrapper container around it must be a `Column` or `Row` (not a `Box`).
   - `SwaaraGlassContainer` draws shadow/clip/background/border on its root box; outer dialog margins belong on an enclosing wrapper `Box`, not on `SwaaraGlassContainer`'s `modifier`.
 ---
+## 2026-11-10 23:37 - US-004
+- Upgraded `Menu` and `MenuEntry` in `Menu.kt` to 24.dp rounded top corners, `SwaaraDeepSurface` (when default dark), top hairline Magenta/glass gradient rim border, centered 36x4dp drag handle pill, optional `iconTint`/`textColor` parameters, and 34.dp rounded-square glass icon badges with >=48dp touch rows.
+- Updated `MediaItemMenu.kt`: wrapped top `SongItem` preview + circular glass Favorite/Share actions inside a bordered `16.dp` glass card, upgraded playlist-picker Back header with circular glass button and title, colored key queue/playlist actions (`secondaryAccent`/`accent`) and destructive actions (`SwaaraErrorRed`), and restyled inline Sleep Timer `-`/`+` buttons and active countdown pill.
+- Replaced the stock Material3 `DropdownMenu` in `SwaaraDownloadsScreen.kt` with `LocalMenuState.current.display` rendering the unified `Menu` Obsidian Glass sheet (with track preview header and Play Next / Add to Queue / Remove from Downloads `MenuEntry` items) on both ellipsis tap and row long-press.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL`).
+- **Learnings for future iterations:**
+  - `LocalMenuState.current` is backed by `BottomSheetMenu` mounted globally inside `MainActivity.setContent`, so any screen inside `SwaaraAppShell` can invoke `LocalMenuState.current.display { Menu { ... } }` seamlessly.
+---

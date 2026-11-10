@@ -3,9 +3,11 @@ package com.varshudev.a1swaara.ui.screens.downloads
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,8 +26,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -37,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -52,11 +53,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.a1swaara.core.ui.Dimensions
+import app.a1swaara.core.ui.utils.roundedShape
 import com.varshudev.a1swaara.Database
 import com.varshudev.a1swaara.LocalPlayerServiceBinder
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.preferences.DataPreferences
+import com.varshudev.a1swaara.ui.components.LocalMenuState
+import com.varshudev.a1swaara.ui.components.SwaaraBorderSubtle
+import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
+import com.varshudev.a1swaara.ui.components.themed.HorizontalDivider
+import com.varshudev.a1swaara.ui.components.themed.Menu
+import com.varshudev.a1swaara.ui.components.themed.MenuEntry
+import com.varshudev.a1swaara.ui.items.SongItem
 import com.varshudev.a1swaara.ui.screens.LocalOpenNowPlaying
 import com.varshudev.a1swaara.updater.SwaaraForceUpdateDialog
 import com.varshudev.a1swaara.updater.SwaaraUpdateManager
@@ -80,6 +90,7 @@ private val SwaaraCyan = Color(0xFF20CFFF)
 private val SwaaraPrimaryText = Color(0xFFF1F1F5)
 private val SwaaraSecondaryText = Color(0xFF8E8EA0)
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SwaaraDownloadsScreen(
     modifier: Modifier = Modifier
@@ -87,6 +98,7 @@ fun SwaaraDownloadsScreen(
     val context = LocalContext.current
     val binder = LocalPlayerServiceBinder.current
     val openNowPlaying = LocalOpenNowPlaying.current
+    val menuState = LocalMenuState.current
     val coroutineScope = rememberCoroutineScope()
 
     val isUpdateAvailable by SwaaraUpdateManager.isUpdateAvailable.collectAsStateWithLifecycle()
@@ -429,22 +441,93 @@ fun SwaaraDownloadsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 itemsIndexed(offlineSongs, key = { _, song -> song.id }) { index, song: Song ->
-                    var showMenu by remember { mutableStateOf(false) }
+                    val openOptionsMenu = {
+                        menuState.display {
+                            Menu {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                                        .clip(16.dp.roundedShape)
+                                        .background(SwaaraElevatedSurface)
+                                        .border(1.dp, SwaaraBorderSubtle, 16.dp.roundedShape)
+                                        .padding(end = 10.dp)
+                                ) {
+                                    SongItem(
+                                        song = song,
+                                        thumbnailSize = Dimensions.thumbnails.song,
+                                        modifier = Modifier.weight(1f),
+                                        showDuration = false
+                                    )
+                                }
+
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .alpha(0.45f)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+
+                                MenuEntry(
+                                    icon = R.drawable.play_skip_forward,
+                                    text = "Play Next",
+                                    iconTint = SwaaraCyan,
+                                    onClick = {
+                                        menuState.hide()
+                                        val active = binder ?: com.varshudev.a1swaara.service.PlayerService.activeBinder.value
+                                        active?.player?.addNext(song.asMediaItem)
+                                        context.toast("Playing \"${song.title}\" next")
+                                    }
+                                )
+
+                                MenuEntry(
+                                    icon = R.drawable.playlist,
+                                    text = "Add to Queue",
+                                    iconTint = SwaaraMagenta,
+                                    onClick = {
+                                        menuState.hide()
+                                        val active = binder ?: com.varshudev.a1swaara.service.PlayerService.activeBinder.value
+                                        active?.player?.enqueue(song.asMediaItem)
+                                        context.toast("Added to queue")
+                                    }
+                                )
+
+                                MenuEntry(
+                                    icon = R.drawable.trash,
+                                    text = "Remove from Downloads",
+                                    iconTint = SwaaraErrorRed,
+                                    textColor = SwaaraErrorRed,
+                                    onClick = {
+                                        menuState.hide()
+                                        DataPreferences.removeDownloadedSongId(song.id)
+                                        binder?.removeDownloadedSong(song.id)
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            Database.delete(song)
+                                        }
+                                        context.toast("Removed \"${song.title}\" from downloads")
+                                    }
+                                )
+                            }
+                        }
+                    }
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
                             .background(SwaaraDeepSurface)
-                            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-                            .clickable {
-                                val active = binder ?: com.varshudev.a1swaara.service.PlayerService.activeBinder.value
-                                active?.player?.forcePlayAtIndex(
-                                    offlineSongs.map { it.asMediaItem },
-                                    index
-                                )
-                                openNowPlaying()
-                            }
+                            .border(1.dp, SwaaraBorderSubtle, RoundedCornerShape(16.dp))
+                            .combinedClickable(
+                                onClick = {
+                                    val active = binder ?: com.varshudev.a1swaara.service.PlayerService.activeBinder.value
+                                    active?.player?.forcePlayAtIndex(
+                                        offlineSongs.map { it.asMediaItem },
+                                        index
+                                    )
+                                    openNowPlaying()
+                                },
+                                onLongClick = openOptionsMenu
+                            )
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -519,77 +602,16 @@ fun SwaaraDownloadsScreen(
                         }
 
                         // Options Menu Button
-                        Box {
-                            IconButton(
-                                onClick = { showMenu = true },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ellipsis_horizontal),
-                                    contentDescription = "Options",
-                                    tint = SwaaraSecondaryText,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false },
-                                modifier = Modifier.background(SwaaraElevatedSurface)
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Play Next", color = SwaaraPrimaryText) },
-                                    onClick = {
-                                        showMenu = false
-                                        binder?.player?.addNext(song.asMediaItem)
-                                        context.toast("Playing \"${song.title}\" next")
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.play_skip_forward),
-                                            contentDescription = null,
-                                            tint = SwaaraCyan,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Add to Queue", color = SwaaraPrimaryText) },
-                                    onClick = {
-                                        showMenu = false
-                                        binder?.player?.enqueue(song.asMediaItem)
-                                        context.toast("Added to queue")
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.playlist),
-                                            contentDescription = null,
-                                            tint = SwaaraMagenta,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Remove from Downloads", color = Color(0xFFFF5252)) },
-                                    onClick = {
-                                        showMenu = false
-                                        DataPreferences.removeDownloadedSongId(song.id)
-                                        binder?.removeDownloadedSong(song.id)
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            Database.delete(song)
-                                        }
-                                        context.toast("Removed \"${song.title}\" from downloads")
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.trash),
-                                            contentDescription = null,
-                                            tint = Color(0xFFFF5252),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                )
-                            }
+                        IconButton(
+                            onClick = openOptionsMenu,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ellipsis_horizontal),
+                                contentDescription = "Options",
+                                tint = SwaaraSecondaryText,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                 }

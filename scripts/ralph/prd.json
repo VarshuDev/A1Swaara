@@ -57,8 +57,8 @@
         "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified with :app:compileHttp3ReleaseKotlin across Menu.kt, MediaItemMenu.kt, and SwaaraDownloadsScreen.kt"
     },
     {
       "id": "US-005",

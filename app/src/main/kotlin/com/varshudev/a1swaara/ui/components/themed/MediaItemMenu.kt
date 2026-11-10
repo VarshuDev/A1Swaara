@@ -15,6 +15,7 @@ import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,6 +62,8 @@ import com.varshudev.a1swaara.models.Playlist
 import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.service.PrecacheService
 import com.varshudev.a1swaara.service.isLocal
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
+import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
 import com.varshudev.a1swaara.ui.items.SongItem
 import com.varshudev.a1swaara.ui.screens.albumRoute
 import com.varshudev.a1swaara.ui.screens.artistRoute
@@ -80,6 +83,8 @@ import app.a1swaara.core.data.enums.SortOrder
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
 import app.a1swaara.core.ui.favoritesIcon
+import app.a1swaara.core.ui.glassBorder
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.utils.px
 import app.a1swaara.core.ui.utils.roundedShape
 import app.a1swaara.core.ui.utils.songBundle
@@ -379,10 +384,21 @@ fun MediaItemMenu(
                     IconButton(
                         onClick = { isViewingPlaylists = false },
                         icon = R.drawable.chevron_back,
-                        color = colorPalette.textSecondary,
+                        color = colorPalette.text,
                         modifier = Modifier
-                            .padding(all = 4.dp)
-                            .size(20.dp)
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                                else colorPalette.background2.copy(alpha = 0.72f)
+                            )
+                            .border(1.dp, colorPalette.glassBorder, CircleShape)
+                            .padding(all = 9.dp)
+                    )
+
+                    BasicText(
+                        text = stringResource(R.string.add_to_playlist),
+                        style = typography.xs.semiBold
                     )
 
                     if (onAddToPlaylist != null) SecondaryTextButton(
@@ -397,6 +413,7 @@ fun MediaItemMenu(
                         MenuEntry(
                             icon = R.drawable.playlist,
                             text = playlistPreview.playlist.name,
+                            iconTint = colorPalette.secondaryAccent,
                             secondaryText = pluralStringResource(
                                 id = R.plurals.song_count_plural,
                                 count = playlistPreview.songCount,
@@ -417,7 +434,16 @@ fun MediaItemMenu(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(end = 12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 4.dp)
+                    .clip(16.dp.roundedShape)
+                    .background(
+                        if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                        else colorPalette.background2.copy(alpha = 0.72f)
+                    )
+                    .border(1.dp, colorPalette.glassBorder, 16.dp.roundedShape)
+                    .padding(end = 10.dp)
             ) {
                 SongItem(
                     song = mediaItem,
@@ -426,42 +452,49 @@ fun MediaItemMenu(
                     showDuration = false
                 )
 
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     IconButton(
                         icon = if (likedAt == null) R.drawable.heart_outline else R.drawable.heart,
-                        color = colorPalette.favoritesIcon,
+                        color = if (likedAt != null) colorPalette.favoritesIcon else colorPalette.textSecondary,
                         onClick = {
                             viewModel.toggleLike(mediaItem = mediaItem, likedAt = likedAt)
                         },
                         modifier = Modifier
-                            .padding(all = 4.dp)
-                            .size(18.dp)
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(colorPalette.background2.copy(alpha = 0.75f))
+                            .border(0.8.dp, colorPalette.glassBorder, CircleShape)
+                            .padding(all = 8.dp)
                     )
 
                     if (!isLocal) IconButton(
                         icon = R.drawable.share_social,
-                        color = colorPalette.text,
+                        color = colorPalette.secondaryAccent,
                         onClick = {
                             onDismiss()
                             onShare()
                         },
                         modifier = Modifier
-                            .padding(all = 4.dp)
-                            .size(17.dp)
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(colorPalette.background2.copy(alpha = 0.75f))
+                            .border(0.8.dp, colorPalette.glassBorder, CircleShape)
+                            .padding(all = 8.dp)
                     )
                 }
             }
 
             HorizontalDivider(
                 modifier = Modifier
-                    .alpha(0.5f)
-                    .padding(vertical = 8.dp)
+                    .alpha(0.45f)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             onPlayNext?.let {
                 MenuEntry(
                     icon = R.drawable.play_skip_forward,
                     text = stringResource(R.string.play_next),
+                    iconTint = colorPalette.secondaryAccent,
                     onClick = {
                         onDismiss()
                         onPlayNext()
@@ -473,6 +506,7 @@ fun MediaItemMenu(
                 MenuEntry(
                     icon = R.drawable.enqueue,
                     text = stringResource(R.string.enqueue),
+                    iconTint = colorPalette.secondaryAccent,
                     onClick = {
                         onDismiss()
                         onEnqueue()
@@ -484,6 +518,7 @@ fun MediaItemMenu(
                 MenuEntry(
                     icon = R.drawable.radio,
                     text = stringResource(R.string.start_radio),
+                    iconTint = colorPalette.accent,
                     onClick = {
                         onDismiss()
                         onStartRadio()
@@ -495,6 +530,7 @@ fun MediaItemMenu(
                 MenuEntry(
                     icon = R.drawable.playlist,
                     text = stringResource(R.string.add_to_playlist),
+                    iconTint = colorPalette.accent,
                     onClick = { isViewingPlaylists = true },
                     trailingContent = {
                         Image(
@@ -582,15 +618,19 @@ fun MediaItemMenu(
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .alpha(if (amount <= 1) 0.5f else 1f)
-                                    .clip(CircleShape)
-                                    .clickable(enabled = amount > 1) { amount-- }
+                                    .alpha(if (amount <= 1) 0.45f else 1f)
                                     .size(48.dp)
-                                    .background(colorPalette.background0)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                                        else colorPalette.background2.copy(alpha = 0.8f)
+                                    )
+                                    .border(1.dp, colorPalette.glassBorder, CircleShape)
+                                    .clickable(enabled = amount > 1) { amount-- }
                             ) {
                                 BasicText(
                                     text = "-",
-                                    style = typography.xs.semiBold
+                                    style = typography.s.semiBold
                                 )
                             }
 
@@ -607,22 +647,26 @@ fun MediaItemMenu(
                                             (amount % 6) * 10
                                         )
                                     }",
-                                    style = typography.s.semiBold
+                                    style = typography.s.semiBold.copy(color = colorPalette.secondaryAccent)
                                 )
                             }
 
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .alpha(if (amount >= 60) 0.5f else 1f)
-                                    .clip(CircleShape)
-                                    .clickable(enabled = amount < 60) { amount++ }
+                                    .alpha(if (amount >= 60) 0.45f else 1f)
                                     .size(48.dp)
-                                    .background(colorPalette.background0)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                                        else colorPalette.background2.copy(alpha = 0.8f)
+                                    )
+                                    .border(1.dp, colorPalette.glassBorder, CircleShape)
+                                    .clickable(enabled = amount < 60) { amount++ }
                             ) {
                                 BasicText(
                                     text = "+",
-                                    style = typography.xs.semiBold
+                                    style = typography.s.semiBold
                                 )
                             }
                         }
@@ -678,13 +722,16 @@ fun MediaItemMenu(
                                     R.string.format_time_left,
                                     formatAsDuration(sleepTimerMillisLeft)
                                 ),
-                                style = typography.xxs.medium,
+                                style = typography.xxs.medium.copy(color = colorPalette.secondaryAccent),
                                 modifier = Modifier
-                                    .background(
-                                        color = colorPalette.background0,
+                                    .clip(16.dp.roundedShape)
+                                    .background(colorPalette.secondaryAccent.copy(alpha = 0.14f))
+                                    .border(
+                                        width = 1.dp,
+                                        color = colorPalette.secondaryAccent.copy(alpha = 0.35f),
                                         shape = 16.dp.roundedShape
                                     )
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
                                     .animateContentSize()
                             )
                         }
@@ -774,6 +821,8 @@ fun MediaItemMenu(
                 MenuEntry(
                     icon = R.drawable.trash,
                     text = stringResource(R.string.remove_from_queue),
+                    iconTint = SwaaraErrorRed,
+                    textColor = SwaaraErrorRed,
                     onClick = {
                         onDismiss()
                         onRemoveFromQueue()
@@ -785,6 +834,8 @@ fun MediaItemMenu(
                 MenuEntry(
                     icon = R.drawable.trash,
                     text = stringResource(R.string.remove_from_playlist),
+                    iconTint = SwaaraErrorRed,
+                    textColor = SwaaraErrorRed,
                     onClick = {
                         onDismiss()
                         onRemoveFromPlaylist()
@@ -796,6 +847,8 @@ fun MediaItemMenu(
                 MenuEntry(
                     icon = R.drawable.trash,
                     text = stringResource(R.string.hide),
+                    iconTint = SwaaraErrorRed,
+                    textColor = SwaaraErrorRed,
                     onClick = onHideFromDatabase
                 )
             }
@@ -804,6 +857,8 @@ fun MediaItemMenu(
                 MenuEntry(
                     icon = R.drawable.trash,
                     text = stringResource(R.string.hide_from_quick_picks),
+                    iconTint = SwaaraErrorRed,
+                    textColor = SwaaraErrorRed,
                     onClick = {
                         onDismiss()
                         onRemoveFromQuickPicks()
