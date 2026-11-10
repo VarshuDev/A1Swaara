@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
 import com.varshudev.a1swaara.utils.center
 import com.varshudev.a1swaara.utils.color
 import com.varshudev.a1swaara.utils.isInPip
@@ -71,11 +74,12 @@ fun PlaybackError(
     ) { currentMessage ->
         if (currentMessage != null) BasicText(
             text = currentMessage,
-            style = typography.xs.center.medium.color(colorPalette.onOverlay),
+            style = typography.xs.center.medium.color(Color.White),
             modifier = Modifier
-                .background(colorPalette.overlay.copy(alpha = 0.4f))
-                .padding(all = 8.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .background(SwaaraDeepSurface)
+                .border(1.dp, SwaaraErrorRed.copy(alpha = 0.5f))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             maxLines = if (pip) 1 else Int.MAX_VALUE,
             overflow = TextOverflow.Ellipsis
         )

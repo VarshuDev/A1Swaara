@@ -6,8 +6,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +27,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -37,6 +41,7 @@ import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.LocalPlayerServiceBinder
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.models.Format
+import com.varshudev.a1swaara.ui.components.SwaaraModalSurface
 import com.varshudev.a1swaara.ui.components.themed.SecondaryTextButton
 import com.varshudev.a1swaara.ui.viewmodels.PlayerViewModel
 import com.varshudev.a1swaara.utils.color
@@ -44,6 +49,8 @@ import com.varshudev.a1swaara.utils.medium
 import app.a1swaara.core.ui.LocalAppearance
 import app.a1swaara.core.ui.onOverlay
 import app.a1swaara.core.ui.overlay
+import app.a1swaara.core.ui.secondaryAccent
+import app.a1swaara.core.ui.utils.roundedShape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -134,78 +141,96 @@ fun StatsForNerds(
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { onDismiss() })
             }
-            .background(colorPalette.overlay)
+            .background(Color.Black.copy(alpha = 0.65f))
             .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(all = 16.dp)
+        Box(
+            modifier = Modifier
+                .padding(24.dp)
+                .clip(20.dp.roundedShape)
+                .background(SwaaraModalSurface)
+                .border(1.dp, Color.White.copy(alpha = 0.10f), 20.dp.roundedShape)
+                .padding(horizontal = 20.dp, vertical = 20.dp)
         ) {
-            @Composable
-            fun Text(text: String) = BasicText(
-                text = text,
-                maxLines = 1,
-                style = typography.xs.medium.color(colorPalette.onOverlay)
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    @Composable
+                    fun Label(text: String) = BasicText(
+                        text = text,
+                        maxLines = 1,
+                        style = typography.xs.medium.color(colorPalette.textSecondary)
+                    )
 
-            Column(horizontalAlignment = Alignment.End) {
-                Text(text = stringResource(R.string.id))
-                Text(text = stringResource(R.string.itag))
-                Text(text = stringResource(R.string.bitrate))
-                Text(text = stringResource(R.string.size))
-                Text(text = stringResource(R.string.cached))
-                Text(text = stringResource(R.string.loudness))
-            }
+                    @Composable
+                    fun Value(text: String) = BasicText(
+                        text = text,
+                        maxLines = 1,
+                        style = typography.xs.medium.color(colorPalette.secondaryAccent)
+                    )
 
-            Column {
-                Text(text = mediaId)
-                Text(text = format?.itag?.toString() ?: stringResource(R.string.unknown))
-                Text(
-                    text = when (val rate = format?.bitrate) {
-                        null, 0L -> stringResource(R.string.unknown)
-                        else -> stringResource(R.string.format_kbps, rate / 1000)
+                    Column(horizontalAlignment = Alignment.End) {
+                        Label(text = stringResource(R.string.id))
+                        Label(text = stringResource(R.string.itag))
+                        Label(text = stringResource(R.string.bitrate))
+                        Label(text = stringResource(R.string.size))
+                        Label(text = stringResource(R.string.cached))
+                        Label(text = stringResource(R.string.loudness))
                     }
-                )
-                Text(
-                    text = when (val length = format?.contentLength) {
-                        null, 0L -> stringResource(R.string.unknown)
-                        else -> Formatter.formatShortFileSize(context, length)
-                    }
-                )
-                Text(
-                    text = buildString {
-                        append(Formatter.formatShortFileSize(context, cachedBytes))
 
-                        format?.contentLength?.let {
-                            append(" (${(cachedBytes.toFloat() / it * 100).roundToInt()}%)")
-                        }
-                    }
-                )
-                Text(
-                    text = format?.loudnessDb?.let {
-                        stringResource(
-                            R.string.format_db,
-                            "%.2f".format(it)
+                    Column {
+                        Value(text = mediaId)
+                        Value(text = format?.itag?.toString() ?: stringResource(R.string.unknown))
+                        Value(
+                            text = when (val rate = format?.bitrate) {
+                                null, 0L -> stringResource(R.string.unknown)
+                                else -> stringResource(R.string.format_kbps, rate / 1000)
+                            }
                         )
-                    } ?: stringResource(R.string.unknown)
-                )
-            }
-        }
+                        Value(
+                            text = when (val length = format?.contentLength) {
+                                null, 0L -> stringResource(R.string.unknown)
+                                else -> Formatter.formatShortFileSize(context, length)
+                            }
+                        )
+                        Value(
+                            text = buildString {
+                                append(Formatter.formatShortFileSize(context, cachedBytes))
 
-        binder?.let {
-            SecondaryTextButton(
-                text = stringResource(R.string.reload),
-                onClick = {
-                    hasReloaded = true
-
-                    coroutineScope.launch {
-                        reload()
+                                format?.contentLength?.let {
+                                    append(" (${(cachedBytes.toFloat() / it * 100).roundToInt()}%)")
+                                }
+                            }
+                        )
+                        Value(
+                            text = format?.loudnessDb?.let {
+                                stringResource(
+                                    R.string.format_db,
+                                    "%.2f".format(it)
+                                )
+                            } ?: stringResource(R.string.unknown)
+                        )
                     }
-                },
-                enabled = !hasReloaded
-            )
+                }
+
+                binder?.let {
+                    SecondaryTextButton(
+                        text = stringResource(R.string.reload),
+                        onClick = {
+                            hasReloaded = true
+
+                            coroutineScope.launch {
+                                reload()
+                            }
+                        },
+                        enabled = !hasReloaded
+                    )
+                }
+            }
         }
     }
 }

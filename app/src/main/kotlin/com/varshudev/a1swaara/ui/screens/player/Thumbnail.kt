@@ -177,7 +177,7 @@ fun Thumbnail(
             AsyncImage(
                 model = currentWindow.mediaItem.mediaMetadata.artworkUri
                     ?.thumbnail((Dimensions.thumbnails.player.song - 64.dp).px),
-                error = painterResource(id = R.drawable.ic_launcher_foreground),
+                error = painterResource(id = R.drawable.musical_notes),
                 contentDescription = null,
                 contentScale = contentScale,
                 modifier = Modifier

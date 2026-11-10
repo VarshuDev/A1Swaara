@@ -116,3 +116,16 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - `LinearProgressIndicator` in `MainActivity.kt` already inherits `colorPalette.accent` and elevated track alpha from `ProgressIndicator.kt`, making a height constraint of 3.5.dp an ideal subtle neon indicator bar under the status bar.
 ---
+
+## 2026-11-11 00:39 - US-011
+- Relocated `musicFilesAsFlow` out of `HomeLocalSongs.kt` into dedicated utility `app/src/main/kotlin/com/varshudev/a1swaara/utils/LocalAudioMedia.kt` and updated `SwaaraLibraryScreen.kt`.
+- Polished PiP & Player Overlays:
+  - Updated `StatsForNerds.kt`: centered readout in a 20.dp Obsidian Glass card (`SwaaraModalSurface` + 10% white border) with cyan secondary accent text values.
+  - Updated `PlaybackError.kt`: restyled error notification banner with `SwaaraDeepSurface` + 50% `SwaaraErrorRed` border.
+  - Updated `Thumbnail.kt`: replaced legacy `R.drawable.ic_launcher_foreground` artwork error with `R.drawable.musical_notes`.
+  - Cleaned duplicate `import androidx.compose.ui.draw.clip` in `Lyrics.kt`.
+- Safely pruned 26 dead unreferenced prototype files and viewmodels (`HomeScreen.kt`, `A1SwaraHomeScreen.kt`, `HomeSongs.kt`, `HomeLocalSongs.kt`, `HomeDiscovery.kt`, `HomeAlbums.kt`, `HomeArtists.kt`, `HomePlaylists.kt`, `HomeQuickPicks.kt`, `A1SwaraLibraryScreen.kt`, `MoreMoodsScreen.kt`, `MoreMoodsList.kt`, `MoreAlbumsScreen.kt`, `MoreAlbumsList.kt`, `A1SwaraGlassDock.kt`, `A1SwaraMiniPlayer.kt`, `A1SwaraVinylCard.kt`, `A1SwaraWaveformVisualizer.kt`, `Player.kt`, `Controls.kt`, `Queue.kt`, `LyricsDialog.kt`, `HomeAlbumsViewModel.kt`, `HomeDiscoveryViewModel.kt`, `HomePlaylistsViewModel.kt`, `HomeQuickPicksViewModel.kt`) while strictly preserving `Thumbnail.kt` for live PiP mode.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL in 4m 2s`).
+- **Learnings for future iterations:**
+  - `Thumbnail.kt` is directly invoked by `MainActivity.kt` in Android Picture-in-Picture mode (`if (currentPip) Thumbnail(...)`). Separating dead prototype shells (`Player.kt`, `Controls.kt`) from live overlay widgets (`Thumbnail.kt`, `Lyrics.kt`, `StatsForNerds.kt`, `PlaybackError.kt`) ensures PiP continues to function perfectly while eliminating dead code.
+---

@@ -112,7 +112,7 @@ import com.varshudev.a1swaara.utils.forcePlayFromBeginning
 import com.varshudev.a1swaara.utils.forcePlayAtIndex
 import com.varshudev.a1swaara.utils.hasPermission
 import com.varshudev.a1swaara.utils.toast
-import com.varshudev.a1swaara.ui.screens.home.musicFilesAsFlow
+import com.varshudev.a1swaara.utils.musicFilesAsFlow
 import app.a1swaara.core.ui.utils.isAtLeastAndroid13
 import android.Manifest
 import android.content.Intent
