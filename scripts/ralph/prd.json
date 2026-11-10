@@ -1,115 +1,175 @@
 {
   "project": "A1 Swaara",
-  "branchName": "ralph/lossless-audio-engine",
-  "description": "Swaara Lossless Audio Engine v1.1.4 - Apple Music-style maximum fidelity audio with quality badges, hi-fi ExoPlayer rendering, and intelligent stream selection",
+  "branchName": "ralph/ui-obsidian-unification",
+  "description": "Unify every screen, drill-down route, dialog, action sheet, and control in A1 Swaara onto the Obsidian & Neon Glass design system while eliminating legacy ViMusic chrome, rotated rails, and #1DB954 Spotify green defaults.",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Audio Quality Preference Enum and Storage",
-      "description": "As a user, I want to choose my preferred audio quality tier so that the app always streams at my chosen fidelity level.",
+      "title": "Unify Core Color Palette and Brand Tokens",
+      "description": "As a user, I want default theme accents, surfaces, gradients, and favorite icons to use Swaara Obsidian, Magenta, Violet, and Cyan instead of legacy Spotify green (#1DB954) while preserving Dynamic and Material You palette modes.",
       "acceptanceCriteria": [
-        "Add AudioQuality enum to PlayerPreferences with values: Auto, Normal (128kbps), High (192kbps), Maximum (256kbps+)",
-        "Add audioQuality property to PlayerPreferences defaulting to Maximum",
-        "Add losslessMode boolean property to PlayerPreferences defaulting to true",
-        "When losslessMode is true, automatically disable volumeNormalization and skipSilence",
-        "Code compiles cleanly offline"
+        "Update defaultAccentColor, defaultDarkPalette, swaaraGradientEnd, swaaraDarkBackground, swaaraSurfaceCard, and favoritesIcon in core/ui ColorPalette.kt away from 0xFF1DB954 to Swaara Magenta/Cyan tokens",
+        "Ensure onAccent provides crisp legible contrast across dark and light defaults and darkColorPalette backgrounds match SwaaraObsidian/DeepSurface/ElevatedSurface",
+        "Consolidate SwaaraThemeTokens.kt and SwaaraGlassContainer.kt without breaking any existing callers",
+        "Preserve ColorSource.Dynamic and ColorSource.MaterialYou palette generation behavior",
+        "./gradlew.bat --offline :core:ui:compileDebugKotlin :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Added AudioQuality enum with Maximum, Auto, High, Normal and losslessMode preference"
+      "notes": "Verified with :core:ui:compileDebugKotlin and :app:compileHttp3ReleaseKotlin"
     },
     {
       "id": "US-002",
-      "title": "Maximum Bitrate Stream Selection in Extractor",
-      "description": "As a user, I want the app to always pick the highest bitrate audio stream from YouTube so that I get the best possible sound quality.",
+      "title": "Upgrade Core Themed Controls and List Item Cards",
+      "description": "As a user, I want buttons, sliders, progress bars, toggles, text fields, thumbnails, and song/album/artist cards to share the Swaara Neon Glass aesthetic with zero green glows or harsh raw fallback icons.",
       "acceptanceCriteria": [
-        "Modify audioStreamComparator in NewPipeExtractorClient to rank OPUS above M4A above WEBMA above MP3",
-        "When AudioQuality.Maximum is selected, always pick the stream with the highest averageBitrate",
-        "When AudioQuality.Normal is selected, pick streams with bitrate closest to 128kbps",
-        "When AudioQuality.High is selected, pick streams with bitrate closest to 192kbps",
-        "When AudioQuality.Auto, use current default comparator (highest available)",
-        "Log the selected stream codec, bitrate, and itag in Logcat",
-        "Code compiles cleanly offline"
+        "Remove hardcoded 0xFF1DB954 spot shadows and flat #2A2A38 borders in BigIconButton.kt and LayoutWithAdaptiveThumbnail.kt",
+        "Upgrade PrimaryButton, SecondaryButton (FloatingActionsContainer.kt), SecondaryTextButton, DialogTextButton, Slider, ProgressIndicator, TextToggle, and TextField to Swaara glass/neon styling",
+        "Modernize HeaderPlaceholder/TextPlaceholder/RetryMessage/Divider/ReorderHandle and SongItem/AlbumItem/ArtistItem/PlaylistItem/VideoItem (replace raw ic_launcher_foreground error fallback in SongItem.kt with clean Swaara fallback)",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Configured dynamic stream selection prioritizing OPUS 251kbps/AAC 256kbps peak bitrates"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Hi-Fi ExoPlayer Audio Renderer Configuration",
-      "description": "As a user, I want the audio renderer to output at the highest possible hardware fidelity so that I hear every detail.",
+      "title": "Restyle All Global Dialogs and Popups",
+      "description": "As a user, I want every modal dialog across the player, library, lyrics, cloud sync, playlist importer, and settings to use rounded Obsidian Glass surfaces with subtle neon borders instead of sharp 8.dp ViMusic boxes or plain unbordered M3 popups.",
       "acceptanceCriteria": [
-        "In createRendersFactory, always pass enableFloatOutput = true to DefaultAudioSink",
-        "Increase buffer sizes: minBuffer to 60s, maxBuffer to 240s for uninterrupted streaming",
-        "Disable audio offload mode on all Android versions in lossless mode",
-        "Request exclusive audio focus when lossless mode is active",
-        "Code compiles cleanly offline"
+        "Restyle DefaultDialog, TextFieldDialog, NumberFieldDialog, ConfirmationDialog, ValueSelectorDialog, and SliderDialog in Dialog.kt to SwaaraGlassContainer 24.dp cards without excessive 48.dp margins",
+        "Restyle ImportPlaylistDialog.kt gradient dot/chrome while preserving green/red platform recognition pills for Spotify/YouTube URLs",
+        "Ensure LrcLibSearchDialog (Lyrics.kt), SwaaraSleepTimerDialog, SwaaraStoryCardDialog, SwaaraCloudSyncScreen broadcast AlertDialog, and SwaaraLibraryScreen New Playlist AlertDialog share consistent glass borders and Swaara tokens",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Enforced 32-bit float output in DefaultAudioSink, 60s/240s buffer sizes, and lossless silence threshold"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Real-Time Audio Quality Badge in Player UI",
-      "description": "As a user, I want to see what audio quality is currently playing in the player UI, similar to Apple Music's Lossless badge.",
+      "title": "Unify BottomSheet Action Menus and Downloads Popup",
+      "description": "As a user, I want long-press song/album/playlist action sheets and Downloads option menus to open in Swaara Obsidian Glass sheets with a drag handle, track card header, and Swaara action icons.",
       "acceptanceCriteria": [
-        "Create SwaaraAudioQualityBadge composable showing quality tier label (LOSSLESS, HI-RES, HIGH, NORMAL)",
-        "Display current codec name (OPUS, AAC, FLAC, WAV, ALAC) and bitrate (e.g. 256 kbps)",
-        "For local FLAC/WAV/ALAC files, show LOSSLESS or HI-RES LOSSLESS badge",
-        "For streaming OPUS 251kbps+, show MAXIMUM badge",
-        "Badge appears below the song title in both Classic and New player layouts",
-        "Animate badge appearance with a subtle fade-in",
-        "Code compiles cleanly offline"
+        "Upgrade Menu and MenuEntry in Menu.kt to 24.dp rounded top corners, SwaaraDeepSurface, subtle top hairline glass border, centered drag handle pill, and elevated interactive row styling",
+        "Update MediaItemMenu.kt header/actions/playlist-picker bar to use Swaara Magenta/Cyan accents and consistent Swaara iconography",
+        "Replace stock Material3 DropdownMenu in SwaaraDownloadsScreen.kt with a matching Swaara styled menu/bottom sheet",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Wired dynamicAudioBadgeText into SwaaraNowPlayingScreen observing Room Format and local track metadata"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-005",
-      "title": "Audio Quality Settings Section in Player Settings",
-      "description": "As a user, I want a dedicated audio quality section in Player Settings to configure my streaming and playback quality preferences.",
+      "title": "Replace Rotated Portrait NavigationRail and Scaffold Chrome",
+      "description": "As a user, I want drill-down pages to use a unified Swaara top bar with circular glass back navigation and horizontal neon pill tabs in portrait (hiding tabs when there is only 1 tab) instead of a rotated -90f ViMusic side rail.",
       "acceptanceCriteria": [
-        "Add Audio Quality settings group in PlayerSettings screen above the existing Audio group",
-        "Add enum selector for AudioQuality (Auto / Normal / High / Maximum) with descriptions",
-        "Add toggle for Lossless Mode with description explaining it disables normalization and skip-silence",
-        "Show informational text: Local files (FLAC, WAV, ALAC) always play at original lossless quality",
-        "Add string resources for all new labels and descriptions",
-        "Code compiles cleanly offline"
+        "Update Scaffold.kt and NavigationRail.kt so portrait renders Swaara top bar + horizontal scrollable neon pill tabs when multi-tab and zero tab strip when single-tab (keeping compact side rail only in landscape)",
+        "Update Header.kt, SongListScaffold.kt, PlaylistInfo.kt, and SongListActionsRow.kt to Swaara alignment, typography, and glass pill bar styling while respecting LocalPlayerAwareWindowInsets and statusBarsPadding",
+        "Extract HeaderSongSortBy out of dead HomeSongs.kt into ui/components/themed/ so live playlists do not depend on dead home screens",
+        "Keep long-press tab visibility customization working with the restyled DefaultDialog",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Added dedicated Audio Quality settings category and localized string resources"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-006",
-      "title": "Format Model Enhancement and Quality Metadata Persistence",
-      "description": "As a developer, I need to store richer audio format metadata so the quality badge can display accurate information.",
+      "title": "Restyle Album, Online Playlist, and Piped Playlist Drill-Downs",
+      "description": "As a user, I want Album, Online Playlist, and Piped Playlist detail pages to match A1 Swaara's Obsidian & Neon Glass hero and track list aesthetic.",
       "acceptanceCriteria": [
-        "Add codec (String?), sampleRate (Int?), and channelCount (Int?) fields to Format entity",
-        "Room auto-migration handles the new nullable columns without data loss",
-        "writeStreamMetadata in NewPipeAudioMediaSourceFactory populates new fields from the selected stream",
-        "Code compiles cleanly offline"
+        "Restyle AlbumScreen.kt and AlbumSongs.kt with clean top action bar (Bookmark, Share), glowing album hero artwork card, metadata pills, horizontal tabs (Songs, Other versions), and glass track rows",
+        "Restyle PlaylistScreen.kt, PlaylistSongList.kt, PipedPlaylistScreen.kt, and PipedPlaylistSongList.kt with clean back top bar, glass filter controls, and unified action FABs/pills",
+        "Ensure LocalPlayerAwareWindowInsets bottom padding clears mini-player/system bars without overlapping floating buttons",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 6,
-      "passes": true,
-      "notes": "Format model enriched with codec, sampleRate, channelCount, and quality tier evaluation properties"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "US-007",
-      "title": "Version Bump and Build Verification",
-      "description": "As a developer, I need to verify the lossless audio engine builds cleanly and produces a verified v1.1.4 APK.",
+      "title": "Unify Artist Studio Screen and Overview",
+      "description": "As a user, I want Artist pages to remove legacy green links, align their top bar and horizontal tabs, and seamlessly match the Magenta/Violet/Cyan artist hero card.",
       "acceptanceCriteria": [
-        "./gradlew.bat --offline assembleHttp3Release completes with zero errors",
-        "Version bumped to 1.1.4 (versionCode 15) in build.gradle.kts",
-        "Output APK generated at app/build/outputs/apk/http3/release/",
-        "APK copied to A1Swaara_apk/A1_Swaara_v1.1.4.apk"
+        "Update ArtistScreen.kt, ArtistOverview.kt, and ArtistLocalSongs.kt to use Swaara top bar (Bookmark, Top Listener Leaderboard, Share) and horizontal scrollable pill tabs across Overview/Songs/Albums/Singles/Videos/Library",
+        "Replace colorPalette.accent green View all text in ArtistOverview.kt with cohesive SwaaraCyan/SwaaraMagenta pill buttons",
+        "Preserve Subscribe CTA, Artist Leaderboard shortcut, Shuffle, Download, Enqueue, and song swipe actions cleanly",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 7,
-      "passes": true,
-      "notes": "Verified build output 28.89 MB APK copied to A1_Swaara_v1.1.4.apk"
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Unify Local Playlist and Built-In Collection Screens",
+      "description": "As a user, I want Local Playlist and Built-In Collection screens (Favorites, Offline, Top Tracks, History) to seamlessly match SwaaraLibraryScreen.",
+      "acceptanceCriteria": [
+        "Update LocalPlaylistScreen.kt and LocalPlaylistSongs.kt to use extracted HeaderSongSortBy, Swaara top bar (rename, 6-digit share code, sync, delete), and Obsidian drag-reorder track items",
+        "Update BuiltInPlaylistScreen.kt and BuiltInPlaylistSongs.kt with horizontal pill tabs (Favorites, Offline, Top X, History) and restyled time-period selector chip",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Align Search Results and Moods Browser With Swaara Visuals",
+      "description": "As a user, I want tapping a search query or mood genre to open an Obsidian Glass result screen with horizontal category chips matching SwaaraSearchScreen and SwaaraHomeScreen.",
+      "acceptanceCriteria": [
+        "Restyle SearchResultScreen.kt and ItemsPage.kt with interactive Obsidian glass search query bar (tap to edit/re-search) + horizontal filter chips (Songs, Albums, Artists, Videos, Playlists) and glass retry/empty states",
+        "Restyle MoodScreen.kt and MoodList.kt with Swaara gradient header badge and cohesive section titles/carousels",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Unify Global Settings Route, LogsScreen, Subpages, and Download Progress",
+      "description": "As a user, I want global settings links, Settings subpages, Logs diagnostics, and the global download bar to all use cohesive Swaara Obsidian Glass styling.",
+      "acceptanceCriteria": [
+        "Route settingsRoute in Routes.kt (and OS preferences intent) to SwaaraSettingsScreen with optional onDismiss back/close button, and embed Piped SyncSettings cleanly inside Accounts & Sync",
+        "Restyle LogsScreen.kt from glaring full-color blocks to dark SwaaraDeepSurface cards with semantic colored severity pills/borders and Swaara top bar",
+        "Polish CacheSettings, PlayerSettings, AppearanceSettings, DatabaseSettings, OtherSettings, About, and MainActivity.kt top download LinearProgressIndicator to Swaara Neon Glass styling",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Polish Lyrics/PiP Overlays, Relocate musicFilesAsFlow, and Safely Prune Dead Prototypes",
+      "description": "As a developer and user, I want Lyrics/Stats/Error PiP overlays polished to Obsidian Glass and unused dead prototype screens safely cleaned up without breaking any live imports or PiP mode.",
+      "acceptanceCriteria": [
+        "Polish StatsForNerds.kt, PlaybackError.kt, and Lyrics.kt menu/button styling to match Swaara Obsidian Glass",
+        "Relocate musicFilesAsFlow out of HomeLocalSongs.kt into a live shared utility and update SwaaraLibraryScreen.kt; relocate/inline MoodItem if needed",
+        "Verify zero callers exist via grep and safely remove dead unrouted prototype screens (keeping Thumbnail.kt, StatsForNerds.kt, PlaybackError.kt, MoreMoodsList/Discover only if unused)",
+        "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Full Offline Release Build Verification and Audit Sign-Off",
+      "description": "As a developer, I want to verify zero unintended #1DB954 or legacy rail regressions remain and confirm the full offline HTTP3 release APK builds cleanly.",
+      "acceptanceCriteria": [
+        "Audit codebase for unintended 0xFF1DB954 occurrences (leaving only intentional Spotify URL brand badge) and rotated NavigationRail regressions",
+        "Run ./gradlew.bat --offline compileHttp3ReleaseKotlin with zero errors",
+        "Run ./gradlew.bat --offline assembleHttp3Release with zero errors and verify release APK generated cleanly",
+        "Verify A1Swaara_apk/ workspace untouched unless explicitly requested and report verification results"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
     }
   ]
 }

@@ -1,0 +1,115 @@
+{
+  "project": "A1 Swaara",
+  "branchName": "ralph/lossless-audio-engine",
+  "description": "Swaara Lossless Audio Engine v1.1.4 - Apple Music-style maximum fidelity audio with quality badges, hi-fi ExoPlayer rendering, and intelligent stream selection",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Audio Quality Preference Enum and Storage",
+      "description": "As a user, I want to choose my preferred audio quality tier so that the app always streams at my chosen fidelity level.",
+      "acceptanceCriteria": [
+        "Add AudioQuality enum to PlayerPreferences with values: Auto, Normal (128kbps), High (192kbps), Maximum (256kbps+)",
+        "Add audioQuality property to PlayerPreferences defaulting to Maximum",
+        "Add losslessMode boolean property to PlayerPreferences defaulting to true",
+        "When losslessMode is true, automatically disable volumeNormalization and skipSilence",
+        "Code compiles cleanly offline"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Added AudioQuality enum with Maximum, Auto, High, Normal and losslessMode preference"
+    },
+    {
+      "id": "US-002",
+      "title": "Maximum Bitrate Stream Selection in Extractor",
+      "description": "As a user, I want the app to always pick the highest bitrate audio stream from YouTube so that I get the best possible sound quality.",
+      "acceptanceCriteria": [
+        "Modify audioStreamComparator in NewPipeExtractorClient to rank OPUS above M4A above WEBMA above MP3",
+        "When AudioQuality.Maximum is selected, always pick the stream with the highest averageBitrate",
+        "When AudioQuality.Normal is selected, pick streams with bitrate closest to 128kbps",
+        "When AudioQuality.High is selected, pick streams with bitrate closest to 192kbps",
+        "When AudioQuality.Auto, use current default comparator (highest available)",
+        "Log the selected stream codec, bitrate, and itag in Logcat",
+        "Code compiles cleanly offline"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Configured dynamic stream selection prioritizing OPUS 251kbps/AAC 256kbps peak bitrates"
+    },
+    {
+      "id": "US-003",
+      "title": "Hi-Fi ExoPlayer Audio Renderer Configuration",
+      "description": "As a user, I want the audio renderer to output at the highest possible hardware fidelity so that I hear every detail.",
+      "acceptanceCriteria": [
+        "In createRendersFactory, always pass enableFloatOutput = true to DefaultAudioSink",
+        "Increase buffer sizes: minBuffer to 60s, maxBuffer to 240s for uninterrupted streaming",
+        "Disable audio offload mode on all Android versions in lossless mode",
+        "Request exclusive audio focus when lossless mode is active",
+        "Code compiles cleanly offline"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Enforced 32-bit float output in DefaultAudioSink, 60s/240s buffer sizes, and lossless silence threshold"
+    },
+    {
+      "id": "US-004",
+      "title": "Real-Time Audio Quality Badge in Player UI",
+      "description": "As a user, I want to see what audio quality is currently playing in the player UI, similar to Apple Music's Lossless badge.",
+      "acceptanceCriteria": [
+        "Create SwaaraAudioQualityBadge composable showing quality tier label (LOSSLESS, HI-RES, HIGH, NORMAL)",
+        "Display current codec name (OPUS, AAC, FLAC, WAV, ALAC) and bitrate (e.g. 256 kbps)",
+        "For local FLAC/WAV/ALAC files, show LOSSLESS or HI-RES LOSSLESS badge",
+        "For streaming OPUS 251kbps+, show MAXIMUM badge",
+        "Badge appears below the song title in both Classic and New player layouts",
+        "Animate badge appearance with a subtle fade-in",
+        "Code compiles cleanly offline"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Wired dynamicAudioBadgeText into SwaaraNowPlayingScreen observing Room Format and local track metadata"
+    },
+    {
+      "id": "US-005",
+      "title": "Audio Quality Settings Section in Player Settings",
+      "description": "As a user, I want a dedicated audio quality section in Player Settings to configure my streaming and playback quality preferences.",
+      "acceptanceCriteria": [
+        "Add Audio Quality settings group in PlayerSettings screen above the existing Audio group",
+        "Add enum selector for AudioQuality (Auto / Normal / High / Maximum) with descriptions",
+        "Add toggle for Lossless Mode with description explaining it disables normalization and skip-silence",
+        "Show informational text: Local files (FLAC, WAV, ALAC) always play at original lossless quality",
+        "Add string resources for all new labels and descriptions",
+        "Code compiles cleanly offline"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Added dedicated Audio Quality settings category and localized string resources"
+    },
+    {
+      "id": "US-006",
+      "title": "Format Model Enhancement and Quality Metadata Persistence",
+      "description": "As a developer, I need to store richer audio format metadata so the quality badge can display accurate information.",
+      "acceptanceCriteria": [
+        "Add codec (String?), sampleRate (Int?), and channelCount (Int?) fields to Format entity",
+        "Room auto-migration handles the new nullable columns without data loss",
+        "writeStreamMetadata in NewPipeAudioMediaSourceFactory populates new fields from the selected stream",
+        "Code compiles cleanly offline"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Format model enriched with codec, sampleRate, channelCount, and quality tier evaluation properties"
+    },
+    {
+      "id": "US-007",
+      "title": "Version Bump and Build Verification",
+      "description": "As a developer, I need to verify the lossless audio engine builds cleanly and produces a verified v1.1.4 APK.",
+      "acceptanceCriteria": [
+        "./gradlew.bat --offline assembleHttp3Release completes with zero errors",
+        "Version bumped to 1.1.4 (versionCode 15) in build.gradle.kts",
+        "Output APK generated at app/build/outputs/apk/http3/release/",
+        "APK copied to A1Swaara_apk/A1_Swaara_v1.1.4.apk"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Verified build output 28.89 MB APK copied to A1_Swaara_v1.1.4.apk"
+    }
+  ]
+}

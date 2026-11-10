@@ -5,6 +5,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.palette.graphics.Palette
@@ -23,9 +24,9 @@ data class ColorPalette(
     val background2: ParcelableColor,
     val accent: ParcelableColor,
     val onAccent: ParcelableColor,
-    val red: ParcelableColor = Color(0xffbf4040),
-    val blue: ParcelableColor = Color(0xff4472cf),
-    val yellow: ParcelableColor = Color(0xfffff176),
+    val red: ParcelableColor = Color(0xFFFF526B),
+    val blue: ParcelableColor = Color(0xFF20CFFF),
+    val yellow: ParcelableColor = Color(0xFFFFD166),
     val text: ParcelableColor,
     val textSecondary: ParcelableColor,
     val textDisabled: ParcelableColor,
@@ -33,13 +34,13 @@ data class ColorPalette(
     val isDark: Boolean
 ) : Parcelable
 
-private val defaultAccentColor = Color(0xFF1DB954).hsl
+private val defaultAccentColor = Color(0xFFFF2DAA).hsl
 
-val swaaraGradientStart = Color(0xFFFF3579)
-val swaaraGradientEnd = Color(0xFF1DB954)
-val swaaraCyan = Color(0xFF00F5D4)
-val swaaraDarkBackground = Color(0xFF0A0A0C)
-val swaaraSurfaceCard = Color(0xFF1A1A24)
+val swaaraGradientStart = Color(0xFFFF2DAA)
+val swaaraGradientEnd = Color(0xFF20CFFF)
+val swaaraCyan = Color(0xFF20CFFF)
+val swaaraDarkBackground = Color(0xFF07070B)
+val swaaraSurfaceCard = Color(0xFF111119)
 
 val defaultLightPalette = ColorPalette(
     background0 = Color(0xfffdfdfe),
@@ -55,14 +56,14 @@ val defaultLightPalette = ColorPalette(
 )
 
 val defaultDarkPalette = ColorPalette(
-    background0 = Color(0xFF0A0A0C),
-    background1 = Color(0xFF12121A),
-    background2 = Color(0xFF1A1A24),
-    text = Color(0xFFF5F5F7),
-    textSecondary = Color(0xFFA0A0AB),
-    textDisabled = Color(0xFF606068),
-    accent = Color(0xFF1DB954),
-    onAccent = Color.Black,
+    background0 = Color(0xFF07070B),
+    background1 = Color(0xFF111119),
+    background2 = Color(0xFF191924),
+    text = Color(0xFFF7F7FA),
+    textSecondary = Color(0xFF9696A5),
+    textDisabled = Color(0xFF555566),
+    accent = Color(0xFFFF2DAA),
+    onAccent = Color.White,
     isDefault = true,
     isDark = true
 )
@@ -72,46 +73,49 @@ private fun lightColorPalette(accent: Hsl) = lightColorPalette(
     saturation = accent.saturation
 )
 
-private fun lightColorPalette(hue: Float, saturation: Float) = ColorPalette(
-    background0 = Color.hsl(
+private fun lightColorPalette(hue: Float, saturation: Float): ColorPalette {
+    val computedAccent = Color.hsl(
         hue = hue,
-        saturation = saturation.coerceAtMost(0.1f),
-        lightness = 0.925f
-    ),
-    background1 = Color.hsl(
-        hue = hue,
-        saturation = saturation.coerceAtMost(0.3f),
-        lightness = 0.90f
-    ),
-    background2 = Color.hsl(
-        hue = hue,
-        saturation = saturation.coerceAtMost(0.4f),
-        lightness = 0.85f
-    ),
-    text = Color.hsl(
-        hue = hue,
-        saturation = saturation.coerceAtMost(0.02f),
-        lightness = 0.12f
-    ),
-    textSecondary = Color.hsl(
-        hue = hue,
-        saturation = saturation.coerceAtMost(0.1f),
-        lightness = 0.40f
-    ),
-    textDisabled = Color.hsl(
-        hue = hue,
-        saturation = saturation.coerceAtMost(0.2f),
-        lightness = 0.65f
-    ),
-    accent = Color.hsl(
-        hue = hue,
-        saturation = saturation.coerceAtMost(0.5f),
-        lightness = 0.5f
-    ),
-    onAccent = Color.White,
-    isDefault = false,
-    isDark = false
-)
+        saturation = saturation.coerceAtMost(0.6f),
+        lightness = 0.48f
+    )
+    return ColorPalette(
+        background0 = Color.hsl(
+            hue = hue,
+            saturation = saturation.coerceAtMost(0.1f),
+            lightness = 0.925f
+        ),
+        background1 = Color.hsl(
+            hue = hue,
+            saturation = saturation.coerceAtMost(0.3f),
+            lightness = 0.90f
+        ),
+        background2 = Color.hsl(
+            hue = hue,
+            saturation = saturation.coerceAtMost(0.4f),
+            lightness = 0.85f
+        ),
+        text = Color.hsl(
+            hue = hue,
+            saturation = saturation.coerceAtMost(0.02f),
+            lightness = 0.12f
+        ),
+        textSecondary = Color.hsl(
+            hue = hue,
+            saturation = saturation.coerceAtMost(0.1f),
+            lightness = 0.40f
+        ),
+        textDisabled = Color.hsl(
+            hue = hue,
+            saturation = saturation.coerceAtMost(0.2f),
+            lightness = 0.65f
+        ),
+        accent = computedAccent,
+        onAccent = if (computedAccent.luminance() > 0.45f) Color.Black else Color.White,
+        isDefault = false,
+        isDark = false
+    )
+}
 
 private fun darkColorPalette(accent: Hsl, darkness: Darkness) = darkColorPalette(
     hue = accent.hue,
@@ -123,22 +127,25 @@ private fun darkColorPalette(
     hue: Float,
     saturation: Float,
     darkness: Darkness
-) = ColorPalette(
-    background0 = if (darkness == Darkness.Normal) Color(0xFF0A0A0C) else Color.Black,
-    background1 = if (darkness == Darkness.Normal) Color(0xFF12121A) else Color(0xFF0D0D0D),
-    background2 = if (darkness == Darkness.Normal) Color(0xFF1A1A24) else Color(0xFF161616),
-    text = Color(0xFFF5F5F7),
-    textSecondary = Color(0xFFA0A0AB),
-    textDisabled = Color(0xFF606068),
-    accent = Color.hsl(
+): ColorPalette {
+    val computedAccent = Color.hsl(
         hue = hue,
         saturation = saturation.coerceAtLeast(0.6f),
-        lightness = 0.5f
-    ),
-    onAccent = Color.Black,
-    isDefault = false,
-    isDark = true
-)
+        lightness = 0.52f
+    )
+    return ColorPalette(
+        background0 = if (darkness == Darkness.Normal) Color(0xFF07070B) else Color.Black,
+        background1 = if (darkness == Darkness.Normal) Color(0xFF111119) else Color(0xFF0D0D0D),
+        background2 = if (darkness == Darkness.Normal) Color(0xFF191924) else Color(0xFF161616),
+        text = Color(0xFFF7F7FA),
+        textSecondary = Color(0xFF9696A5),
+        textDisabled = Color(0xFF555566),
+        accent = computedAccent,
+        onAccent = if (computedAccent.luminance() > 0.45f) Color.Black else Color.White,
+        isDefault = false,
+        isDark = true
+    )
+}
 
 fun accentColorOf(
     source: ColorSource,
@@ -222,8 +229,12 @@ fun colorPaletteOf(
 inline val ColorPalette.isPureBlack get() = background0 == Color.Black
 inline val ColorPalette.collapsedPlayerProgressBar
     get() = if (isPureBlack) defaultDarkPalette.background0 else background2
-inline val ColorPalette.favoritesIcon get() = if (isDefault) Color(0xFF1DB954) else accent
-inline val ColorPalette.shimmer get() = Color(0xFF222230)
+inline val ColorPalette.favoritesIcon get() = if (isDefault) Color(0xFFFF2DAA) else accent
+inline val ColorPalette.secondaryAccent get() = if (isDefault) Color(0xFF20CFFF) else accent
+inline val ColorPalette.tertiaryAccent get() = if (isDefault) Color(0xFF8B35FF) else accent
+inline val ColorPalette.glassBorder
+    get() = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f)
+inline val ColorPalette.shimmer get() = if (isDark) Color(0xFF1E1E2B) else Color(0xFFE0E0EC)
 inline val ColorPalette.primaryButton get() = if (isPureBlack) Color(0xFF161616) else background2
 
 @Suppress("UnusedReceiverParameter")

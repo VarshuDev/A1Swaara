@@ -1,25 +1,18 @@
 # Ralph Progress Log
-Started: 2026-10-28 20:06:00
+Started: 11/10/2026 23:11:54
 ---
 
 ## Codebase Patterns
-- Audio stream selection uses `audioStreamComparator` in `NewPipeExtractorClient.kt` (line 337).
-- Codec quality rank: MP3=0, WEBMA=1, M4A=2, OPUS=3. Comparator picks max (format rank, then bitrate).
-- ExoPlayer renderer built in `createRendersFactory()` in `PlayerService.kt`.
-- DefaultAudioSink with forced 32-bit float output passthrough on capable hardware.
-- Expanded playback buffers: 60s min, 240s max for uninterrupted high-bitrate streaming.
-- Silence threshold set to 0 in lossless mode to bypass silence skipping and preserve pristine signal paths.
-- Local files bypass network with `isLocal` check in `NewPipeAudioMediaSourceFactory.createMediaSource`.
-- Format entity enriched with `codec`, `sampleRate`, `channelCount`, and computed `qualityTier` / `codecDisplayName` / `bitrateDisplayText`.
-- Player UI (`SwaaraNowPlayingScreen.kt`) features real-time badge displaying live codec, bitrate, and quality tier.
+- Active Swaara visual tokens live in SwaaraThemeTokens.kt (SwaaraColors) and SwaaraGlassContainer.kt (SwaaraObsidian, SwaaraDeepSurface, SwaaraElevatedSurface, SwaaraMagenta, SwaaraViolet, SwaaraCyan, SwaaraBrandGradient, SwaaraSignatureGradient).
+- Legacy theme palette in core/ui/.../ColorPalette.kt feeds LocalAppearance.current.colorPalette for drill-down screens and dialogs.
+- All pushed drill-down routes live in ui/screens/Routes.kt and ui/screens/SwaaraAppShell.kt inside RouteHandler(listenToGlobalEmitter = true). Do not break route keys, PersistMapCleanup tags, or PiP overlays (Thumbnail.kt, StatsForNerds.kt, PlaybackError.kt).
 
-## 2026-10-28 - US-001 through US-007: Lossless Audio Engine Complete (v1.1.4)
-- Added `PlayerPreferences.AudioQuality` with Maximum, Auto, High, Normal tiers and `losslessMode` toggle.
-- Modified `NewPipeExtractorClient.kt` stream selection logic to respect target bitrates and rank OPUS highest.
-- Configured audiophile ExoPlayer pipeline in `PlayerService.kt` with 32-bit float output and expanded buffering.
-- Implemented real-time dynamic audio badge in `SwaaraNowPlayingScreen.kt` for both streaming and local tracks.
-- Added dedicated Audio Quality configuration section in `PlayerSettings.kt`.
-- Bumped app version to 1.1.4 (versionCode 15).
-- Compiled release binary offline: `./gradlew.bat --offline assembleHttp3Release` (0 errors).
-- Generated release artifact: `A1_Swaara_v1.1.4.apk` (28.89 MB).
-<promise>COMPLETE</promise>
+
+## 2026-11-10 23:18 - US-001
+- Updated `core/ui/src/main/kotlin/app/a1swaara/core/ui/ColorPalette.kt` to replace default `#1DB954` accent, `swaaraGradientEnd`, `swaaraDarkBackground`, `swaaraSurfaceCard`, and `favoritesIcon` with Swaara Obsidian (`#07070B`/`#111119`/`#191924`), Magenta (`#FF2DAA`), and Cyan (`#20CFFF`) tokens, added luminance-aware `onAccent`, theme-aware `shimmer`, `secondaryAccent`, `tertiaryAccent`, and `glassBorder` extensions, while preserving `ColorSource.Dynamic` and `ColorSource.MaterialYou`.
+- Consolidated `SwaaraThemeTokens.kt` (`ModalSurface`, `SubtleBorder`, `Error`) and `SwaaraGlassContainer.kt` (`SwaaraModalSurface`, `SwaaraBorderSubtle`, `SwaaraErrorRed`, optional `borderBrush`).
+- Files changed: `ColorPalette.kt`, `SwaaraThemeTokens.kt`, `SwaaraGlassContainer.kt`, `scripts/ralph/prd.json`, `scripts/ralph/progress.txt`, `scripts/ralph/archive/2026-11-10-lossless-audio-engine/*`.
+- **Learnings for future iterations:**
+  - Gradle subproject path in `settings.gradle.kts` is `:core:ui` (not `:core-ui`).
+  - `ColorPalette.isDark` and `ColorPalette.isPureBlack` matter for AMOLED/Darkness/Light themes; derive surface/glass colors gracefully from `colorPalette` in themed components rather than hardcoding dark-only hexes when dynamic/light themes are active.
+---

@@ -18,12 +18,15 @@ import androidx.compose.ui.unit.dp
 
 val SwaaraObsidian = Color(0xFF08080C)
 val SwaaraDeepSurface = Color(0xFF111119)
+val SwaaraModalSurface = Color(0xFF141424)
 val SwaaraElevatedSurface = Color(0xFF171722)
 val SwaaraMagenta = Color(0xFFFF2DAA)
 val SwaaraViolet = Color(0xFF8B35FF)
 val SwaaraCyan = Color(0xFF20CFFF)
 val SwaaraPrimaryText = Color(0xFFF7F7FA)
 val SwaaraSecondaryText = Color(0xFF9696A5)
+val SwaaraBorderSubtle = Color.White.copy(alpha = 0.08f)
+val SwaaraErrorRed = Color(0xFFFF526B)
 
 // Compatibility aliases
 val SwaaraPink = SwaaraMagenta
@@ -57,8 +60,14 @@ fun SwaaraGlassContainer(
     borderColor: Color = Color.White.copy(alpha = 0.08f),
     borderWidth: Dp = 1.dp,
     shadowElevation: Dp = 6.dp,
+    borderBrush: Brush? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val borderStroke = if (borderBrush != null) {
+        BorderStroke(borderWidth, borderBrush)
+    } else {
+        BorderStroke(borderWidth, borderColor)
+    }
     Box(
         modifier = modifier
             .shadow(
@@ -70,7 +79,7 @@ fun SwaaraGlassContainer(
             .clip(shape)
             .background(backgroundColor)
             .border(
-                border = BorderStroke(borderWidth, borderColor),
+                border = borderStroke,
                 shape = shape
             )
     ) {
