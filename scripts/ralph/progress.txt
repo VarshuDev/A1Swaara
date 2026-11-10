@@ -129,3 +129,16 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - `Thumbnail.kt` is directly invoked by `MainActivity.kt` in Android Picture-in-Picture mode (`if (currentPip) Thumbnail(...)`). Separating dead prototype shells (`Player.kt`, `Controls.kt`) from live overlay widgets (`Thumbnail.kt`, `Lyrics.kt`, `StatsForNerds.kt`, `PlaybackError.kt`) ensures PiP continues to function perfectly while eliminating dead code.
 ---
+
+## 2026-11-11 00:46 - US-012
+- Audited codebase for legacy regressions:
+  - Verified zero unintended `0xFF1DB954` or `#1DB954` occurrences remain across the entire repository (only the intentional external Spotify playlist URL brand badge in `ImportPlaylistDialog.kt` remains).
+  - Verified zero rotated portrait `NavigationRail` regressions remain (`Scaffold.kt` renders `SwaaraScaffoldHeader` in portrait; landscape retains compact rail with `rotationZ = 0f`).
+  - Verified `c:\Users\varshan\Downloads\projects\A1Swaara_apk` remains completely untouched.
+- Executed full offline release compilation & assembly:
+  - `.\gradlew.bat --offline assembleHttp3Release` completed with exit 0 (`BUILD SUCCESSFUL in 4m 6s`, 354 actionable tasks, 29 executed, 325 up-to-date).
+  - Confirmed signed release APK exists at `app/build/outputs/apk/http3/release/app-http3-release.apk` (28,815,767 bytes).
+- Concluded Ralph Loop for UI consistency unification (`US-001` through `US-012` all passed).
+- **Learnings for future iterations:**
+  - Strict isolation of individual user stories with automated offline compilation gate after every story ensures zero accumulated compilation debt or broken imports, allowing the final release build and R8 shrinking to pass cleanly on the first run.
+---
