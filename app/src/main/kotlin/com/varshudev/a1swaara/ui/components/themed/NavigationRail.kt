@@ -13,12 +13,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
@@ -26,12 +29,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
@@ -52,12 +59,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import com.varshudev.a1swaara.LocalPlayerAwareWindowInsets
 import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.ui.components.SwaaraBrandGradient
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.ui.screens.settings.SwitchSettingsEntry
 import com.varshudev.a1swaara.utils.center
 import com.varshudev.a1swaara.utils.color
 import com.varshudev.a1swaara.utils.semiBold
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.utils.isLandscape
 import app.a1swaara.core.ui.utils.roundedShape
 import kotlinx.collections.immutable.ImmutableList
@@ -180,30 +192,173 @@ sealed class Tab : Parcelable {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-inline fun NavigationRail(
-    topIconButtonId: Int,
-    noinline onTopIconButtonClick: () -> Unit,
+fun SwaaraScaffoldHeader(
+    @DrawableRes topIconButtonId: Int,
+    onTopIconButtonClick: () -> Unit,
+    tabs: ImmutableList<Tab>,
     tabIndex: Int,
-    crossinline onTabIndexChange: (Int) -> Unit,
+    onTabIndexChange: (Int) -> Unit,
     hiddenTabs: ImmutableList<String>,
-    crossinline setHiddenTabs: (List<String>) -> Unit,
-    modifier: Modifier = Modifier,
-    crossinline content: TabsBuilder.() -> Unit
+    setHiddenTabs: (List<String>) -> Unit,
+    topInsetsPadding: PaddingValues,
+    modifier: Modifier = Modifier
 ) {
     val (colorPalette, typography) = LocalAppearance.current
-
-    val tabs = TabsBuilder.rememberTabs(content)
-
-    val isLandscape = isLandscape
-
-    val paddingValues = LocalPlayerAwareWindowInsets.current
-        .only(WindowInsetsSides.Vertical + WindowInsetsSides.Start)
-        .asPaddingValues()
-
     var editing by remember { mutableStateOf(false) }
 
-    if (editing) DefaultDialog(
-        onDismiss = { editing = false },
+    if (editing) TabVisibilityDialog(
+        tabs = tabs,
+        hiddenTabs = hiddenTabs,
+        setHiddenTabs = setHiddenTabs,
+        onDismiss = { editing = false }
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(topInsetsPadding)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                        else colorPalette.background1
+                    )
+                    .border(1.dp, colorPalette.glassBorder, CircleShape)
+                    .clickable(onClick = onTopIconButtonClick)
+            ) {
+                Image(
+                    painter = painterResource(topIconButtonId),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(colorPalette.text),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            if (tabs.size > 1) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                            else colorPalette.background1
+                        )
+                        .border(1.dp, colorPalette.glassBorder, CircleShape)
+                        .clickable { editing = true }
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ellipsis_horizontal),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(colorPalette.textSecondary),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+
+        if (tabs.size > 1) {
+            val visibleTabs = remember(tabs, hiddenTabs, tabIndex) {
+                tabs.mapIndexedNotNull { index, tab ->
+                    if (index == tabIndex || tab.key !in hiddenTabs) index to tab else null
+                }
+            }
+            val listState = rememberLazyListState()
+
+            LaunchedEffect(tabIndex, visibleTabs) {
+                val targetVisibleIndex = visibleTabs.indexOfFirst { it.first == tabIndex }
+                if (targetVisibleIndex >= 0) {
+                    listState.animateScrollToItem(targetVisibleIndex)
+                }
+            }
+
+            LazyRow(
+                state = listState,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 6.dp)
+            ) {
+                items(
+                    items = visibleTabs,
+                    key = { (_, tab) -> tab.key }
+                ) { (index, tab) ->
+                    val isSelected = tabIndex == index
+                    val contentColor = when {
+                        isSelected && colorPalette.isDefault -> Color.White
+                        isSelected -> colorPalette.onAccent
+                        else -> colorPalette.textSecondary
+                    }
+                    val pillModifier = if (isSelected) {
+                        Modifier
+                            .clip(20.dp.roundedShape)
+                            .background(
+                                if (colorPalette.isDefault) SwaaraBrandGradient
+                                else Brush.horizontalGradient(
+                                    listOf(colorPalette.accent, colorPalette.secondaryAccent)
+                                )
+                            )
+                    } else {
+                        Modifier
+                            .clip(20.dp.roundedShape)
+                            .background(
+                                if (colorPalette.isDefault && colorPalette.isDark) SwaaraDeepSurface
+                                else colorPalette.background1
+                            )
+                            .border(1.dp, colorPalette.glassBorder, 20.dp.roundedShape)
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = pillModifier
+                            .combinedClickable(
+                                onClick = { onTabIndexChange(index) },
+                                onLongClick = { editing = true }
+                            )
+                            .padding(horizontal = 14.dp, vertical = 9.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(tab.icon),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(contentColor),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        BasicText(
+                            text = tab.title(),
+                            style = typography.xs.semiBold.color(contentColor),
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TabVisibilityDialog(
+    tabs: ImmutableList<Tab>,
+    hiddenTabs: ImmutableList<String>,
+    setHiddenTabs: (List<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val (_, typography) = LocalAppearance.current
+
+    DefaultDialog(
+        onDismiss = onDismiss,
         horizontalPadding = 0.dp
     ) {
         BasicText(
@@ -233,6 +388,38 @@ inline fun NavigationRail(
             }
         }
     }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+inline fun NavigationRail(
+    topIconButtonId: Int,
+    noinline onTopIconButtonClick: () -> Unit,
+    tabIndex: Int,
+    crossinline onTabIndexChange: (Int) -> Unit,
+    hiddenTabs: ImmutableList<String>,
+    crossinline setHiddenTabs: (List<String>) -> Unit,
+    modifier: Modifier = Modifier,
+    crossinline content: TabsBuilder.() -> Unit
+) {
+    val (colorPalette, typography) = LocalAppearance.current
+
+    val tabs = TabsBuilder.rememberTabs(content)
+
+    val isLandscape = isLandscape
+
+    val paddingValues = LocalPlayerAwareWindowInsets.current
+        .only(WindowInsetsSides.Vertical + WindowInsetsSides.Start)
+        .asPaddingValues()
+
+    var editing by remember { mutableStateOf(false) }
+
+    if (editing) TabVisibilityDialog(
+        tabs = tabs,
+        hiddenTabs = hiddenTabs,
+        setHiddenTabs = { setHiddenTabs(it) },
+        onDismiss = { editing = false }
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -252,15 +439,18 @@ inline fun NavigationRail(
             Image(
                 painter = painterResource(topIconButtonId),
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(Color.White),
+                colorFilter = ColorFilter.tint(colorPalette.text),
                 modifier = Modifier
                     .offset(
                         x = if (isLandscape) 0.dp else Dimensions.navigationRail.iconOffset,
                         y = 48.dp
                     )
                     .clip(CircleShape)
-                    .background(Color(0xFF1A1A24))
-                    .border(1.dp, Color(0xFF2A2A38), CircleShape)
+                    .background(
+                        if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                        else colorPalette.background1
+                    )
+                    .border(1.dp, colorPalette.glassBorder, CircleShape)
                     .clickable(onClick = onTopIconButtonClick)
                     .padding(all = 10.dp)
                     .size(20.dp)
@@ -284,7 +474,7 @@ inline fun NavigationRail(
                     }
 
                     val textColor by transition.animateColor(label = "") {
-                        if (it == index) Color.White else Color(0xFF8E8E9A)
+                        if (it == index) colorPalette.text else colorPalette.textSecondary
                     }
 
                     val iconContent: @Composable () -> Unit = {
@@ -292,7 +482,7 @@ inline fun NavigationRail(
                             painter = painterResource(tab.icon),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(
-                                if (tabIndex == index) colorPalette.accent else Color(0xFF8E8E9A)
+                                if (tabIndex == index) colorPalette.accent else colorPalette.textSecondary
                             ),
                             modifier = Modifier
                                 .vertical(enabled = !isLandscape)
@@ -319,11 +509,14 @@ inline fun NavigationRail(
                     val contentModifier = Modifier
                         .clip(24.dp.roundedShape)
                         .background(
-                            if (tabIndex == index) Color(0xFF1A1A24) else Color.Transparent
+                            if (tabIndex == index) {
+                                if (colorPalette.isDefault && colorPalette.isDark) SwaaraElevatedSurface
+                                else colorPalette.background1
+                            } else Color.Transparent
                         )
                         .border(
                             1.dp,
-                            if (tabIndex == index) Color(0xFF2A2A38) else Color.Transparent,
+                            if (tabIndex == index) colorPalette.glassBorder else Color.Transparent,
                             24.dp.roundedShape
                         )
                         .combinedClickable(

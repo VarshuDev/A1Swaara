@@ -43,3 +43,13 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - `LocalMenuState.current` is backed by `BottomSheetMenu` mounted globally inside `MainActivity.setContent`, so any screen inside `SwaaraAppShell` can invoke `LocalMenuState.current.display { Menu { ... } }` seamlessly.
 ---
+
+## 2026-11-10 23:41 - US-005
+- Replaced the portrait `-90f` rotated `NavigationRail` in `Scaffold.kt` and `NavigationRail.kt` with `SwaaraScaffoldHeader` (top status-bar padding, 44.dp circular glass Back button, optional 40.dp circular glass tab-visibility button, and horizontal scrollable `LazyRow` neon pill tabs when `tabs.size > 1`, zero tab strip when `tabs.size <= 1`), while preserving side `NavigationRail` in `isLandscape` with Swaara Obsidian tokens and keeping long-press `TabVisibilityDialog` (`DefaultDialog`).
+- Stripped `WindowInsetsSides.Top` in portrait `LocalPlayerAwareWindowInsets` inside `Scaffold.kt` so inner scrollable lists preserve bottom mini-player/nav-bar clearance without double top status-bar padding.
+- Restyled `Header.kt`, `PlaylistInfo.kt`, `SongListActionsRow.kt` (full-width expandable Obsidian Glass search bar), and `SongListScaffold.kt` (`SongCollectionScreen` non-full-height 6-row loading shimmer).
+- Extracted `HeaderSongSortBy` out of `HomeSongs.kt` into `app/src/main/kotlin/com/varshudev/a1swaara/ui/components/themed/HeaderSongSortBy.kt` with Obsidian Glass sort pills and updated `HomeSongs.kt`, `LocalPlaylistSongs.kt`, and `BuiltInPlaylistSongs.kt`.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL`).
+- **Learnings for future iterations:**
+  - `ColorPalette.onAccent` is a data-class property directly on `ColorPalette`, not a top-level extension function (`import app.a1swaara.core.ui.onAccent` fails to resolve).
+---

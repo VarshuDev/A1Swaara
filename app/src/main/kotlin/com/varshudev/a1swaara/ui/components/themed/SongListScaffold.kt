@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -43,7 +44,7 @@ fun SongCollectionScreen(
     thumbnailContent = thumbnailContent,
     modifier = modifier
 ) {
-    Box {
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
             contentPadding = contentPadding,
@@ -88,8 +89,8 @@ fun <T> LazyListScope.songCollectionItems(
         )
     } else {
         item(key = "loading") {
-            ShimmerHost(modifier = Modifier.fillParentMaxSize()) {
-                repeat(4) {
+            ShimmerHost(modifier = Modifier.fillMaxWidth()) {
+                repeat(6) {
                     SongItemPlaceholder(thumbnailSize = Dimensions.thumbnails.song)
                 }
             }

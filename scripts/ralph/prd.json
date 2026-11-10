@@ -72,8 +72,8 @@
         "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified with :app:compileHttp3ReleaseKotlin (SwaaraScaffoldHeader + extracted HeaderSongSortBy)"
     },
     {
       "id": "US-006",

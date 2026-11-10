@@ -2,9 +2,6 @@ package com.varshudev.a1swaara.ui.screens.home
 
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -36,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -53,6 +49,7 @@ import com.varshudev.a1swaara.ui.components.LocalMenuState
 import com.varshudev.a1swaara.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import com.varshudev.a1swaara.ui.components.themed.Header
 import com.varshudev.a1swaara.ui.components.themed.HeaderIconButton
+import com.varshudev.a1swaara.ui.components.themed.HeaderSongSortBy
 import com.varshudev.a1swaara.ui.components.themed.HideSongDialog
 import com.varshudev.a1swaara.ui.components.themed.InHistoryMediaItemMenu
 import com.varshudev.a1swaara.ui.components.themed.TextField
@@ -287,47 +284,4 @@ fun HomeSongs(
             onClick = onSearchClick
         )
     }
-}
-
-// Row content, for convenience, doesn't need modifier/receiver
-@Suppress("UnusedReceiverParameter", "ModifierMissing")
-@Composable
-fun RowScope.HeaderSongSortBy(
-    sortBy: SongSortBy,
-    setSortBy: (SongSortBy) -> Unit,
-    sortOrder: SortOrder,
-    setSortOrder: (SortOrder) -> Unit
-) {
-    val (colorPalette) = LocalAppearance.current
-
-    val sortOrderIconRotation by animateFloatAsState(
-        targetValue = if (sortOrder == SortOrder.Ascending) 0f else 180f,
-        animationSpec = tween(durationMillis = 400, easing = LinearEasing),
-        label = ""
-    )
-
-    HeaderIconButton(
-        icon = R.drawable.trending,
-        enabled = sortBy == SongSortBy.PlayTime,
-        onClick = { setSortBy(SongSortBy.PlayTime) }
-    )
-
-    HeaderIconButton(
-        icon = R.drawable.text,
-        enabled = sortBy == SongSortBy.Title,
-        onClick = { setSortBy(SongSortBy.Title) }
-    )
-
-    HeaderIconButton(
-        icon = R.drawable.time,
-        enabled = sortBy == SongSortBy.DateAdded,
-        onClick = { setSortBy(SongSortBy.DateAdded) }
-    )
-
-    HeaderIconButton(
-        icon = R.drawable.arrow_up,
-        color = colorPalette.text,
-        onClick = { setSortOrder(!sortOrder) },
-        modifier = Modifier.graphicsLayer { rotationZ = sortOrderIconRotation }
-    )
 }
