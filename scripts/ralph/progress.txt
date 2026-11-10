@@ -87,3 +87,17 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - In `SongCollectionScreen`, `rememberReorderingState` matches dragged items with `itemInfo.index == index + extraItemCount`. Because `headerContent` occupies index 0 of `LazyColumn`, any count badge or header subcomponent must live inside `headerContent` rather than as a separate `item {}` in the lazy list to keep `extraItemCount = 1`.
 ---
+
+## 2026-11-11 00:14 - US-009
+- Updated `SearchResultScreen.kt`:
+  - Replaced plain text `Header(title = query)` with an interactive Obsidian Glass search bar pill inside `Header(titleContent = { ... })` featuring a Cyan `R.drawable.search` icon, query text, and trailing "Edit" pencil pill that triggers `persistMap?.clean("searchResults/$query/"); onSearchAgain()`.
+  - Wrapped `ItemsPage` result rows across all 5 tabs (`SongItem`, `AlbumItem`, `ArtistItem`, `VideoItem`, `PlaylistItem`) in `.padding(horizontal = 12.dp, vertical = 3.dp).swaaraGlassTrackSurface()`.
+- Updated `ItemsPage.kt`:
+  - Restyled `emptyItemsText` inside a centered Obsidian Glass card (`SwaaraDeepSurface` + `16.dp.roundedShape` + `Color.White.copy(alpha = 0.08f)` glass border).
+- Updated `MoodScreen.kt` & `MoodList.kt`:
+  - In `MoodScreen.kt`, set `canHide = false` on single Mood tab.
+  - In `MoodList.kt`, restyled section titles with a Cyan indicator bar + semiBold typography, added `contentPadding = PaddingValues(horizontal = 16.dp)` and `Arrangement.spacedBy(8.dp)` to `LazyRow`, wrapped cards in `.swaaraGlassTrackSurface()`, and added `84.dp` `bottom_fab_spacer`.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL in 5m 2s`).
+- **Learnings for future iterations:**
+  - `Header` has an overload taking `titleContent: @Composable () -> Unit` and `actionsContent: @Composable RowScope.() -> Unit = {}`, allowing rich interactive search bar pills without breaking `Header`'s layout constraints.
+---

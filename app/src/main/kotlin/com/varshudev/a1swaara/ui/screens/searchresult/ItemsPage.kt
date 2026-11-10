@@ -1,5 +1,7 @@
 package com.varshudev.a1swaara.ui.screens.searchresult
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -23,12 +25,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import android.util.Log
 import com.varshudev.a1swaara.LocalPlayerAwareWindowInsets
 import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
 import com.varshudev.a1swaara.ui.components.ShimmerHost
 import com.varshudev.a1swaara.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import com.varshudev.a1swaara.ui.components.themed.RetryMessage
@@ -38,6 +43,7 @@ import com.varshudev.a1swaara.utils.center
 import com.varshudev.a1swaara.utils.secondary
 import com.varshudev.a1swaara.utils.requireValue
 import com.varshudev.a1swaara.utils.runSuspendCatching
+import app.a1swaara.core.ui.utils.roundedShape
 import app.a1swaara.compose.persist.persist
 import app.a1swaara.core.ui.LocalAppearance
 import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
@@ -163,13 +169,28 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
             }
 
             if (pageState.initialLoad == LoadPhase.Complete && pageState.items.isEmpty()) item(key = "empty") {
-                BasicText(
-                    text = emptyItemsText,
-                    style = typography.xs.secondary.center,
+                Box(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 32.dp)
                         .fillMaxWidth()
-                )
+                        .padding(horizontal = 24.dp, vertical = 32.dp)
+                        .background(
+                            color = SwaaraDeepSurface,
+                            shape = 16.dp.roundedShape
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = 0.08f),
+                            shape = 16.dp.roundedShape
+                        )
+                        .padding(horizontal = 24.dp, vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BasicText(
+                        text = emptyItemsText,
+                        style = typography.xs.secondary.center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             if (!pageState.hasError && !pageState.isComplete) item(key = "loading") {

@@ -2,13 +2,19 @@ package com.varshudev.a1swaara.ui.screens.mood
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -20,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +39,7 @@ import com.varshudev.a1swaara.ui.components.themed.Header
 import com.varshudev.a1swaara.ui.components.themed.HeaderPlaceholder
 import com.varshudev.a1swaara.ui.components.themed.RetryMessage
 import com.varshudev.a1swaara.ui.components.themed.TextPlaceholder
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.items.AlbumItem
 import com.varshudev.a1swaara.ui.items.AlbumItemPlaceholder
 import com.varshudev.a1swaara.ui.items.ArtistItem
@@ -46,6 +54,8 @@ import com.varshudev.a1swaara.utils.semiBold
 import app.a1swaara.compose.persist.persist
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.secondaryAccent
+import app.a1swaara.core.ui.utils.roundedShape
 import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.a1swaara.providers.youtubemusic.innertube.requests.BrowseResult
 import com.valentinilk.shimmer.shimmer
@@ -112,14 +122,29 @@ fun MoodList(
 
             moodResult.items.forEach { item ->
                 item {
-                    BasicText(
-                        text = item.title.orEmpty(),
-                        style = typography.m.semiBold,
-                        modifier = sectionTextModifier
-                    )
+                    Row(
+                        modifier = sectionTextModifier,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(16.dp)
+                                .clip(2.dp.roundedShape)
+                                .background(colorPalette.secondaryAccent)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        BasicText(
+                            text = item.title.orEmpty(),
+                            style = typography.m.semiBold
+                        )
+                    }
                 }
                 item {
-                    LazyRow {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         items(
                             items = item.items,
                             key = { it.key }
@@ -131,38 +156,44 @@ fun MoodList(
                                     album = childItem,
                                     thumbnailSize = Dimensions.thumbnails.album,
                                     alternative = true,
-                                    modifier = Modifier.clickable {
-                                        childItem.info?.endpoint?.browseId?.let {
-                                            albumRoute.global(it)
+                                    modifier = Modifier
+                                        .swaaraGlassTrackSurface()
+                                        .clickable {
+                                            childItem.info?.endpoint?.browseId?.let {
+                                                albumRoute.global(it)
+                                            }
                                         }
-                                    }
                                 )
 
                                 is YoutubeMusicInnertube.ArtistItem -> ArtistItem(
                                     artist = childItem,
                                     thumbnailSize = Dimensions.thumbnails.album,
                                     alternative = true,
-                                    modifier = Modifier.clickable {
-                                        childItem.info?.endpoint?.browseId?.let {
-                                            artistRoute.global(it)
+                                    modifier = Modifier
+                                        .swaaraGlassTrackSurface()
+                                        .clickable {
+                                            childItem.info?.endpoint?.browseId?.let {
+                                                artistRoute.global(it)
+                                            }
                                         }
-                                    }
                                 )
 
                                 is YoutubeMusicInnertube.PlaylistItem -> PlaylistItem(
                                     playlist = childItem,
                                     thumbnailSize = Dimensions.thumbnails.album,
                                     alternative = true,
-                                    modifier = Modifier.clickable {
-                                        childItem.info?.endpoint?.let { endpoint ->
-                                            playlistRoute.global(
-                                                p0 = endpoint.browseId ?: return@clickable,
-                                                p1 = endpoint.params,
-                                                p2 = childItem.songCount?.let { it / 100 },
-                                                p3 = true
-                                            )
+                                    modifier = Modifier
+                                        .swaaraGlassTrackSurface()
+                                        .clickable {
+                                            childItem.info?.endpoint?.let { endpoint ->
+                                                playlistRoute.global(
+                                                    p0 = endpoint.browseId ?: return@clickable,
+                                                    p1 = endpoint.params,
+                                                    p2 = childItem.songCount?.let { it / 100 },
+                                                    p3 = true
+                                                )
+                                            }
                                         }
-                                    }
                                 )
 
                                 else -> {}
@@ -170,6 +201,10 @@ fun MoodList(
                         }
                     }
                 }
+            }
+
+            item(key = "bottom_fab_spacer") {
+                Spacer(modifier = Modifier.height(84.dp))
             }
         }
     } ?: (moodState as? LoadState.Error)?.let {
