@@ -21,6 +21,8 @@ import com.varshudev.a1swaara.utils.medium
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
 import app.a1swaara.core.ui.shimmer
+import app.a1swaara.core.ui.utils.roundedShape
+import androidx.compose.ui.draw.clip
 import kotlin.random.Random
 
 @Composable
@@ -79,6 +81,7 @@ fun HeaderPlaceholder(modifier: Modifier = Modifier) = Box(
 
     Box(
         modifier = Modifier
+            .clip(12.dp.roundedShape)
             .background(colorPalette.shimmer)
             .fillMaxWidth(remember { 0.25f + Random.nextFloat() * 0.5f })
     ) {

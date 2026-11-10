@@ -3,6 +3,7 @@ package com.varshudev.a1swaara.ui.items
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Spacer
@@ -36,6 +37,7 @@ import com.varshudev.a1swaara.utils.semiBold
 import com.varshudev.a1swaara.utils.thumbnail
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 import app.a1swaara.core.ui.onOverlay
 import app.a1swaara.core.ui.overlay
 import app.a1swaara.core.ui.shimmer
@@ -182,14 +184,16 @@ fun PlaylistItem(
 ) = ItemContainer(
     alternative = alternative,
     thumbnailSize = thumbnailSize,
-    modifier = Modifier.clip(LocalAppearance.current.thumbnailShape) then modifier
+    modifier = Modifier.clip(14.dp.roundedShape) then modifier
 ) { centeredModifier ->
     val (colorPalette, typography, thumbnailShapeCorners) = LocalAppearance.current
+    val thumbShape = thumbnailShapeCorners.roundedShape
 
     Box(
         modifier = centeredModifier
-            .clip(thumbnailShapeCorners.roundedShape)
+            .clip(thumbShape)
             .background(color = colorPalette.background1)
+            .border(0.75.dp, colorPalette.glassBorder, thumbShape)
             .requiredSize(thumbnailSize)
     ) {
         thumbnailContent(Modifier.fillMaxSize())

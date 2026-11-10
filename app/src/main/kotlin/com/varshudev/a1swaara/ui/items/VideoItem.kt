@@ -1,6 +1,7 @@
 package com.varshudev.a1swaara.ui.items
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import com.varshudev.a1swaara.utils.secondary
 import com.varshudev.a1swaara.utils.semiBold
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 import app.a1swaara.core.ui.onOverlay
 import app.a1swaara.core.ui.overlay
 import app.a1swaara.core.ui.shimmer
@@ -58,9 +60,10 @@ fun VideoItem(
 ) = ItemContainer(
     alternative = false,
     thumbnailSize = 0.dp,
-    modifier = Modifier.clip(LocalAppearance.current.thumbnailShape) then modifier
+    modifier = Modifier.clip(14.dp.roundedShape) then modifier
 ) {
     val (colorPalette, typography, thumbnailShapeCorners) = LocalAppearance.current
+    val thumbShape = thumbnailShapeCorners.roundedShape
 
     Box {
         AsyncImage(
@@ -68,7 +71,9 @@ fun VideoItem(
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .clip(thumbnailShapeCorners.roundedShape)
+                .clip(thumbShape)
+                .background(colorPalette.background1)
+                .border(0.75.dp, colorPalette.glassBorder, thumbShape)
                 .size(width = thumbnailWidth, height = thumbnailHeight)
         )
 

@@ -24,7 +24,7 @@ inline fun ItemContainer(
     content: @Composable (centeredModifier: Modifier) -> Unit
 ) = if (alternative) Column(
     horizontalAlignment = horizontalAlignment,
-    verticalArrangement = Arrangement.spacedBy(12.dp),
+    verticalArrangement = Arrangement.spacedBy(10.dp),
     modifier = modifier
         .padding(
             vertical = Dimensions.items.verticalPadding,
@@ -34,7 +34,7 @@ inline fun ItemContainer(
 ) { content(Modifier.align(Alignment.CenterHorizontally)) }
 else Row(
     verticalAlignment = verticalAlignment,
-    horizontalArrangement = Arrangement.spacedBy(12.dp),
+    horizontalArrangement = Arrangement.spacedBy(14.dp),
     modifier = modifier
         .padding(
             vertical = Dimensions.items.verticalPadding,

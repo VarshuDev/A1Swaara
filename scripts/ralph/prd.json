@@ -29,8 +29,8 @@
         "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified with :app:compileHttp3ReleaseKotlin (22 files updated cleanly)"
     },
     {
       "id": "US-003",

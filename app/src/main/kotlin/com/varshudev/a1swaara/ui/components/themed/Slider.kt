@@ -5,6 +5,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.secondaryAccent
 
 @Composable
 fun Slider(
@@ -25,9 +26,11 @@ fun Slider(
         modifier = modifier,
         steps = steps,
         colors = SliderDefaults.colors(
-            thumbColor = colorPalette.onAccent,
+            thumbColor = if (colorPalette.isDefault) colorPalette.secondaryAccent else colorPalette.accent,
             activeTrackColor = colorPalette.accent,
-            inactiveTrackColor = colorPalette.text.copy(alpha = 0.75f)
+            inactiveTrackColor = colorPalette.text.copy(alpha = 0.18f),
+            activeTickColor = colorPalette.onAccent.copy(alpha = 0.5f),
+            inactiveTickColor = colorPalette.text.copy(alpha = 0.3f)
         )
     )
 }

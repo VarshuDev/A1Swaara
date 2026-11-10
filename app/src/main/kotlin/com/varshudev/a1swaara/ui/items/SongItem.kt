@@ -2,6 +2,7 @@ package com.varshudev.a1swaara.ui.items
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -39,10 +40,12 @@ import com.varshudev.a1swaara.utils.secondary
 import com.varshudev.a1swaara.utils.semiBold
 import com.varshudev.a1swaara.utils.thumbnail
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 import app.a1swaara.core.ui.onOverlay
 import app.a1swaara.core.ui.overlay
 import app.a1swaara.core.ui.shimmer
 import app.a1swaara.core.ui.utils.px
+import app.a1swaara.core.ui.utils.roundedShape
 import app.a1swaara.core.ui.utils.songBundle
 import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.varshudev.a1swaara.ui.components.RetryingAsyncImage as AsyncImage
@@ -178,12 +181,21 @@ fun SongItem(
             Box(
                 modifier = Modifier
                     .clip(thumbnailShape)
-                    .background(colorPalette.background1)
+                    .background(colorPalette.background2)
+                    .border(0.75.dp, colorPalette.glassBorder, thumbnailShape)
                     .fillMaxSize()
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.musical_notes),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(colorPalette.textSecondary.copy(alpha = 0.65f)),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(20.dp)
+                )
+
                 AsyncImage(
                     model = thumbnailUrl,
-                    error = painterResource(id = R.drawable.ic_launcher_foreground),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
@@ -192,7 +204,7 @@ fun SongItem(
                 if (index != null) {
                     Box(
                         modifier = Modifier
-                            .background(color = Color.Black.copy(alpha = 0.75f))
+                            .background(color = Color.Black.copy(alpha = 0.65f))
                             .fillMaxSize()
                     )
                     BasicText(
@@ -229,7 +241,7 @@ fun SongItem(
 ) = if (!(hideExplicit && explicit)) ItemContainer(
     alternative = false,
     thumbnailSize = thumbnailSize,
-    modifier = if (clip) Modifier.clip(LocalAppearance.current.thumbnailShape) then modifier
+    modifier = if (clip) Modifier.clip(14.dp.roundedShape) then modifier
     else modifier
 ) {
     val (colorPalette, typography) = LocalAppearance.current

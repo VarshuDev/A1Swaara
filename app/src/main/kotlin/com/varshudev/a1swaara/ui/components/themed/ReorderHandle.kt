@@ -16,7 +16,7 @@ fun ReorderHandle(
     modifier: Modifier = Modifier
 ) = IconButton(
     icon = R.drawable.reorder,
-    color = LocalAppearance.current.colorPalette.textDisabled,
+    color = LocalAppearance.current.colorPalette.textSecondary.copy(alpha = 0.65f),
     indication = null,
     onClick = {},
     modifier = modifier
@@ -24,5 +24,5 @@ fun ReorderHandle(
             reorderingState = reorderingState,
             index = index
         )
-        .size(18.dp)
+        .size(20.dp)
 )

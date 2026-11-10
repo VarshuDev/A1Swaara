@@ -170,7 +170,8 @@ private fun BoxScope.FloatingActions(
                     PrimaryButton(
                         icon = icon,
                         onClick = onClick,
-                        enabled = transition.targetState?.isScrollingDown == false
+                        enabled = transition.targetState?.isScrollingDown == false,
+                        accent = true
                     )
                 }
             }

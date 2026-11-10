@@ -7,13 +7,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.utils.center
 import com.varshudev.a1swaara.utils.disabled
 import com.varshudev.a1swaara.utils.medium
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 import app.a1swaara.core.ui.primaryButton
 import app.a1swaara.core.ui.utils.roundedShape
 
@@ -26,17 +28,24 @@ fun SecondaryTextButton(
     alternative: Boolean = false
 ) {
     val (colorPalette, typography) = LocalAppearance.current
+    val shape = 20.dp.roundedShape
+    val containerColor = when {
+        alternative -> colorPalette.background0
+        colorPalette.isDefault && colorPalette.isDark -> SwaaraElevatedSurface
+        else -> colorPalette.primaryButton
+    }
 
     BasicText(
         text = text,
         style = typography.xxs.medium.center.copy(
-            color = if (enabled) Color.White else colorPalette.textDisabled
+            color = if (enabled) colorPalette.text else colorPalette.textDisabled
         ),
         modifier = modifier
-            .clip(16.dp.roundedShape)
+            .alpha(if (enabled) 1f else 0.55f)
+            .clip(shape)
+            .background(containerColor)
+            .border(1.dp, colorPalette.glassBorder, shape)
             .clickable(enabled = enabled, onClick = onClick)
-            .background(if (alternative) colorPalette.background0 else colorPalette.primaryButton)
-            .border(1.dp, Color(0xFF2A2A38), 16.dp.roundedShape)
-            .padding(vertical = 8.dp, horizontal = 14.dp)
+            .padding(vertical = 10.dp, horizontal = 16.dp)
     )
 }

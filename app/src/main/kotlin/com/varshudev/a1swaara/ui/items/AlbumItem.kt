@@ -1,6 +1,7 @@
 package com.varshudev.a1swaara.ui.items
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,8 +19,10 @@ import com.varshudev.a1swaara.utils.secondary
 import com.varshudev.a1swaara.utils.semiBold
 import com.varshudev.a1swaara.utils.thumbnail
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 import app.a1swaara.core.ui.shimmer
 import app.a1swaara.core.ui.utils.px
+import app.a1swaara.core.ui.utils.roundedShape
 import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.varshudev.a1swaara.ui.components.RetryingAsyncImage as AsyncImage
 
@@ -67,10 +70,9 @@ fun AlbumItem(
 ) = ItemContainer(
     alternative = alternative,
     thumbnailSize = thumbnailSize,
-    modifier = Modifier.clip(LocalAppearance.current.thumbnailShape) then modifier
+    modifier = Modifier.clip(14.dp.roundedShape) then modifier
 ) {
-    val typography = LocalAppearance.current.typography
-    val thumbnailShape = LocalAppearance.current.thumbnailShape
+    val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
 
     AsyncImage(
         model = thumbnailUrl?.thumbnail(thumbnailSize.px),
@@ -78,6 +80,8 @@ fun AlbumItem(
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .clip(thumbnailShape)
+            .background(colorPalette.background1)
+            .border(0.75.dp, colorPalette.glassBorder, thumbnailShape)
             .size(thumbnailSize)
     )
 

@@ -16,3 +16,13 @@ Started: 11/10/2026 23:11:54
   - Gradle subproject path in `settings.gradle.kts` is `:core:ui` (not `:core-ui`).
   - `ColorPalette.isDark` and `ColorPalette.isPureBlack` matter for AMOLED/Darkness/Light themes; derive surface/glass colors gracefully from `colorPalette` in themed components rather than hardcoding dark-only hexes when dynamic/light themes are active.
 ---
+
+## 2026-11-10 23:23 - US-002
+- Removed hardcoded `0xFF1DB954` spot shadows and flat `#2A2A38` borders from `BigIconButton.kt` and `LayoutWithAdaptiveThumbnail.kt`, replacing them with theme-aware Swaara Obsidian elevated surfaces, `glassBorder`, and Magenta→Cyan neon border accents.
+- Upgraded `PrimaryButton.kt` (`accent` Magenta→Violet neon variant + glass variant), `FloatingActionsContainer.kt` (main CTA uses `accent = true`, secondary actions use Obsidian glass), `SecondaryButton.kt`, `SecondaryTextButton.kt` (fixed Light Mode text contrast bug), `DialogTextButton.kt`, `Slider.kt`, `ProgressIndicator.kt`, `TextToggle.kt`, `TextField.kt`, `Header.kt` (`HeaderPlaceholder`), `TextPlaceholder.kt`, `RetryMessage.kt`, `Divider.kt`, and `ReorderHandle.kt`.
+- Upgraded list/card items (`ItemContainer.kt`, `SongItem.kt`, `AlbumItem.kt`, `ArtistItem.kt`, `PlaylistItem.kt`, `VideoItem.kt`), replacing the raw `R.drawable.ic_launcher_foreground` error fallback in `SongItem.kt` with a centered vector `R.drawable.musical_notes` placeholder inside a `background2` + `glassBorder` frame behind `RetryingAsyncImage`.
+- Files changed: 16 files in `app/src/main/kotlin/com/varshudev/a1swaara/ui/components/themed/`, 6 files in `app/src/main/kotlin/com/varshudev/a1swaara/ui/items/`, `scripts/ralph/prd.json`, `scripts/ralph/progress.txt`.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL`).
+- **Learnings for future iterations:**
+  - Avoid adding `Modifier.shadow` or animated shimmer overlays per `SongItem` row to preserve smooth 60fps `LazyColumn` scroll performance; `RetryingAsyncImage` already handles animated placeholders for remote URLs while static background + vector fallback cleanly covers local URIs.
+---

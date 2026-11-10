@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 
 /**
  * A simple horizontal divider, derived from Material Design
@@ -20,7 +21,7 @@ import app.a1swaara.core.ui.LocalAppearance
 fun HorizontalDivider(
     modifier: Modifier = Modifier,
     thickness: Dp = 1.dp,
-    color: Color = LocalAppearance.current.colorPalette.textDisabled
+    color: Color = LocalAppearance.current.colorPalette.glassBorder
 ) = Canvas(
     modifier = modifier
         .fillMaxWidth()
@@ -49,7 +50,7 @@ fun HorizontalDivider(
 fun VerticalDivider(
     modifier: Modifier = Modifier,
     thickness: Dp = 1.dp,
-    color: Color = LocalAppearance.current.colorPalette.textDisabled
+    color: Color = LocalAppearance.current.colorPalette.glassBorder
 ) = Canvas(
     modifier = modifier
         .fillMaxHeight()

@@ -60,7 +60,7 @@ fun ColumnScope.TextField(
     visualTransformation = visualTransformation,
     onTextLayout = onTextLayout,
     interactionSource = interactionSource,
-    cursorBrush = SolidColor(appearance.colorPalette.text),
+    cursorBrush = SolidColor(appearance.colorPalette.accent),
     decorationBox = { innerTextField ->
         hintText?.let { text ->
             this@TextField.AnimatedVisibility(
@@ -117,7 +117,7 @@ fun RowScope.TextField(
     visualTransformation = visualTransformation,
     onTextLayout = onTextLayout,
     interactionSource = interactionSource,
-    cursorBrush = SolidColor(appearance.colorPalette.text),
+    cursorBrush = SolidColor(appearance.colorPalette.accent),
     decorationBox = { innerTextField ->
         hintText?.let { text ->
             this@TextField.AnimatedVisibility(

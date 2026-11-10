@@ -1,5 +1,6 @@
 package com.varshudev.a1swaara.ui.components.themed
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -13,12 +14,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraMagenta
+import com.varshudev.a1swaara.ui.components.SwaaraViolet
 import com.varshudev.a1swaara.utils.thumbnail
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 import app.a1swaara.core.ui.shimmer
 import app.a1swaara.core.ui.utils.isLandscape
 import app.a1swaara.core.ui.utils.px
@@ -53,11 +59,31 @@ fun adaptiveThumbnailContent(
         val thumbnailSize =
             if (isLandscape) (maxHeight - 96.dp - Dimensions.items.collapsedPlayerHeight)
             else minOf(maxWidth, 240.dp)
+        val spotGlowColor = (if (colorPalette.isDefault) SwaaraViolet else colorPalette.accent)
+            .copy(alpha = 0.42f)
+        val borderStroke = if (colorPalette.isDefault && colorPalette.isDark) {
+            BorderStroke(
+                width = 1.25.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        SwaaraMagenta.copy(alpha = 0.45f),
+                        SwaaraCyan.copy(alpha = 0.35f)
+                    )
+                )
+            )
+        } else {
+            BorderStroke(1.dp, colorPalette.glassBorder)
+        }
 
         val innerModifier = Modifier
-            .shadow(16.dp, effectiveShape, spotColor = Color(0xFF1DB954))
-            .border(2.dp, Color(0xFF2A2A38), effectiveShape)
+            .shadow(
+                elevation = 18.dp,
+                shape = effectiveShape,
+                ambientColor = Color.Black.copy(alpha = 0.6f),
+                spotColor = spotGlowColor
+            )
             .clip(effectiveShape)
+            .border(borderStroke, effectiveShape)
             .size(thumbnailSize)
 
         if (isLoading) Spacer(

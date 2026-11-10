@@ -17,11 +17,12 @@ fun CircularProgressIndicator(
     if (progress == null) androidx.compose.material3.CircularProgressIndicator(
         modifier = modifier,
         color = colorPalette.accent,
-        strokeCap = strokeCap ?: ProgressIndicatorDefaults.CircularIndeterminateStrokeCap
+        strokeCap = strokeCap ?: StrokeCap.Round
     ) else androidx.compose.material3.CircularProgressIndicator(
         modifier = modifier,
         color = colorPalette.accent,
-        strokeCap = strokeCap ?: ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
+        trackColor = colorPalette.text.copy(alpha = 0.14f),
+        strokeCap = strokeCap ?: StrokeCap.Round,
         progress = { progress }
     )
 }
@@ -30,19 +31,19 @@ fun CircularProgressIndicator(
 fun LinearProgressIndicator(
     modifier: Modifier = Modifier,
     progress: Float? = null,
-    strokeCap: StrokeCap = ProgressIndicatorDefaults.LinearStrokeCap
+    strokeCap: StrokeCap = StrokeCap.Round
 ) {
     val (colorPalette) = LocalAppearance.current
 
     if (progress == null) androidx.compose.material3.LinearProgressIndicator(
         modifier = modifier,
         color = colorPalette.accent,
-        trackColor = colorPalette.background1,
+        trackColor = colorPalette.text.copy(alpha = 0.12f),
         strokeCap = strokeCap
     ) else androidx.compose.material3.LinearProgressIndicator(
         modifier = modifier,
         color = colorPalette.accent,
-        trackColor = colorPalette.background1,
+        trackColor = colorPalette.text.copy(alpha = 0.12f),
         strokeCap = strokeCap,
         progress = { progress }
     )

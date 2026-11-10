@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import app.a1swaara.core.ui.LocalAppearance
 import app.a1swaara.core.ui.shimmer
+import app.a1swaara.core.ui.utils.roundedShape
 import kotlin.random.Random
 
 @Composable
@@ -24,7 +26,8 @@ fun TextPlaceholder(
 ) = Spacer(
     modifier = modifier
         .padding(vertical = 4.dp)
+        .clip(8.dp.roundedShape)
         .background(color)
         .fillMaxWidth(width)
-        .height(16.dp)
+        .height(14.dp)
 )
