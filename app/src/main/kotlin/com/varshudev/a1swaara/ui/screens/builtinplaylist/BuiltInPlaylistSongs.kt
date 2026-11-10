@@ -1,25 +1,37 @@
 package com.varshudev.a1swaara.ui.screens.builtinplaylist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,6 +42,7 @@ import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.preferences.DataPreferences
 import com.varshudev.a1swaara.ui.components.LocalMenuState
+import com.varshudev.a1swaara.ui.components.themed.CollectionTrackSectionHeader
 import com.varshudev.a1swaara.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import com.varshudev.a1swaara.ui.components.themed.Header
 import com.varshudev.a1swaara.ui.components.themed.HeaderSongSortBy
@@ -37,10 +50,10 @@ import com.varshudev.a1swaara.ui.components.themed.HideSongDialog
 import com.varshudev.a1swaara.ui.components.themed.InHistoryMediaItemMenu
 import com.varshudev.a1swaara.ui.components.themed.NonQueuedMediaItemMenu
 import com.varshudev.a1swaara.ui.components.themed.PrimaryButton
-import com.varshudev.a1swaara.ui.components.themed.SecondaryTextButton
 import com.varshudev.a1swaara.ui.components.themed.SongListActionsRow
 import com.varshudev.a1swaara.ui.components.themed.ValueSelectorDialog
 import com.varshudev.a1swaara.ui.components.themed.matchesSongCollectionQuery
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.items.SongItem
 import com.varshudev.a1swaara.ui.items.SongTotalPlayTimeOverlay
 import com.varshudev.a1swaara.ui.modifiers.songSwipeActions
@@ -48,6 +61,7 @@ import com.varshudev.a1swaara.ui.viewmodels.BuiltInPlaylistSongsViewModel
 import com.varshudev.a1swaara.utils.LocalPlaybackActions
 import com.varshudev.a1swaara.utils.PlaylistDownloadFloatingButton
 import com.varshudev.a1swaara.utils.asMediaItem
+import com.varshudev.a1swaara.utils.medium
 import com.varshudev.a1swaara.utils.rememberMediaItems
 import app.a1swaara.compose.persist.persistList
 import app.a1swaara.core.data.enums.BuiltInPlaylist
@@ -55,7 +69,9 @@ import app.a1swaara.core.data.enums.SongSortBy
 import app.a1swaara.core.data.enums.SortOrder
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.utils.enumSaver
+import app.a1swaara.core.ui.utils.roundedShape
 import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -67,7 +83,7 @@ fun BuiltInPlaylistSongs(
     val viewModel: BuiltInPlaylistSongsViewModel = viewModel(
         factory = BuiltInPlaylistSongsViewModel.factory(LocalAppContainer.current.builtInPlaylistRepository)
     )
-    val (colorPalette) = LocalAppearance.current
+    val (colorPalette, typography) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
     val playbackActions = LocalPlaybackActions.current
@@ -136,11 +152,42 @@ fun BuiltInPlaylistSongs(
 
                             if (builtInPlaylist == BuiltInPlaylist.Top) {
                                 var dialogShowing by rememberSaveable { mutableStateOf(false) }
+                                val chipShape = 12.dp.roundedShape
 
-                                SecondaryTextButton(
-                                    text = topListPeriod.displayName(),
-                                    onClick = { dialogShowing = true }
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier
+                                        .height(36.dp)
+                                        .clip(chipShape)
+                                        .background(colorPalette.secondaryAccent.copy(alpha = 0.14f))
+                                        .border(
+                                            width = 1.dp,
+                                            color = colorPalette.secondaryAccent.copy(alpha = 0.35f),
+                                            shape = chipShape
+                                        )
+                                        .clickable { dialogShowing = true }
+                                        .padding(horizontal = 12.dp)
+                                ) {
+                                    Image(
+                                        painter = painterResource(R.drawable.time),
+                                        contentDescription = null,
+                                        colorFilter = ColorFilter.tint(colorPalette.secondaryAccent),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+
+                                    BasicText(
+                                        text = topListPeriod.displayName(),
+                                        style = typography.xxs.medium.copy(color = colorPalette.text)
+                                    )
+
+                                    Image(
+                                        painter = painterResource(R.drawable.chevron_down),
+                                        contentDescription = null,
+                                        colorFilter = ColorFilter.tint(colorPalette.secondaryAccent),
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                }
 
                                 if (dialogShowing) ValueSelectorDialog(
                                     onDismiss = { dialogShowing = false },
@@ -159,6 +206,15 @@ fun BuiltInPlaylistSongs(
                 }
             }
 
+            if (displayedSongs.isNotEmpty()) {
+                item(
+                    key = "section_header",
+                    contentType = "section_header"
+                ) {
+                    CollectionTrackSectionHeader(count = displayedSongs.size)
+                }
+            }
+
             itemsIndexed(
                 items = displayedSongs,
                 key = { _, song -> song.id },
@@ -172,6 +228,15 @@ fun BuiltInPlaylistSongs(
 
                 SongItem(
                     modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                        .animateItem()
+                        .songSwipeActions(
+                            key = displayedSongs,
+                            mediaItem = song.asMediaItem,
+                            songToHide = song,
+                            onSwipeLeftRequested = { hidingSong = it.id }
+                        )
+                        .swaaraGlassTrackSurface()
                         .combinedClickable(
                             onLongClick = {
                                 menuState.display {
@@ -193,14 +258,7 @@ fun BuiltInPlaylistSongs(
                             onClick = {
                                 playbackActions.playAtIndex(mediaItems, index)
                             }
-                        )
-                        .songSwipeActions(
-                            key = displayedSongs,
-                            mediaItem = song.asMediaItem,
-                            songToHide = song,
-                            onSwipeLeftRequested = { hidingSong = it.id }
-                        )
-                        .animateItem(),
+                        ),
                     song = song,
                     index = if (builtInPlaylist == BuiltInPlaylist.Top) index else null,
                     thumbnailSize = Dimensions.thumbnails.song,
@@ -208,6 +266,13 @@ fun BuiltInPlaylistSongs(
                         { SongTotalPlayTimeOverlay(song.totalPlayTimeMs) }
                     } else null
                 )
+            }
+
+            item(
+                key = "bottom_fab_spacer",
+                contentType = "bottom_fab_spacer"
+            ) {
+                Spacer(modifier = Modifier.height(84.dp))
             }
         }
 

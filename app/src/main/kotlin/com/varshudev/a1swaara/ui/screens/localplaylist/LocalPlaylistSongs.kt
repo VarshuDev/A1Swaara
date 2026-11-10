@@ -2,7 +2,6 @@ package com.varshudev.a1swaara.ui.screens.localplaylist
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -29,7 +28,9 @@ import com.varshudev.a1swaara.models.Playlist
 import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.preferences.DataPreferences
 import com.varshudev.a1swaara.ui.components.LocalMenuState
+import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
 import com.varshudev.a1swaara.ui.components.themed.CircularProgressIndicator
+import com.varshudev.a1swaara.ui.components.themed.CollectionTrackSectionHeader
 import com.varshudev.a1swaara.ui.components.themed.ConfirmationDialog
 import com.varshudev.a1swaara.ui.components.themed.Header
 import com.varshudev.a1swaara.ui.components.themed.HeaderIconButton
@@ -43,6 +44,7 @@ import com.varshudev.a1swaara.ui.components.themed.ReorderHandle
 import com.varshudev.a1swaara.ui.components.themed.SongListActionsRow
 import com.varshudev.a1swaara.ui.components.themed.SongCollectionScreen
 import com.varshudev.a1swaara.ui.components.themed.songCollectionItems
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.components.themed.matchesSongCollectionQuery
 import com.varshudev.a1swaara.ui.components.themed.TextFieldDialog
 import com.varshudev.a1swaara.ui.items.SongItem
@@ -64,6 +66,7 @@ import app.a1swaara.compose.reordering.draggedItem
 import app.a1swaara.compose.reordering.rememberReorderingState
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.utils.enumSaver
 import app.a1swaara.core.ui.utils.isLandscape
 import app.a1swaara.core.data.enums.SongSortBy
@@ -207,6 +210,7 @@ fun LocalPlaylistSongs(
                                                     MenuEntry(
                                                         icon = R.drawable.sync,
                                                         text = stringResource(R.string.sync),
+                                                        iconTint = colorPalette.secondaryAccent,
                                                         enabled = !loading,
                                                         onClick = {
                                                             menuState.hide()
@@ -257,6 +261,7 @@ fun LocalPlaylistSongs(
                                                 MenuEntry(
                                                     icon = R.drawable.share_social,
                                                     text = "Share Playlist Code",
+                                                    iconTint = colorPalette.secondaryAccent,
                                                     onClick = {
                                                         menuState.hide()
                                                         coroutineScope.launch {
@@ -290,6 +295,8 @@ fun LocalPlaylistSongs(
                                                 MenuEntry(
                                                     icon = R.drawable.trash,
                                                     text = stringResource(R.string.delete),
+                                                    iconTint = SwaaraErrorRed,
+                                                    textColor = SwaaraErrorRed,
                                                     onClick = {
                                                         menuState.hide()
                                                         isDeleting = true
@@ -304,6 +311,10 @@ fun LocalPlaylistSongs(
                     }
 
                     if (!isLandscape) thumbnailContent()
+
+                    if (displayedSongs.isNotEmpty()) {
+                        CollectionTrackSectionHeader(count = displayedSongs.size)
+                    }
                 }
             }
         ) {
@@ -321,21 +332,7 @@ fun LocalPlaylistSongs(
 
                 SongItem(
                     modifier = Modifier
-                        .combinedClickable(
-                            onLongClick = {
-                                menuState.display {
-                                    InPlaylistMediaItemMenu(
-                                        playlistId = playlist.id,
-                                        positionInPlaylist = songs.indexOf(song),
-                                        song = song,
-                                        onDismiss = menuState::hide
-                                    )
-                                }
-                            },
-                            onClick = {
-                                playbackActions.playAtIndex(mediaItems, index)
-                            }
-                        )
+                        .padding(horizontal = 12.dp, vertical = 3.dp)
                         .then(
                             if (canReorder) Modifier
                                 .animateItemPlacement(reorderingState)
@@ -351,7 +348,22 @@ fun LocalPlaylistSongs(
                             songToHide = song,
                             onSwipeLeftRequested = { hidingSong = it.id }
                         )
-                        .background(colorPalette.background0),
+                        .swaaraGlassTrackSurface()
+                        .combinedClickable(
+                            onLongClick = {
+                                menuState.display {
+                                    InPlaylistMediaItemMenu(
+                                        playlistId = playlist.id,
+                                        positionInPlaylist = songs.indexOf(song),
+                                        song = song,
+                                        onDismiss = menuState::hide
+                                    )
+                                }
+                            },
+                            onClick = {
+                                playbackActions.playAtIndex(mediaItems, index)
+                            }
+                        ),
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
                     onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {

@@ -71,3 +71,19 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - When mixing a leading `textButton` with trailing `HeaderIconButton`s inside `Header`'s `Row`, wrap a non-null `textButton` in `Box(modifier = Modifier.weight(1f))` rather than combining `weight(1f, fill = false)` with another `Spacer(weight(1f))` so Compose allocates full remaining width without splitting 50/50.
 ---
+
+## 2026-11-10 23:58 - US-008
+- Updated `LocalPlaylistScreen.kt`: set `canHide = false` on single Songs tab so it cannot be accidentally hidden.
+- Updated `LocalPlaylistSongs.kt`:
+  - In `Header` menu: tinted sync and Share Playlist Code with `colorPalette.secondaryAccent`, and tinted delete action with `SwaaraErrorRed`.
+  - Kept drag-reordering invariance intact (`ReorderingState.kt` index computation) by embedding `CollectionTrackSectionHeader` inside `headerContent`'s `Column` so `extraItemCount = 1` remains strictly 1 with zero drag offset bugs.
+  - Replaced flat `colorPalette.background0` on `SongItem` with `.swaaraGlassTrackSurface()` and added `.padding(horizontal = 12.dp, vertical = 3.dp)`.
+- Updated `BuiltInPlaylistSongs.kt`:
+  - Upgraded `BuiltInPlaylist.Top` time period selector chip inside `SongListActionsRow` to an interactive 36.dp Obsidian Glass pill (`12.dp.roundedShape`, `secondaryAccent` border/tint, `R.drawable.time` leading icon, `R.drawable.chevron_down` trailing icon).
+  - Added `CollectionTrackSectionHeader(count = displayedSongs.size)` when `displayedSongs.isNotEmpty()`.
+  - Wrapped `SongItem` in `.padding(horizontal = 12.dp, vertical = 3.dp).animateItem().songSwipeActions(...).swaaraGlassTrackSurface().combinedClickable(...)`.
+  - Added `Spacer(modifier = Modifier.height(84.dp))` (`bottom_fab_spacer`) at the bottom of the list for floating actions and dock clearance.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL in 3m 5s`).
+- **Learnings for future iterations:**
+  - In `SongCollectionScreen`, `rememberReorderingState` matches dragged items with `itemInfo.index == index + extraItemCount`. Because `headerContent` occupies index 0 of `LazyColumn`, any count badge or header subcomponent must live inside `headerContent` rather than as a separate `item {}` in the lazy list to keep `extraItemCount = 1`.
+---
