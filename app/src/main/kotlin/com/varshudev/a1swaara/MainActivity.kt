@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.only
@@ -352,6 +353,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .height(3.5.dp)
                                 .align(Alignment.TopCenter)
                         )
                     }

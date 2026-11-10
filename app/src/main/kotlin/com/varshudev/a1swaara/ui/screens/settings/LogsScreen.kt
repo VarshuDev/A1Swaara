@@ -7,22 +7,26 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -43,6 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.varshudev.a1swaara.LocalPlayerAwareWindowInsets
 import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
 import com.varshudev.a1swaara.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import com.varshudev.a1swaara.ui.components.themed.Scaffold
 import com.varshudev.a1swaara.ui.screens.GlobalRoutes
@@ -50,12 +55,14 @@ import com.varshudev.a1swaara.ui.screens.Route
 import com.varshudev.a1swaara.utils.Logcat
 import com.varshudev.a1swaara.utils.color
 import com.varshudev.a1swaara.utils.logcat
+import com.varshudev.a1swaara.utils.secondary
 import com.varshudev.a1swaara.utils.semiBold
 import com.varshudev.a1swaara.utils.smoothScrollToTop
 import app.a1swaara.compose.routing.RouteHandler
 import app.a1swaara.core.ui.LocalAppearance
-import app.a1swaara.core.ui.primaryButton
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.utils.ActivityIntentBundleAccessor
+import app.a1swaara.core.ui.utils.roundedShape
 import kotlinx.coroutines.delay
 
 @Route
@@ -75,7 +82,7 @@ fun LogsScreen() {
                 tabIndex = tabIndex,
                 onTabChange = onTabChanged,
                 tabColumnContent = {
-                    tab(0, R.string.logs, R.drawable.library)
+                    tab(0, R.string.logs, R.drawable.library, canHide = false)
                 }
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(currentTabIndex) {
@@ -130,7 +137,7 @@ fun LogsList(modifier: Modifier = Modifier) = Box(modifier = modifier.fillMaxSiz
                     line = line,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(4.dp)
+                        .padding(horizontal = 12.dp, vertical = 3.dp)
                 )
 
                 is Logcat.RawLine -> BasicText(
@@ -139,6 +146,10 @@ fun LogsList(modifier: Modifier = Modifier) = Box(modifier = modifier.fillMaxSiz
                     modifier = Modifier.padding(16.dp)
                 )
             }
+        }
+
+        item(key = "bottom_fab_spacer") {
+            Spacer(modifier = Modifier.height(84.dp))
         }
     }
 
@@ -173,14 +184,14 @@ fun LazyItemScope.FormattedLine(
     line: Logcat.FormattedLine,
     modifier: Modifier = Modifier
 ) {
-    val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
+    val (colorPalette, typography) = LocalAppearance.current
 
-    val backgroundColor = remember(line, colorPalette) {
+    val accentColor = remember(line, colorPalette) {
         when (line.level) {
             Logcat.FormattedLine.Level.Error -> colorPalette.red
             Logcat.FormattedLine.Level.Warning -> colorPalette.yellow
-            Logcat.FormattedLine.Level.Debug -> colorPalette.blue
-            Logcat.FormattedLine.Level.Info -> colorPalette.primaryButton
+            Logcat.FormattedLine.Level.Debug -> colorPalette.secondaryAccent
+            Logcat.FormattedLine.Level.Info -> colorPalette.accent
             Logcat.FormattedLine.Level.Unknown -> colorPalette.textDisabled
         }
     }
@@ -189,40 +200,55 @@ fun LazyItemScope.FormattedLine(
 
     Column(
         modifier = modifier
-            .clip(thumbnailShape)
+            .clip(14.dp.roundedShape)
+            .background(SwaaraDeepSurface)
+            .border(1.dp, accentColor.copy(alpha = 0.35f), 14.dp.roundedShape)
             .clickable { singleLine = !singleLine }
-            .background(backgroundColor)
-            .padding(16.dp)
+            .padding(14.dp)
             .animateItem()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(
-                    when (line.level) {
-                        Logcat.FormattedLine.Level.Error -> R.drawable.alert_circle
-                        Logcat.FormattedLine.Level.Warning -> R.drawable.warning_outline
-                        Logcat.FormattedLine.Level.Debug -> R.drawable.bug_outline
-                        Logcat.FormattedLine.Level.Info -> R.drawable.information_circle_outline
-                        Logcat.FormattedLine.Level.Unknown -> R.drawable.help_outline
-                    }
-                ),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(contentColorFor(backgroundColor))
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                BasicText(
-                    text = line.timestamp.toString(),
-                    style = typography.xxs.color(contentColorFor(backgroundColor)),
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+            Box(
+                modifier = Modifier
+                    .clip(8.dp.roundedShape)
+                    .background(accentColor.copy(alpha = 0.16f))
+                    .border(1.dp, accentColor.copy(alpha = 0.35f), 8.dp.roundedShape)
+                    .padding(horizontal = 7.dp, vertical = 3.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(
+                            when (line.level) {
+                                Logcat.FormattedLine.Level.Error -> R.drawable.alert_circle
+                                Logcat.FormattedLine.Level.Warning -> R.drawable.warning_outline
+                                Logcat.FormattedLine.Level.Debug -> R.drawable.bug_outline
+                                Logcat.FormattedLine.Level.Info -> R.drawable.information_circle_outline
+                                Logcat.FormattedLine.Level.Unknown -> R.drawable.help_outline
+                            }
+                        ),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(accentColor),
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    BasicText(
+                        text = line.level.name,
+                        style = typography.xxs.semiBold.copy(color = accentColor)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 BasicText(
                     text = line.tag,
-                    style = typography.xxs.semiBold.color(
-                        contentColorFor(
-                            backgroundColor
-                        )
-                    ),
-                    modifier = Modifier.padding(start = 8.dp)
+                    style = typography.xxs.semiBold.copy(color = colorPalette.text)
+                )
+                BasicText(
+                    text = line.timestamp.toString(),
+                    style = typography.xxs.secondary
                 )
             }
         }
@@ -233,7 +259,7 @@ fun LazyItemScope.FormattedLine(
         ) { currentSingleLine ->
             BasicText(
                 text = line.message,
-                style = typography.xs.color(contentColorFor(backgroundColor)),
+                style = typography.xs.copy(color = colorPalette.text),
                 modifier = Modifier.padding(top = 8.dp),
                 maxLines = if (currentSingleLine) 1 else Int.MAX_VALUE,
                 overflow = TextOverflow.Ellipsis

@@ -49,6 +49,8 @@ import com.varshudev.a1swaara.ui.components.SwaaraMagenta
 import com.varshudev.a1swaara.ui.components.SwaaraViolet
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.statusBarsPadding
+import app.a1swaara.core.ui.utils.roundedShape
 
 data class SettingCategory(
     val id: Int,
@@ -60,7 +62,8 @@ data class SettingCategory(
 
 @Composable
 fun SwaaraSettingsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDismiss: (() -> Unit)? = null
 ) {
     var activeSubpageId by remember { mutableIntStateOf(-1) }
     var showTourOverlay by remember { mutableStateOf(false) }
@@ -119,11 +122,21 @@ fun SwaaraSettingsScreen(
         )
     }
 
-    Box(
-        modifier = modifier
+    val rootModifier = if (onDismiss != null) {
+        modifier
+            .fillMaxSize()
+            .background(SwaaraObsidian)
+            .statusBarsPadding()
+            .padding(bottom = 120.dp)
+    } else {
+        modifier
             .fillMaxSize()
             .background(SwaaraObsidian)
             .padding(bottom = 120.dp)
+    }
+
+    Box(
+        modifier = rootModifier
     ) {
         if (activeSubpageId == -1) {
             // Root Settings Menu
@@ -139,21 +152,47 @@ fun SwaaraSettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "Settings Studio",
-                            color = SwaaraPrimaryText,
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = (-0.5).sp
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Acoustics, storage, visual identity & preferences",
-                            color = SwaaraSecondaryText,
-                            fontSize = 12.5.sp
-                        )
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (onDismiss != null) {
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(SwaaraElevatedSurface)
+                                    .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.chevron_back),
+                                    contentDescription = "Back",
+                                    tint = SwaaraPrimaryText,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Settings Studio",
+                                color = SwaaraPrimaryText,
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-0.5).sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Acoustics, storage, visual identity & preferences",
+                                color = SwaaraSecondaryText,
+                                fontSize = 12.5.sp
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Box(
                         modifier = Modifier
@@ -405,7 +444,7 @@ fun SwaaraSettingsScreen(
                         1 -> PlayerSettings()
                         2 -> CacheSettings()
                         3 -> DatabaseSettings()
-                        4 -> SwaaraCloudSyncScreen()
+                        4 -> AccountsAndSyncSubpage()
                         5 -> OtherSettings()
                         6 -> About()
                     }
@@ -422,6 +461,70 @@ fun SwaaraSettingsScreen(
                 SwaaraFeatureTourScreen(
                     onTourCompleted = { showTourOverlay = false }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccountsAndSyncSubpage() {
+    var selectedTab by remember { mutableIntStateOf(0) }
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(12.dp.roundedShape)
+                    .background(if (selectedTab == 0) SwaaraMagenta.copy(alpha = 0.20f) else SwaaraDeepSurface)
+                    .border(
+                        1.dp,
+                        if (selectedTab == 0) SwaaraMagenta.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.08f),
+                        12.dp.roundedShape
+                    )
+                    .clickable { selectedTab = 0 }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Swaara Cloud & Jam",
+                    color = if (selectedTab == 0) SwaaraMagenta else SwaaraSecondaryText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(12.dp.roundedShape)
+                    .background(if (selectedTab == 1) SwaaraViolet.copy(alpha = 0.20f) else SwaaraDeepSurface)
+                    .border(
+                        1.dp,
+                        if (selectedTab == 1) SwaaraViolet.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.08f),
+                        12.dp.roundedShape
+                    )
+                    .clickable { selectedTab = 1 }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Piped Account",
+                    color = if (selectedTab == 1) SwaaraViolet else SwaaraSecondaryText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (selectedTab) {
+                0 -> SwaaraCloudSyncScreen()
+                1 -> SyncSettings()
             }
         }
     }

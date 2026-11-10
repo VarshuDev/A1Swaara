@@ -101,3 +101,18 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - `Header` has an overload taking `titleContent: @Composable () -> Unit` and `actionsContent: @Composable RowScope.() -> Unit = {}`, allowing rich interactive search bar pills without breaking `Header`'s layout constraints.
 ---
+
+## 2026-11-11 00:26 - US-010
+- Updated `SwaaraSettingsScreen.kt`:
+  - Added optional `onDismiss: (() -> Unit)? = null` parameter; when present, applies `statusBarsPadding()` and displays a 38.dp circular glass Back button (`R.drawable.chevron_back`) next to "Settings Studio".
+  - In subpage 4 (Accounts & Sync), embedded `AccountsAndSyncSubpage()` with segmented Obsidian Glass selector tabs granting access to both Swaara Cloud & Jam and Piped Account (`SyncSettings()`).
+- Updated `Routes.kt`: routed `settingsRoute` to `SwaaraSettingsScreen(onDismiss = pop)` so global settings navigation opens the unified screen with back navigation.
+- Updated `LogsScreen.kt`:
+  - Set `canHide = false` on single Logs tab.
+  - Replaced glaring solid full-color card blocks with dark `SwaaraDeepSurface` cards (`14.dp.roundedShape`, semantic level border highlight `accentColor.copy(alpha = 0.35f)`, and a compact level pill badge).
+  - Added `84.dp` `bottom_fab_spacer`.
+- Updated `MainActivity.kt`: polished top download `LinearProgressIndicator` with `.height(3.5.dp)`.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL in 2m 29s`).
+- **Learnings for future iterations:**
+  - `LinearProgressIndicator` in `MainActivity.kt` already inherits `colorPalette.accent` and elevated track alpha from `ProgressIndicator.kt`, making a height constraint of 3.5.dp an ideal subtle neon indicator bar under the status bar.
+---

@@ -18,6 +18,7 @@ import com.varshudev.a1swaara.ui.screens.search.SwaaraSearchScreen
 import com.varshudev.a1swaara.ui.screens.searchresult.SearchResultScreen
 import com.varshudev.a1swaara.ui.screens.settings.LogsScreen
 import com.varshudev.a1swaara.ui.screens.settings.SettingsScreen
+import com.varshudev.a1swaara.ui.screens.settings.SwaaraSettingsScreen
 import com.varshudev.a1swaara.ui.screens.profile.SwaaraProfileScreen
 import com.varshudev.a1swaara.ui.screens.leaderboard.SwaaraLeaderboardScreen
 import com.varshudev.a1swaara.ui.screens.jam.SwaaraJamHubScreen
@@ -106,7 +107,7 @@ fun RouteHandlerScope.GlobalRoutes() {
     }
 
     settingsRoute {
-        SettingsScreen()
+        SwaaraSettingsScreen(onDismiss = pop)
     }
 
     searchRoute { initialTextInput ->

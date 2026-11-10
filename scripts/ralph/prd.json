@@ -140,8 +140,8 @@
         "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified offline Kotlin compilation exit 0"
     },
     {
       "id": "US-011",
