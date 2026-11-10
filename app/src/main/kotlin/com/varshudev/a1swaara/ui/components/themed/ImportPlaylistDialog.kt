@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,6 +51,8 @@ import com.varshudev.a1swaara.utils.bold
 import com.varshudev.a1swaara.utils.medium
 import com.varshudev.a1swaara.utils.semiBold
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.swaaraGradientEnd
 import app.a1swaara.core.ui.swaaraGradientStart
 import app.a1swaara.core.ui.utils.roundedShape
@@ -95,7 +98,7 @@ fun ImportPlaylistDialog(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
         // Header
         Row(
@@ -139,7 +142,7 @@ fun ImportPlaylistDialog(
             val isSpotify = detectedPlatform == PlaylistImporter.Platform.SPOTIFY
             val isYouTube = detectedPlatform == PlaylistImporter.Platform.YOUTUBE
 
-            // Spotify badge
+            // Spotify badge (brand green preserved)
             Box(
                 modifier = Modifier
                     .clip(12.dp.roundedShape)
@@ -147,7 +150,12 @@ fun ImportPlaylistDialog(
                         if (isSpotify) Color(0xFF1DB954).copy(alpha = 0.22f)
                         else colorPalette.background2
                     )
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .border(
+                        width = 1.dp,
+                        color = if (isSpotify) Color(0xFF1DB954).copy(alpha = 0.5f) else colorPalette.glassBorder,
+                        shape = 12.dp.roundedShape
+                    )
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 BasicText(
                     text = "Spotify",
@@ -159,7 +167,7 @@ fun ImportPlaylistDialog(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // YouTube badge
+            // YouTube badge (brand red preserved)
             Box(
                 modifier = Modifier
                     .clip(12.dp.roundedShape)
@@ -167,7 +175,12 @@ fun ImportPlaylistDialog(
                         if (isYouTube) Color(0xFFFF0000).copy(alpha = 0.22f)
                         else colorPalette.background2
                     )
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .border(
+                        width = 1.dp,
+                        color = if (isYouTube) Color(0xFFFF4E4E).copy(alpha = 0.5f) else colorPalette.glassBorder,
+                        shape = 12.dp.roundedShape
+                    )
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 BasicText(
                     text = "YouTube Music",
@@ -187,8 +200,10 @@ fun ImportPlaylistDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(colorPalette.background2, shape = 12.dp.roundedShape)
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .clip(14.dp.roundedShape)
+                        .background(colorPalette.background2.copy(alpha = 0.78f))
+                        .border(1.dp, colorPalette.glassBorder, 14.dp.roundedShape)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     TextField(
                         value = urlInput,
@@ -227,14 +242,15 @@ fun ImportPlaylistDialog(
                     // Paste button
                     Box(
                         modifier = Modifier
-                            .clip(8.dp.roundedShape)
-                            .background(colorPalette.accent.copy(alpha = 0.15f))
+                            .clip(10.dp.roundedShape)
+                            .background(colorPalette.accent.copy(alpha = 0.16f))
+                            .border(1.dp, colorPalette.accent.copy(alpha = 0.35f), 10.dp.roundedShape)
                             .clickable {
                                 clipboardManager.getText()?.text?.let { clip ->
                                     if (clip.isNotBlank()) urlInput = clip.trim()
                                 }
                             }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         BasicText(
                             text = stringResource(R.string.import_playlist_paste),
@@ -370,15 +386,17 @@ fun ImportPlaylistDialog(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .background(Color(0xFF1DB954).copy(alpha = 0.2f), shape = CircleShape),
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(colorPalette.secondaryAccent.copy(alpha = 0.18f))
+                            .border(1.dp, colorPalette.secondaryAccent.copy(alpha = 0.45f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.checkmark),
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(Color(0xFF1DB954)),
-                            modifier = Modifier.size(18.dp)
+                            colorFilter = ColorFilter.tint(colorPalette.secondaryAccent),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 

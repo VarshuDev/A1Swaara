@@ -15,12 +15,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -52,6 +52,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import com.varshudev.a1swaara.Database
@@ -66,12 +68,19 @@ import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.ui.screens.albumRoute
 import com.varshudev.a1swaara.ui.screens.artistRoute
 import com.varshudev.a1swaara.ui.screens.localPlaylistRoute
+import com.varshudev.a1swaara.ui.components.SwaaraBorderSubtle
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
 import com.varshudev.a1swaara.ui.components.SwaaraDisplayItem
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.ui.components.SwaaraGlassContainer
+import com.varshudev.a1swaara.ui.components.SwaaraMagenta
+import com.varshudev.a1swaara.ui.components.SwaaraModalSurface
 import com.varshudev.a1swaara.ui.components.SwaaraPink
+import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
 import com.varshudev.a1swaara.ui.components.SwaaraPurple
+import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
 import com.varshudev.a1swaara.ui.components.SwaaraTrendingShelf
+import com.varshudev.a1swaara.ui.components.SwaaraViolet
 import com.varshudev.a1swaara.ui.screens.LocalOpenNowPlaying
 import com.varshudev.a1swaara.utils.asMediaItem
 import com.varshudev.a1swaara.utils.forcePlay
@@ -249,59 +258,93 @@ fun SwaaraLibraryScreen(
 
     // Create Playlist Dialog
     if (showCreatePlaylistDialog) {
-        AlertDialog(
+        Dialog(
             onDismissRequest = { showCreatePlaylistDialog = false },
-            containerColor = Color(0xFF141424),
-            shape = RoundedCornerShape(22.dp),
-            title = {
-                Text(
-                    text = "New Playlist",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                OutlinedTextField(
-                    value = newPlaylistName,
-                    onValueChange = { newPlaylistName = it },
-                    placeholder = { Text("My Awesome Playlist", color = Color.White.copy(alpha = 0.4f)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = SwaaraPurple,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                        focusedContainerColor = Color(0xFF1B1B2C),
-                        unfocusedContainerColor = Color(0xFF1B1B2C)
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 420.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                SwaaraGlassContainer(
+                    shape = RoundedCornerShape(24.dp),
+                    backgroundColor = SwaaraModalSurface,
+                    borderBrush = Brush.linearGradient(
+                        listOf(
+                            SwaaraMagenta.copy(alpha = 0.50f),
+                            SwaaraViolet.copy(alpha = 0.30f),
+                            SwaaraCyan.copy(alpha = 0.45f)
+                        )
                     ),
-                    shape = RoundedCornerShape(14.dp),
-                    singleLine = true,
+                    borderWidth = 1.2.dp,
+                    shadowElevation = 24.dp,
                     modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (newPlaylistName.isNotBlank()) {
-                            coroutineScope.launch(Dispatchers.IO) {
-                                Database.insert(Playlist(name = newPlaylistName.trim()))
-                            }
-                            newPlaylistName = ""
-                            showCreatePlaylistDialog = false
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = SwaaraPurple),
-                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Create", color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCreatePlaylistDialog = false }) {
-                    Text("Cancel", color = Color.White.copy(alpha = 0.6f))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(22.dp)
+                    ) {
+                        Text(
+                            text = "New Playlist",
+                            color = SwaaraPrimaryText,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        OutlinedTextField(
+                            value = newPlaylistName,
+                            onValueChange = { newPlaylistName = it },
+                            placeholder = {
+                                Text(
+                                    "My Awesome Playlist",
+                                    color = SwaaraSecondaryText.copy(alpha = 0.7f)
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = SwaaraPrimaryText,
+                                unfocusedTextColor = SwaaraPrimaryText,
+                                focusedBorderColor = SwaaraViolet,
+                                unfocusedBorderColor = SwaaraBorderSubtle,
+                                focusedContainerColor = SwaaraElevatedSurface,
+                                unfocusedContainerColor = SwaaraElevatedSurface
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = { showCreatePlaylistDialog = false }) {
+                                Text("Cancel", color = SwaaraSecondaryText)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    if (newPlaylistName.isNotBlank()) {
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            Database.insert(Playlist(name = newPlaylistName.trim()))
+                                        }
+                                        newPlaylistName = ""
+                                        showCreatePlaylistDialog = false
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = SwaaraViolet),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Create", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
-        )
+        }
     }
 
     Column(

@@ -64,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -106,10 +107,13 @@ import com.varshudev.a1swaara.utils.medium
 import com.varshudev.a1swaara.utils.semiBold
 import com.varshudev.a1swaara.utils.toast
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.glassBorder
 import app.a1swaara.core.ui.onOverlay
 import app.a1swaara.core.ui.onOverlayShimmer
 import app.a1swaara.core.ui.overlay
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.utils.dp
+import app.a1swaara.core.ui.utils.roundedShape
 import app.a1swaara.providers.lrclib.LrcParser
 import app.a1swaara.providers.lrclib.models.Track
 import app.a1swaara.providers.lrclib.toLrcFile
@@ -901,7 +905,7 @@ fun LrcLibSearchDialog(
     horizontalPadding = 0.dp,
     modifier = modifier
 ) {
-    val (_, typography) = LocalAppearance.current
+    val (colorPalette, typography) = LocalAppearance.current
 
     val tracks = remember { mutableStateListOf<Track>() }
     var loading by remember { mutableStateOf(true) }
@@ -929,16 +933,34 @@ fun LrcLibSearchDialog(
         } ?: run { loading = false }
     }
 
-    TextField(
-        value = query,
-        onValueChange = setQuery,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        maxLines = 1,
-        singleLine = true
-    )
-    Spacer(modifier = Modifier.height(8.dp))
+            .padding(horizontal = 20.dp)
+            .clip(14.dp.roundedShape)
+            .background(colorPalette.background2.copy(alpha = 0.72f))
+            .border(1.dp, colorPalette.glassBorder, 14.dp.roundedShape)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.search),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colorPalette.secondaryAccent),
+            modifier = Modifier.size(16.dp)
+        )
+
+        TextField(
+            value = query,
+            onValueChange = setQuery,
+            hintText = stringResource(R.string.search_lyrics_online),
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            singleLine = true
+        )
+    }
+    Spacer(modifier = Modifier.height(10.dp))
 
     when {
         loading -> CircularProgressIndicator(

@@ -26,3 +26,12 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - Avoid adding `Modifier.shadow` or animated shimmer overlays per `SongItem` row to preserve smooth 60fps `LazyColumn` scroll performance; `RetryingAsyncImage` already handles animated placeholders for remote URLs while static background + vector fallback cleanly covers local URIs.
 ---
+## 2026-11-10 23:31 - US-003
+- Restyled `DefaultDialog`, `TextFieldDialog`, `NumberFieldDialog`, `ConfirmationDialog`, `ValueSelectorDialog`/`ValueSelectorDialogBody`, and `SliderDialog`/`SliderDialogBody` in `Dialog.kt` with shared `SwaaraDialogCard` (`DialogProperties(usePlatformDefaultWidth = false)`, max 420.dp, `SwaaraGlassContainer` 24.dp shape, `SwaaraModalSurface` + Magenta→Violet→Cyan gradient border, bordered glass input field, `heightIn(max = 360.dp)` scrollable selector rows, and `secondaryAccent` slider readout pill).
+- Updated `ImportPlaylistDialog.kt` (glass-bordered platform detection pills keeping `#1DB954` Spotify / `#FF4E4E` YouTube brand badges, bordered URL field/Paste button, and `secondaryAccent` completion badge) and `LrcLibSearchDialog` in `Lyrics.kt` (bordered glass search bar).
+- Replaced raw Material3 `AlertDialog` popups in `SwaaraSleepTimerDialog.kt`, `SwaaraStoryCardDialog.kt`, `SwaaraCloudSyncScreen.kt` (broadcast dialog), and `SwaaraLibraryScreen.kt` (New Playlist dialog) with `Dialog` + `SwaaraGlassContainer` 24.dp Obsidian Glass cards and signature gradient borders.
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL`).
+- **Learnings for future iterations:**
+  - `TextField` in `ui/components/themed/TextField.kt` is declared as `ColumnScope.TextField` / `RowScope.TextField`, so any glass wrapper container around it must be a `Column` or `Row` (not a `Box`).
+  - `SwaaraGlassContainer` draws shadow/clip/background/border on its root box; outer dialog margins belong on an enclosing wrapper `Box`, not on `SwaaraGlassContainer`'s `modifier`.
+---

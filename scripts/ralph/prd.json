@@ -43,8 +43,8 @@
         "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified with :app:compileHttp3ReleaseKotlin across all 7 dialog/screen files"
     },
     {
       "id": "US-004",
