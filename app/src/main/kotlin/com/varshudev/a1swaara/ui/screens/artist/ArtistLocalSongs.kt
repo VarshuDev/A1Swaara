@@ -3,6 +3,7 @@ package com.varshudev.a1swaara.ui.screens.artist
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,17 +13,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.ui.components.LocalMenuState
 import com.varshudev.a1swaara.ui.components.rememberSongListState
+import com.varshudev.a1swaara.ui.components.themed.CollectionTrackSectionHeader
 import com.varshudev.a1swaara.ui.components.themed.HideSongDialog
 import com.varshudev.a1swaara.ui.components.themed.NonQueuedMediaItemMenu
 import com.varshudev.a1swaara.ui.components.themed.PrimaryButton
 import com.varshudev.a1swaara.ui.components.themed.SongCollectionScreen
 import com.varshudev.a1swaara.ui.components.themed.songCollectionItems
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.items.SongItem
 import com.varshudev.a1swaara.ui.modifiers.songSwipeActions
 import com.varshudev.a1swaara.ui.viewmodels.ArtistLocalSongsViewModel
@@ -89,6 +93,15 @@ fun ArtistLocalSongs(
             }
         }
     ) {
+        if (listState.items.isNotEmpty()) {
+            item(
+                key = "section_header",
+                contentType = "section_header"
+            ) {
+                CollectionTrackSectionHeader(count = listState.items.size)
+            }
+        }
+
         songCollectionItems(
             items = listState.items,
             isLoading = listState.isLoading,
@@ -102,6 +115,14 @@ fun ArtistLocalSongs(
 
                 SongItem(
                     modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                        .songSwipeActions(
+                            key = listState.items,
+                            mediaItem = song.asMediaItem,
+                            songToHide = song,
+                            onSwipeLeftRequested = { hidingSong = it.id }
+                        )
+                        .swaaraGlassTrackSurface()
                         .combinedClickable(
                             onLongClick = {
                                 menuState.display {
@@ -116,12 +137,6 @@ fun ArtistLocalSongs(
                                     playbackActions.playAtIndex(items, index)
                                 }
                             }
-                        )
-                        .songSwipeActions(
-                            key = listState.items,
-                            mediaItem = song.asMediaItem,
-                            songToHide = song,
-                            onSwipeLeftRequested = { hidingSong = it.id }
                         ),
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song

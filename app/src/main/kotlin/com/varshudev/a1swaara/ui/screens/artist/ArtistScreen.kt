@@ -4,9 +4,11 @@ import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.varshudev.a1swaara.LocalAppContainer
@@ -31,6 +34,7 @@ import com.varshudev.a1swaara.ui.components.themed.NonQueuedMediaItemMenu
 import com.varshudev.a1swaara.ui.components.themed.RetryMessage
 import com.varshudev.a1swaara.ui.components.themed.Scaffold
 import com.varshudev.a1swaara.ui.components.themed.adaptiveThumbnailContent
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.items.AlbumItem
 import com.varshudev.a1swaara.ui.items.AlbumItemPlaceholder
 import com.varshudev.a1swaara.ui.items.SongItem
@@ -53,6 +57,7 @@ import app.a1swaara.compose.persist.persist
 import app.a1swaara.compose.routing.RouteHandler
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.valentinilk.shimmer.shimmer
 
@@ -110,21 +115,25 @@ fun ArtistScreen(browseId: String) {
                         val context = LocalContext.current
 
                         Header(title = artist?.name ?: stringResource(R.string.unknown)) {
-                            textButton?.invoke()
-
-                            Spacer(modifier = Modifier.weight(1f))
+                            if (textButton != null) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    textButton()
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
 
                             HeaderIconButton(
                                 icon = if (artist?.bookmarkedAt == null) R.drawable.bookmark_outline
                                 else R.drawable.bookmark,
-                                color = if (artist?.bookmarkedAt == null) colorPalette.textSecondary
+                                color = if (artist?.bookmarkedAt == null) colorPalette.text
                                 else colorPalette.accent,
                                 onClick = { viewModel.toggleBookmark(artist) }
                             )
 
                             HeaderIconButton(
                                 icon = R.drawable.person,
-                                color = colorPalette.textSecondary,
+                                color = colorPalette.secondaryAccent,
                                 onClick = {
                                     artist?.name?.let { name ->
                                         leaderboardRoute(name)
@@ -134,7 +143,7 @@ fun ArtistScreen(browseId: String) {
 
                             HeaderIconButton(
                                 icon = R.drawable.share_social,
-                                color = colorPalette.textSecondary,
+                                color = colorPalette.text,
                                 onClick = {
                                     val sendIntent = Intent().apply {
                                         action = Intent.ACTION_SEND
@@ -197,6 +206,12 @@ fun ArtistScreen(browseId: String) {
                                     song = song,
                                     thumbnailSize = Dimensions.thumbnails.song,
                                     modifier = Modifier
+                                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                                        .songSwipeActions(
+                                            key = "artist/$browseId/songs",
+                                            mediaItem = song.asMediaItem
+                                        )
+                                        .swaaraGlassTrackSurface()
                                         .combinedClickable(
                                             onLongClick = {
                                                 menuState.display {
@@ -211,10 +226,6 @@ fun ArtistScreen(browseId: String) {
                                                 binder?.player?.forcePlay(song.asMediaItem)
                                                 binder?.setupRadio(song.info?.endpoint)
                                             }
-                                        )
-                                        .songSwipeActions(
-                                            key = "artist/$browseId/songs",
-                                            mediaItem = song.asMediaItem
                                         )
                                 )
                             },
@@ -234,7 +245,10 @@ fun ArtistScreen(browseId: String) {
                                 AlbumItem(
                                     album = album,
                                     thumbnailSize = Dimensions.thumbnails.album,
-                                    modifier = Modifier.clickable(onClick = { albumRoute(album.key) })
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                                        .swaaraGlassTrackSurface()
+                                        .clickable(onClick = { albumRoute(album.key) })
                                 )
                             },
                             itemPlaceholderContent = {
@@ -253,7 +267,10 @@ fun ArtistScreen(browseId: String) {
                                 AlbumItem(
                                     album = album,
                                     thumbnailSize = Dimensions.thumbnails.album,
-                                    modifier = Modifier.clickable(onClick = { albumRoute(album.key) })
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                                        .swaaraGlassTrackSurface()
+                                        .clickable(onClick = { albumRoute(album.key) })
                                 )
                             },
                             itemPlaceholderContent = {
@@ -274,21 +291,24 @@ fun ArtistScreen(browseId: String) {
                                     video = video,
                                     thumbnailWidth = Dimensions.thumbnails.videoWidth,
                                     thumbnailHeight = Dimensions.thumbnails.videoHeight,
-                                    modifier = Modifier.combinedClickable(
-                                        onLongClick = {
-                                            menuState.display {
-                                                NonQueuedMediaItemMenu(
-                                                    onDismiss = menuState::hide,
-                                                    mediaItem = video.asMediaItem
-                                                )
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                                        .swaaraGlassTrackSurface()
+                                        .combinedClickable(
+                                            onLongClick = {
+                                                menuState.display {
+                                                    NonQueuedMediaItemMenu(
+                                                        onDismiss = menuState::hide,
+                                                        mediaItem = video.asMediaItem
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                binder?.stopRadio()
+                                                binder?.player?.forcePlay(video.asMediaItem)
+                                                binder?.setupRadio(video.info?.endpoint)
                                             }
-                                        },
-                                        onClick = {
-                                            binder?.stopRadio()
-                                            binder?.player?.forcePlay(video.asMediaItem)
-                                            binder?.setupRadio(video.info?.endpoint)
-                                        }
-                                    )
+                                        )
                                 )
                             },
                             itemPlaceholderContent = {

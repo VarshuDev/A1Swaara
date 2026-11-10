@@ -100,8 +100,8 @@
         "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified with :app:compileHttp3ReleaseKotlin across ArtistScreen.kt, ArtistOverview.kt, and ArtistLocalSongs.kt"
     },
     {
       "id": "US-008",

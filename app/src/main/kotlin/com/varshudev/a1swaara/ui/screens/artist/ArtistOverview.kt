@@ -8,11 +8,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,8 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.varshudev.a1swaara.LocalPlayerAwareWindowInsets
 import com.varshudev.a1swaara.LocalPlayerServiceBinder
@@ -40,6 +45,7 @@ import com.varshudev.a1swaara.ui.components.themed.LayoutWithAdaptiveThumbnail
 import com.varshudev.a1swaara.ui.components.themed.NonQueuedMediaItemMenu
 import com.varshudev.a1swaara.ui.components.themed.SecondaryTextButton
 import com.varshudev.a1swaara.ui.components.themed.TextPlaceholder
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.items.AlbumItem
 import com.varshudev.a1swaara.ui.items.AlbumItemPlaceholder
 import com.varshudev.a1swaara.ui.items.SongItem
@@ -48,11 +54,13 @@ import com.varshudev.a1swaara.ui.modifiers.songSwipeActions
 import com.varshudev.a1swaara.utils.asMediaItem
 import com.varshudev.a1swaara.utils.forcePlay
 import com.varshudev.a1swaara.utils.medium
-import com.varshudev.a1swaara.utils.secondary
 import com.varshudev.a1swaara.utils.semiBold
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.secondaryAccent
+import app.a1swaara.core.ui.tertiaryAccent
 import app.a1swaara.core.ui.utils.isLandscape
+import app.a1swaara.core.ui.utils.roundedShape
 import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.a1swaara.providers.youtubemusic.innertube.models.NavigationEndpoint
 
@@ -113,15 +121,23 @@ fun ArtistOverview(
                             )
                         }
                         youtubeArtistPage?.subscribersCountText?.let { subscribers ->
+                            val pillShape = 12.dp.roundedShape
                             Box(
                                 modifier = Modifier
-                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                                    .background(Color.White.copy(alpha = 0.08f))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    .clip(pillShape)
+                                    .background(colorPalette.secondaryAccent.copy(alpha = 0.14f))
+                                    .border(
+                                        width = 1.dp,
+                                        color = colorPalette.secondaryAccent.copy(alpha = 0.35f),
+                                        shape = pillShape
+                                    )
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 BasicText(
                                     text = stringResource(R.string.format_subscribers, subscribers),
-                                    style = typography.xxs.medium.copy(color = Color(0xFF20CFFF))
+                                    style = typography.xxs.medium.copy(color = colorPalette.secondaryAccent),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -142,10 +158,10 @@ fun ArtistOverview(
                             .size(165.dp)
                             .clip(CircleShape)
                             .background(
-                                androidx.compose.ui.graphics.Brush.radialGradient(
+                                Brush.radialGradient(
                                     listOf(
-                                        Color(0xFF8B35FF).copy(alpha = 0.45f),
-                                        Color(0xFFFF2DAA).copy(alpha = 0.20f),
+                                        colorPalette.tertiaryAccent.copy(alpha = 0.45f),
+                                        colorPalette.accent.copy(alpha = 0.22f),
                                         Color.Transparent
                                     )
                                 )
@@ -157,12 +173,12 @@ fun ArtistOverview(
                             .clip(CircleShape)
                             .border(
                                 2.dp,
-                                androidx.compose.ui.graphics.Brush.sweepGradient(
+                                Brush.sweepGradient(
                                     listOf(
-                                        Color(0xFFFF2DAA),
-                                        Color(0xFF8B35FF),
-                                        Color(0xFF20CFFF),
-                                        Color(0xFFFF2DAA)
+                                        colorPalette.accent,
+                                        colorPalette.tertiaryAccent,
+                                        colorPalette.secondaryAccent,
+                                        colorPalette.accent
                                     )
                                 ),
                                 CircleShape
@@ -175,33 +191,25 @@ fun ArtistOverview(
 
             youtubeArtistPage?.let { artist ->
                 artist.songs?.let { songs ->
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(endPaddingValues)
-                    ) {
-                        BasicText(
-                            text = stringResource(R.string.songs),
-                            style = typography.m.semiBold.copy(color = Color.White),
-                            modifier = sectionTextModifier
-                        )
-
-                        artist.songsEndpoint?.let {
-                            BasicText(
-                                text = stringResource(R.string.view_all),
-                                style = typography.xs.secondary.copy(color = colorPalette.accent),
-                                modifier = sectionTextModifier.clickable(onClick = onViewAllSongsClick)
-                            )
-                        }
-                    }
+                    ArtistOverviewSectionHeader(
+                        title = stringResource(R.string.songs),
+                        onViewAllClick = if (artist.songsEndpoint != null) onViewAllSongsClick else null,
+                        pillColor = colorPalette.accent,
+                        modifier = Modifier.padding(endPaddingValues)
+                    )
 
                     songs.forEach { song ->
                         SongItem(
                             song = song,
                             thumbnailSize = Dimensions.thumbnails.song,
                             modifier = Modifier
+                                .padding(endPaddingValues)
+                                .padding(horizontal = 12.dp, vertical = 3.dp)
+                                .songSwipeActions(
+                                    key = songs,
+                                    mediaItem = song.asMediaItem
+                                )
+                                .swaaraGlassTrackSurface()
                                 .combinedClickable(
                                     onLongClick = {
                                         menuState.display {
@@ -220,41 +228,24 @@ fun ArtistOverview(
                                         )
                                     }
                                 )
-                                .songSwipeActions(
-                                    key = songs,
-                                    mediaItem = song.asMediaItem
-                                )
-                                .padding(endPaddingValues)
                         )
                     }
                 }
 
                 artist.albums?.let { albums ->
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(endPaddingValues)
-                    ) {
-                        BasicText(
-                            text = stringResource(R.string.albums),
-                            style = typography.m.semiBold.copy(color = Color.White),
-                            modifier = sectionTextModifier
-                        )
-
-                        artist.albumsEndpoint?.let {
-                            BasicText(
-                                text = stringResource(R.string.view_all),
-                                style = typography.xs.secondary.copy(color = colorPalette.accent),
-                                modifier = sectionTextModifier.clickable(onClick = onViewAllAlbumsClick)
-                            )
-                        }
-                    }
+                    ArtistOverviewSectionHeader(
+                        title = stringResource(R.string.albums),
+                        onViewAllClick = if (artist.albumsEndpoint != null) onViewAllAlbumsClick else null,
+                        pillColor = colorPalette.secondaryAccent,
+                        modifier = Modifier.padding(endPaddingValues)
+                    )
 
                     LazyRow(
-                        contentPadding = endPaddingValues,
-                        modifier = Modifier.fillMaxWidth()
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(endPaddingValues)
                     ) {
                         items(
                             items = albums,
@@ -264,40 +255,31 @@ fun ArtistOverview(
                                 album = album,
                                 thumbnailSize = Dimensions.thumbnails.album,
                                 alternative = true,
-                                modifier = Modifier.clickable {
-                                    onAlbumClick(album.key)
-                                }
+                                modifier = Modifier
+                                    .padding(vertical = 3.dp)
+                                    .swaaraGlassTrackSurface()
+                                    .clickable {
+                                        onAlbumClick(album.key)
+                                    }
                             )
                         }
                     }
                 }
 
                 artist.singles?.let { singles ->
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(endPaddingValues)
-                    ) {
-                        BasicText(
-                            text = stringResource(R.string.singles),
-                            style = typography.m.semiBold.copy(color = Color.White),
-                            modifier = sectionTextModifier
-                        )
-
-                        artist.singlesEndpoint?.let {
-                            BasicText(
-                                text = stringResource(R.string.view_all),
-                                style = typography.xs.secondary.copy(color = colorPalette.accent),
-                                modifier = sectionTextModifier.clickable(onClick = onViewAllSinglesClick)
-                            )
-                        }
-                    }
+                    ArtistOverviewSectionHeader(
+                        title = stringResource(R.string.singles),
+                        onViewAllClick = if (artist.singlesEndpoint != null) onViewAllSinglesClick else null,
+                        pillColor = colorPalette.secondaryAccent,
+                        modifier = Modifier.padding(endPaddingValues)
+                    )
 
                     LazyRow(
-                        contentPadding = endPaddingValues,
-                        modifier = Modifier.fillMaxWidth()
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(endPaddingValues)
                     ) {
                         items(
                             items = singles,
@@ -307,7 +289,10 @@ fun ArtistOverview(
                                 album = album,
                                 thumbnailSize = Dimensions.thumbnails.album,
                                 alternative = true,
-                                modifier = Modifier.clickable(onClick = { onAlbumClick(album.key) })
+                                modifier = Modifier
+                                    .padding(vertical = 3.dp)
+                                    .swaaraGlassTrackSurface()
+                                    .clickable(onClick = { onAlbumClick(album.key) })
                             )
                         }
                     }
@@ -322,7 +307,7 @@ fun ArtistOverview(
                     )
                 }
 
-                Unit
+                Spacer(modifier = Modifier.height(84.dp))
             } ?: ArtistOverviewBodyPlaceholder()
         }
 
@@ -335,6 +320,51 @@ fun ArtistOverview(
                     binder?.playRadio(endpoint)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun ArtistOverviewSectionHeader(
+    title: String,
+    onViewAllClick: (() -> Unit)?,
+    pillColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val (colorPalette, typography) = LocalAppearance.current
+    val pillShape = 12.dp.roundedShape
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(top = 24.dp, bottom = 10.dp)
+    ) {
+        BasicText(
+            text = title,
+            style = typography.m.semiBold.copy(color = colorPalette.text)
+        )
+
+        onViewAllClick?.let { onClick ->
+            Box(
+                modifier = Modifier
+                    .clip(pillShape)
+                    .background(pillColor.copy(alpha = 0.14f))
+                    .border(
+                        width = 1.dp,
+                        color = pillColor.copy(alpha = 0.35f),
+                        shape = pillShape
+                    )
+                    .clickable(onClick = onClick)
+                    .padding(horizontal = 12.dp, vertical = 5.dp)
+            ) {
+                BasicText(
+                    text = stringResource(R.string.view_all),
+                    style = typography.xxs.semiBold.copy(color = pillColor)
+                )
+            }
         }
     }
 }
