@@ -1,10 +1,12 @@
 package com.varshudev.a1swaara.ui.screens.searchresult
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -191,6 +193,10 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
                     modifier = Modifier
                         .fillMaxWidth()
                 )
+            }
+
+            if (pageState.items.isNotEmpty()) item(key = "bottom_fab_spacer") {
+                Spacer(modifier = Modifier.height(76.dp))
             }
         }
 

@@ -53,3 +53,12 @@ Started: 11/10/2026 23:11:54
 - **Learnings for future iterations:**
   - `ColorPalette.onAccent` is a data-class property directly on `ColorPalette`, not a top-level extension function (`import app.a1swaara.core.ui.onAccent` fails to resolve).
 ---
+
+## 2026-11-10 23:46 - US-006
+- Restyled `HeaderIconButton` and `IconButton` in `IconButton.kt` into 38.dp Obsidian Glass rounded pills (`12.dp.roundedShape`, elevated surface, `glassBorder`, active accent fill/tint when highlighted) and fixed the `enabled = enabled` pass-through bug.
+- Added `Modifier.swaaraGlassTrackSurface()`, `CollectionTrackSectionHeader(count)`, and a `84.dp` `bottom_fab_spacer` inside `SongListScaffold.kt` (`SongCollectionScreen`) so tracks clear floating action buttons and mini-player insets; added matching `76.dp` `bottom_fab_spacer` in `ItemsPage.kt`.
+- Updated `AlbumScreen.kt` (accent Bookmark state tint + glass cards on `Other versions` albums), `AlbumSongs.kt`, `PlaylistScreen.kt` (`canHide = false`), `PlaylistSongList.kt` (`secondaryAccent` Add tint + glass track cards), `PipedPlaylistScreen.kt` (`canHide = false`), and `PipedPlaylistSongList.kt` (section header + glass track cards ordered cleanly after `.songSwipeActions(...)`).
+- Verified: `.\gradlew.bat --offline :app:compileHttp3ReleaseKotlin` exited 0 (`BUILD SUCCESSFUL`).
+- **Learnings for future iterations:**
+  - Because `swipeToAction` draws the swipe action icon in `drawWithContent` before shifting `drawContent()`, `Modifier.swaaraGlassTrackSurface()` (opaque card fill/clip/border) and `.combinedClickable(...)` must follow `.songSwipeActions(...)` while outer spacing (`.padding(horizontal = 12.dp, vertical = 3.dp)`) goes before `.songSwipeActions(...)` so the sliding glass card reveals the action icon underneath cleanly.
+---

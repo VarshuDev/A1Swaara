@@ -3,6 +3,7 @@ package com.varshudev.a1swaara.ui.screens.pipedplaylist
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,10 +14,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.ui.components.LocalMenuState
+import com.varshudev.a1swaara.ui.components.themed.CollectionTrackSectionHeader
 import com.varshudev.a1swaara.ui.components.themed.Header
 import com.varshudev.a1swaara.ui.components.themed.HeaderPlaceholder
 import com.varshudev.a1swaara.ui.components.themed.NonQueuedMediaItemMenu
@@ -24,6 +27,7 @@ import com.varshudev.a1swaara.ui.components.themed.PrimaryButton
 import com.varshudev.a1swaara.ui.components.themed.SongListActionsRow
 import com.varshudev.a1swaara.ui.components.themed.SongCollectionScreen
 import com.varshudev.a1swaara.ui.components.themed.songCollectionItems
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.components.themed.matchesSongCollectionQuery
 import com.varshudev.a1swaara.ui.components.themed.adaptiveThumbnailContent
 import com.varshudev.a1swaara.ui.items.SongItem
@@ -113,6 +117,9 @@ fun PipedPlaylistSongList(
                 }
 
                 if (!isLandscape) thumbnailContent()
+                if (displayedVideos.isNotEmpty()) {
+                    CollectionTrackSectionHeader(count = displayedVideos.size)
+                }
             }
         }
     ) {
@@ -125,6 +132,12 @@ fun PipedPlaylistSongList(
                     song = mediaItem,
                     thumbnailSize = Dimensions.thumbnails.song,
                     modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 3.dp)
+                        .songSwipeActions(
+                            key = playlistId,
+                            mediaItem = mediaItem
+                        )
+                        .swaaraGlassTrackSurface()
                         .combinedClickable(
                             onLongClick = {
                                 menuState.display {
@@ -139,10 +152,6 @@ fun PipedPlaylistSongList(
                                     playbackActions.playAtIndex(items, index)
                                 }
                             }
-                        )
-                        .songSwipeActions(
-                            key = playlistId,
-                            mediaItem = mediaItem
                         )
                 )
             }

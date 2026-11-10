@@ -3,6 +3,7 @@ package com.varshudev.a1swaara.ui.screens.album
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -11,14 +12,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.ui.components.LocalMenuState
+import com.varshudev.a1swaara.ui.components.themed.CollectionTrackSectionHeader
 import com.varshudev.a1swaara.ui.components.themed.HideSongDialog
 import com.varshudev.a1swaara.ui.components.themed.NonQueuedMediaItemMenu
 import com.varshudev.a1swaara.ui.components.themed.PrimaryButton
 import com.varshudev.a1swaara.ui.components.themed.SongCollectionScreen
 import com.varshudev.a1swaara.ui.components.themed.songCollectionItems
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.items.SongItem
 import com.varshudev.a1swaara.ui.modifiers.songSwipeActions
 import com.varshudev.a1swaara.utils.PlaylistDownloadFloatingButton
@@ -69,6 +73,9 @@ fun AlbumSongs(
 
                 if (!isLandscape) thumbnailContent()
                 afterHeaderContent?.invoke()
+                if (songs.isNotEmpty()) {
+                    CollectionTrackSectionHeader(count = songs.size)
+                }
             }
         }
     ) {
@@ -88,6 +95,14 @@ fun AlbumSongs(
                 index = index,
                 thumbnailSize = Dimensions.thumbnails.song,
                 modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 3.dp)
+                    .songSwipeActions(
+                        key = songs,
+                        mediaItem = song.asMediaItem,
+                        songToHide = song,
+                        onSwipeLeftRequested = { hidingSong = it.id }
+                    )
+                    .swaaraGlassTrackSurface()
                     .combinedClickable(
                         onLongClick = {
                             menuState.display {
@@ -100,12 +115,6 @@ fun AlbumSongs(
                         onClick = {
                             playbackActions.playAtIndex(mediaItems, index)
                         }
-                    )
-                    .songSwipeActions(
-                        key = songs,
-                        mediaItem = song.asMediaItem,
-                        songToHide = song,
-                        onSwipeLeftRequested = { hidingSong = it.id }
                     )
             )
         }

@@ -86,8 +86,8 @@
         "./gradlew.bat --offline :app:compileHttp3ReleaseKotlin passes cleanly"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified with :app:compileHttp3ReleaseKotlin (9 files updated: IconButton, SongListScaffold, ItemsPage, Album/Playlist/Piped screens & song lists)"
     },
     {
       "id": "US-007",

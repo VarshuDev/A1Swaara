@@ -38,7 +38,7 @@ fun PipedPlaylistScreen(
                 tabIndex = 0,
                 onTabChange = { },
                 tabColumnContent = {
-                    tab(0, R.string.songs, R.drawable.musical_notes)
+                    tab(0, R.string.songs, R.drawable.musical_notes, canHide = false)
                 }
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {

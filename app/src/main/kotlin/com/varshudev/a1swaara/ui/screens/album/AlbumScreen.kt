@@ -3,6 +3,7 @@ package com.varshudev.a1swaara.ui.screens.album
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -14,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.models.Album
@@ -24,6 +26,7 @@ import com.varshudev.a1swaara.ui.components.themed.HeaderPlaceholder
 import com.varshudev.a1swaara.ui.components.themed.PlaylistInfo
 import com.varshudev.a1swaara.ui.components.themed.Scaffold
 import com.varshudev.a1swaara.ui.components.themed.adaptiveThumbnailContent
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.items.AlbumItem
 import com.varshudev.a1swaara.ui.items.AlbumItemPlaceholder
 import com.varshudev.a1swaara.ui.screens.GlobalRoutes
@@ -123,7 +126,8 @@ fun AlbumScreen(browseId: String) {
                         HeaderIconButton(
                             icon = if (album?.bookmarkedAt == null) R.drawable.bookmark_outline
                             else R.drawable.bookmark,
-                            color = colorPalette.accent,
+                            color = if (album?.bookmarkedAt == null) colorPalette.textSecondary
+                            else colorPalette.accent,
                             onClick = { viewModel.toggleBookmark(album) }
                         )
 
@@ -199,7 +203,10 @@ fun AlbumScreen(browseId: String) {
                                     AlbumItem(
                                         album = album,
                                         thumbnailSize = Dimensions.thumbnails.album,
-                                        modifier = Modifier.clickable { albumRoute(album.key) }
+                                        modifier = Modifier
+                                            .padding(horizontal = 12.dp, vertical = 4.dp)
+                                            .swaaraGlassTrackSurface()
+                                            .clickable { albumRoute(album.key) }
                                     )
                                 },
                                 itemPlaceholderContent = {

@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,10 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.ui.components.LocalMenuState
+import com.varshudev.a1swaara.ui.components.themed.CollectionTrackSectionHeader
 import com.varshudev.a1swaara.ui.components.themed.Header
 import com.varshudev.a1swaara.ui.components.themed.HeaderIconButton
 import com.varshudev.a1swaara.ui.components.themed.HeaderPlaceholder
@@ -28,6 +31,7 @@ import com.varshudev.a1swaara.ui.components.themed.PrimaryButton
 import com.varshudev.a1swaara.ui.components.themed.SongListActionsRow
 import com.varshudev.a1swaara.ui.components.themed.SongCollectionScreen
 import com.varshudev.a1swaara.ui.components.themed.songCollectionItems
+import com.varshudev.a1swaara.ui.components.themed.swaaraGlassTrackSurface
 import com.varshudev.a1swaara.ui.components.themed.matchesSongCollectionQuery
 import com.varshudev.a1swaara.ui.components.themed.TextFieldDialog
 import com.varshudev.a1swaara.ui.components.themed.adaptiveThumbnailContent
@@ -42,6 +46,7 @@ import com.varshudev.a1swaara.utils.rememberMediaItemsOrNull
 import app.a1swaara.compose.persist.persist
 import app.a1swaara.core.ui.Dimensions
 import app.a1swaara.core.ui.LocalAppearance
+import app.a1swaara.core.ui.secondaryAccent
 import app.a1swaara.core.ui.utils.isLandscape
 import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.valentinilk.shimmer.shimmer
@@ -123,7 +128,7 @@ fun PlaylistSongList(
                 trailingContent = {
                     HeaderIconButton(
                         icon = R.drawable.add,
-                        color = colorPalette.text,
+                        color = colorPalette.secondaryAccent,
                         onClick = { isImportingPlaylist = true }
                     )
 
@@ -181,6 +186,9 @@ fun PlaylistSongList(
                 headerContent()
                 if (!isLandscape) thumbnailContent()
                 PlaylistInfo(playlist = playlistPage)
+                if (displayedPlaylistItems.isNotEmpty()) {
+                    CollectionTrackSectionHeader(count = displayedPlaylistItems.size)
+                }
             }
         }
     ) {
@@ -192,6 +200,12 @@ fun PlaylistSongList(
                 song = song,
                 thumbnailSize = Dimensions.thumbnails.song,
                 modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 3.dp)
+                    .songSwipeActions(
+                        key = displayedPlaylistItems,
+                        mediaItem = song.asMediaItem
+                    )
+                    .swaaraGlassTrackSurface()
                     .combinedClickable(
                         onLongClick = {
                             menuState.display {
@@ -206,10 +220,6 @@ fun PlaylistSongList(
                                 playbackActions.playAtIndex(items, index)
                             }
                         }
-                    )
-                    .songSwipeActions(
-                        key = displayedPlaylistItems,
-                        mediaItem = song.asMediaItem
                     )
             )
         }
