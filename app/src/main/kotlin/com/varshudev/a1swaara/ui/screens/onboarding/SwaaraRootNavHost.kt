@@ -25,7 +25,15 @@ enum class SwaaraNavDestination {
 @Composable
 fun SwaaraRootNavHost() {
     val context = androidx.compose.ui.platform.LocalContext.current
-    var destination by remember { mutableStateOf(SwaaraNavDestination.Splash) }
+    var destination by remember {
+        val prefs = context.getSharedPreferences("swaara_prefs", android.content.Context.MODE_PRIVATE)
+        val tourCompleted = prefs.getBoolean("tour_completed", false)
+        val onboardingCompleted = prefs.getBoolean("onboarding_completed", false)
+        mutableStateOf(
+            if (tourCompleted && onboardingCompleted) SwaaraNavDestination.MainShell
+            else SwaaraNavDestination.Splash
+        )
+    }
 
     val latestRelease by SwaaraUpdateManager.latestRelease.collectAsStateWithLifecycle()
     val updateInfo by SwaaraUpdateManager.updateInfo.collectAsStateWithLifecycle()
@@ -83,7 +91,8 @@ fun SwaaraRootNavHost() {
                 updateInfo = updateInfo,
                 onDismiss = {
                     showDialog = false
-                    SwaaraUpdateManager.setMandatoryLock(true)
+                    // Only enforce online lockout when a manifest explicitly requires a forced update
+                    SwaaraUpdateManager.setMandatoryLock(updateInfo?.forceUpdate == true)
                 }
             )
         }

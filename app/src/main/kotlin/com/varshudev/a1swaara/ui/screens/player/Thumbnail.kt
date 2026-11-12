@@ -261,7 +261,19 @@ fun Thumbnail(
                         else -> stringResource(R.string.error_unknown_playback)
                     }
                 },
-                onDismiss = { binder?.player?.prepare() },
+                onDismiss = {
+                    binder?.player?.prepare()
+                    binder?.player?.play()
+                },
+                onRetry = {
+                    binder?.player?.prepare()
+                    binder?.player?.play()
+                },
+                onSkipNext = {
+                    binder?.player?.seekToNextMediaItem()
+                    binder?.player?.prepare()
+                    binder?.player?.play()
+                },
                 modifier = Modifier.height(height.px.dp)
             )
         }

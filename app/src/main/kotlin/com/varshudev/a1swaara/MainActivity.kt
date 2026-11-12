@@ -38,6 +38,7 @@ import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
@@ -62,6 +64,7 @@ import androidx.media3.common.Player
 import com.varshudev.a1swaara.bugreport.SwaaraBugReportSheet
 import com.varshudev.a1swaara.bugreport.SwaaraShakeDetector
 import com.varshudev.a1swaara.preferences.AppearancePreferences
+import com.varshudev.a1swaara.preferences.DataPreferences
 import com.varshudev.a1swaara.service.PlayerService
 import com.varshudev.a1swaara.service.downloadState
 import com.varshudev.a1swaara.ui.components.BottomSheetMenu
@@ -187,9 +190,16 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
 
         intent?.let { handleIntent(it) }
         addOnNewIntentListener(::handleIntent)
-        shakeDetector = SwaaraShakeDetector(this) {
+        shakeDetector = SwaaraShakeDetector(
+            context = this,
+            canTrigger = {
+                !isBugReportSheetOpen && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+            }
+        ) {
             runOnUiThread {
-                isBugReportSheetOpen = true
+                if (!isBugReportSheetOpen && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    isBugReportSheetOpen = true
+                }
             }
         }
 
@@ -291,25 +301,14 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 label = ""
             )
 
-            val playerBottomSheetState = rememberBottomSheetState(
-                key = vm.binder,
-                dismissedBound = 0.dp,
-                collapsedBound = Dimensions.items.collapsedPlayerHeight + bottomDp,
-                expandedBound = maxHeight
-            )
-
             val playerAwareWindowInsets = remember(
-                bottomDp,
                 animatedBottomDp,
-                playerBottomSheetState.value,
                 imeVisible,
                 imeBottomDp
             ) {
                 val bottom =
-                    if (imeVisible) imeBottomDp.coerceAtLeast(playerBottomSheetState.value)
-                    else playerBottomSheetState.value.coerceIn(
-                        animatedBottomDp..playerBottomSheetState.collapsedBound
-                    )
+                    if (imeVisible) imeBottomDp.coerceAtLeast(animatedBottomDp)
+                    else animatedBottomDp
 
                 windowsInsets
                     .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
@@ -317,10 +316,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
             }
 
             val pip = isInPip(
-                onChange = {
-                    if (!it || vm.binder?.player?.shouldBePlaying != true) return@isInPip
-                    playerBottomSheetState.expandSoft()
-                }
+                onChange = { }
             )
 
             KeyedCrossfade(state = pip) { currentPip ->
@@ -364,6 +360,15 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 }
             }
 
+            val shakeToReportEnabled = DataPreferences.isShakeToReportEnabled
+            LaunchedEffect(shakeToReportEnabled) {
+                if (shakeToReportEnabled && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    shakeDetector?.start()
+                } else if (!shakeToReportEnabled) {
+                    shakeDetector?.stop()
+                }
+            }
+
             if (isBugReportSheetOpen) {
                 SwaaraBugReportSheet(
                     onDismiss = { isBugReportSheetOpen = false },
@@ -376,19 +381,8 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                     override fun onMediaItemTransition(
                         mediaItem: MediaItem?,
                         reason: Int
-                    ) = when {
-                        mediaItem == null -> {
-                            maybeExitPip()
-                            playerBottomSheetState.dismissSoft()
-                        }
-
-                        reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED &&
-                                mediaItem.mediaMetadata.extras?.songBundle?.isFromPersistentQueue != true
-                            -> playerBottomSheetState.expandSoft()
-
-                        playerBottomSheetState.dismissed -> playerBottomSheetState.collapseSoft()
-
-                        else -> Unit
+                    ) {
+                        if (mediaItem == null) maybeExitPip()
                     }
                 }
             }

@@ -75,7 +75,12 @@ import com.varshudev.a1swaara.service.ServiceNotifications
 import com.varshudev.a1swaara.utils.YouTubeRadioDataSource
 import com.varshudev.a1swaara.utils.addHttpTransport
 import com.varshudev.a1swaara.utils.initializeHttpTransport
+import com.varshudev.a1swaara.bugreport.SwaaraCrashRecovery
 import com.varshudev.a1swaara.work.DatabaseAutoBackupWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import app.a1swaara.compose.persist.PersistMap
 import app.a1swaara.compose.preferences.PreferencesHolder
 import app.a1swaara.core.ui.utils.isAtLeastAndroid12
@@ -124,7 +129,7 @@ class AppContainer(
         NewPipePoTokenProvider.initialize(application.applicationContext)
         YoutubeStreamExtractor.setPoTokenProvider(NewPipePoTokenProvider)
         YoutubeStreamExtractor.setFetchIosClient(false)
-        NewPipeExtractorClient.ensureInitialized(application.applicationContext)
+        // Initialized off-thread in backgroundInitScope below
     }
 }
 
@@ -135,13 +140,16 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
     lateinit var appContainer: AppContainer
         private set
 
+    private val backgroundInitScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     override fun onCreate() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e("A1SwaaraCrash", "FATAL CRASH on thread ${thread.name}: ${throwable.message}", throwable)
+            SwaaraCrashRecovery.recordCrash(applicationContext, thread.name, throwable)
             defaultHandler?.uncaughtException(thread, throwable)
         }
-        StrictMode.setVmPolicy(
+        if (BuildConfig.DEBUG) StrictMode.setVmPolicy(
             VmPolicy.Builder()
                 .let {
                     if (isAtLeastAndroid12) it.detectUnsafeIntentLaunch()
@@ -166,9 +174,14 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         initializeHttpTransport(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         ServiceNotifications.createAll(this)
-        DatabaseAutoBackupWorker.upsert(this)
-        com.varshudev.a1swaara.ui.screens.settings.VersionCheckWorker.upsert(this, DataPreferences.versionCheckPeriod.period)
-        com.varshudev.a1swaara.work.SwaaraPushWorker.upsert(this)
+        backgroundInitScope.launch {
+            NewPipeExtractorClient.ensureInitialized(applicationContext)
+            DatabaseAutoBackupWorker.upsert(applicationContext)
+            com.varshudev.a1swaara.ui.screens.settings.VersionCheckWorker.upsert(applicationContext, DataPreferences.versionCheckPeriod.period)
+            com.varshudev.a1swaara.work.SwaaraPushWorker.upsert(applicationContext)
+        }
+
+
     }
 
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)

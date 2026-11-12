@@ -79,11 +79,14 @@ import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
 import com.varshudev.a1swaara.ui.components.SwaaraMagenta
 import com.varshudev.a1swaara.ui.components.SwaaraViolet
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
 import com.varshudev.a1swaara.utils.forcePlay
 import com.varshudev.a1swaara.utils.thumbnail
 import app.a1swaara.providers.youtubemusic.innertube.models.NavigationEndpoint
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope as parallelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.varshudev.a1swaara.ui.screens.artistRoute
@@ -169,6 +172,7 @@ fun SwaaraHomeScreen(
     var isLoadingFeed by remember {
         mutableStateOf(!SwaaraHomeFeedCache.hasDataFor(initialPrefs.second))
     }
+    var feedError by remember { mutableStateOf<String?>(null) }
     val userPrefs = remember { context.getSharedPreferences("swaara_prefs", Context.MODE_PRIVATE) }
     var showJamDialog by remember { mutableStateOf(false) }
     var showNotificationDialog by remember { mutableStateOf(false) }
@@ -500,11 +504,36 @@ fun SwaaraHomeScreen(
         }
     }
 
-    // Load Live YouTube Music Feed for Selected Language & Personal History
-    val loadLiveFeed: (String, Boolean) -> Unit = { lang, forceRefresh ->
+    // Load Live YouTube Music Feed with Stale-While-Revalidate (SWR) & parallel fetch
+    fun loadLiveFeed(lang: String, forceRefresh: Boolean, silent: Boolean = false) {
         if (forceRefresh || !SwaaraHomeFeedCache.hasDataFor(lang)) {
-            isLoadingFeed = true
+            if (!silent) {
+                isLoadingFeed = true
+                feedError = null
+            }
             coroutineScope.launch(Dispatchers.IO) {
+                // Fast disk cache hydrate before network fetch when switching languages or cold starting
+                if (!forceRefresh) {
+                    val diskHit = SwaaraHomeFeedCache.loadFromDiskIfNeeded(context, lang)
+                    if (diskHit) {
+                        withContext(Dispatchers.Main) {
+                            liveTrendingSongs = SwaaraHomeFeedCache.trendingSongs
+                            quickGridItems = SwaaraHomeFeedCache.quickGridItems
+                            liveArtists = SwaaraHomeFeedCache.liveArtists
+                            viralSongs = SwaaraHomeFeedCache.viralSongs
+                            topTwentyList = SwaaraHomeFeedCache.topTwentyList
+                            if (SwaaraHomeFeedCache.communitySongs.isNotEmpty()) {
+                                communitySongs = SwaaraHomeFeedCache.communitySongs
+                            }
+                            isLoadingFeed = false
+                            feedError = null
+                        }
+                        if (!SwaaraHomeFeedCache.isStale()) {
+                            return@launch
+                        }
+                    }
+                }
+
                 // 1. Fetch real user history from Database for Jump Back In
                 val userHistoryEvents = runCatching {
                     Database.events().first()
@@ -556,30 +585,39 @@ fun SwaaraHomeScreen(
                     else -> "$lang popular playback singers"
                 }
 
-                val liveSongsResult = container.searchResultRepository.searchSongs(trendingQuery, null)?.getOrNull()?.items
-                val viralResult = container.searchResultRepository.searchSongs(viralQuery, null)?.getOrNull()?.items
-                val topChartResult = container.searchResultRepository.searchSongs(topChartQuery, null)?.getOrNull()?.items
-                val liveArtistsResult = runCatching {
-                    container.searchResultRepository.searchArtists(artistQuery, null)?.getOrNull()?.items
-                }.getOrNull()
+                val (liveSongsResult, viralResult, topChartResult, liveArtistsResult) = parallelScope {
+                    val dSongs = async { runCatching { container.searchResultRepository.searchSongs(trendingQuery, null)?.getOrNull()?.items }.getOrNull() }
+                    val dViral = async { runCatching { container.searchResultRepository.searchSongs(viralQuery, null)?.getOrNull()?.items }.getOrNull() }
+                    val dTop = async { runCatching { container.searchResultRepository.searchSongs(topChartQuery, null)?.getOrNull()?.items }.getOrNull() }
+                    val dArtists = async { runCatching { container.searchResultRepository.searchArtists(artistQuery, null)?.getOrNull()?.items }.getOrNull() }
+                    listOf(dSongs.await(), dViral.await(), dTop.await(), dArtists.await())
+                }
 
-                withContext(Dispatchers.Main) {
-                    val mappedSongs = (!liveSongsResult.isNullOrEmpty()).let { hasSongs ->
-                        if (hasSongs) {
-                            liveSongsResult!!.map { item ->
-                                SwaaraDisplayItem(
-                                    id = item.key,
-                                    title = item.info?.name ?: "Unknown Title",
-                                    subtitle = item.authors?.joinToString { it.name.orEmpty() }?.replace(Regex("[,&\\s]{2,}"), ", ")?.trim(',', ' ') ?: "Various Artists",
-                                    thumbnailUrl = item.thumbnail?.url?.thumbnail(800) ?: "https://i.ytimg.com/vi/${item.key}/maxresdefault.jpg"
-                                )
-                            }
-                        } else emptyList()
-                    }
+                @Suppress("UNCHECKED_CAST")
+                val typedSongs = liveSongsResult as? List<app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube.SongItem>
+                @Suppress("UNCHECKED_CAST")
+                val typedViral = viralResult as? List<app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube.SongItem>
+                @Suppress("UNCHECKED_CAST")
+                val typedTopChart = topChartResult as? List<app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube.SongItem>
+                @Suppress("UNCHECKED_CAST")
+                val typedArtists = liveArtistsResult as? List<app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube.ArtistItem>
 
-                    liveTrendingSongs = mappedSongs
+                val fetchedAnything = !typedSongs.isNullOrEmpty() || !typedViral.isNullOrEmpty() || !typedTopChart.isNullOrEmpty() || !typedArtists.isNullOrEmpty()
 
-                    // Set Jump Back In: Prioritize real user listening history, fallback to trending
+                if (fetchedAnything) {
+                    val mappedSongs = if (!typedSongs.isNullOrEmpty()) {
+                        typedSongs.map { item ->
+                            SwaaraDisplayItem(
+                                id = item.key,
+                                title = item.info?.name ?: "Unknown Title",
+                                subtitle = item.authors?.joinToString { it.name.orEmpty() }?.replace(Regex("[,&\\s]{2,}"), ", ")?.trim(',', ' ') ?: "Various Artists",
+                                thumbnailUrl = item.thumbnail?.url?.thumbnail(800) ?: "https://i.ytimg.com/vi/${item.key}/maxresdefault.jpg"
+                            )
+                        }
+                    } else if (SwaaraHomeFeedCache.cachedLanguage == lang) {
+                        SwaaraHomeFeedCache.trendingSongs
+                    } else emptyList()
+
                     val resolvedQuickGrid = if (historyDisplayItems.isNotEmpty()) {
                         if (historyDisplayItems.size < 6 && mappedSongs.isNotEmpty()) {
                             val historyIds = historyDisplayItems.map { it.id }.toSet()
@@ -588,24 +626,26 @@ fun SwaaraHomeScreen(
                         } else {
                             historyDisplayItems
                         }
-                    } else {
+                    } else if (mappedSongs.isNotEmpty()) {
                         mappedSongs.take(6)
-                    }
-                    quickGridItems = resolvedQuickGrid
+                    } else if (SwaaraHomeFeedCache.cachedLanguage == lang) {
+                        SwaaraHomeFeedCache.quickGridItems
+                    } else emptyList()
 
-                    val resolvedArtists = if (!liveArtistsResult.isNullOrEmpty()) {
-                        liveArtistsResult.take(12).map { item ->
+                    val resolvedArtists = if (!typedArtists.isNullOrEmpty()) {
+                        typedArtists.take(12).map { item ->
                             SwaaraArtistDisplayItem(
                                 id = item.key,
                                 name = item.info?.name ?: "Artist",
                                 thumbnailUrl = item.thumbnail?.url?.thumbnail(800)
                             )
                         }
+                    } else if (SwaaraHomeFeedCache.cachedLanguage == lang) {
+                        SwaaraHomeFeedCache.liveArtists
                     } else emptyList()
-                    liveArtists = resolvedArtists
 
-                    val resolvedViral = if (!viralResult.isNullOrEmpty()) {
-                        viralResult.map { item ->
+                    val resolvedViral = if (!typedViral.isNullOrEmpty()) {
+                        typedViral.map { item ->
                             SwaaraDisplayItem(
                                 id = item.key,
                                 title = item.info?.name ?: "Viral Hit",
@@ -613,10 +653,11 @@ fun SwaaraHomeScreen(
                                 thumbnailUrl = item.thumbnail?.url?.thumbnail(800) ?: "https://i.ytimg.com/vi/${item.key}/maxresdefault.jpg"
                             )
                         }
+                    } else if (SwaaraHomeFeedCache.cachedLanguage == lang) {
+                        SwaaraHomeFeedCache.viralSongs
                     } else emptyList()
-                    viralSongs = resolvedViral
 
-                    val allSongs = (topChartResult ?: liveSongsResult).orEmpty()
+                    val allSongs = (typedTopChart ?: typedSongs).orEmpty()
                     val resolvedTopTwenty = if (allSongs.isNotEmpty()) {
                         allSongs.take(20).map { item ->
                             SwaaraDisplayItem(
@@ -626,30 +667,58 @@ fun SwaaraHomeScreen(
                                 thumbnailUrl = item.thumbnail?.url?.thumbnail(800) ?: "https://i.ytimg.com/vi/${item.key}/maxresdefault.jpg"
                             )
                         }
+                    } else if (SwaaraHomeFeedCache.cachedLanguage == lang) {
+                        SwaaraHomeFeedCache.topTwentyList
                     } else emptyList()
-                    topTwentyList = resolvedTopTwenty
 
-                    // Persist to in-memory cache so leaving and returning from Settings does not reload
                     SwaaraHomeFeedCache.cachedLanguage = lang
                     SwaaraHomeFeedCache.trendingSongs = mappedSongs
                     SwaaraHomeFeedCache.quickGridItems = resolvedQuickGrid
                     SwaaraHomeFeedCache.liveArtists = resolvedArtists
                     SwaaraHomeFeedCache.viralSongs = resolvedViral
                     SwaaraHomeFeedCache.topTwentyList = resolvedTopTwenty
+                    SwaaraHomeFeedCache.lastUpdatedMs = System.currentTimeMillis()
                     SwaaraHomeFeedCache.isInitialized = true
+                    SwaaraHomeFeedCache.saveToDisk(context, lang)
 
-                    isLoadingFeed = false
-                    isRefreshing = false
+                    withContext(Dispatchers.Main) {
+                        liveTrendingSongs = mappedSongs
+                        quickGridItems = resolvedQuickGrid
+                        liveArtists = resolvedArtists
+                        viralSongs = resolvedViral
+                        topTwentyList = resolvedTopTwenty
+                        feedError = null
+                        isLoadingFeed = false
+                        isRefreshing = false
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        val hasExistingData = liveTrendingSongs.isNotEmpty() || quickGridItems.isNotEmpty()
+                        if (!hasExistingData && historyDisplayItems.isNotEmpty()) {
+                            quickGridItems = historyDisplayItems
+                        }
+                        feedError = if (hasExistingData || historyDisplayItems.isNotEmpty()) {
+                            "Offline mode — showing saved feed"
+                        } else {
+                            "Unable to load music feed. Check your connection and retry."
+                        }
+                        isLoadingFeed = false
+                        isRefreshing = false
+                    }
                 }
             }
         } else {
-            // Restore from cache with zero delay or network overhead
+            // Restore from memory cache immediately and silently revalidate if stale
             liveTrendingSongs = SwaaraHomeFeedCache.trendingSongs
             quickGridItems = SwaaraHomeFeedCache.quickGridItems
             liveArtists = SwaaraHomeFeedCache.liveArtists
             viralSongs = SwaaraHomeFeedCache.viralSongs
             topTwentyList = SwaaraHomeFeedCache.topTwentyList
             isLoadingFeed = false
+            feedError = null
+            if (SwaaraHomeFeedCache.isStale()) {
+                loadLiveFeed(lang, true, true)
+            }
         }
     }
 
@@ -657,7 +726,7 @@ fun SwaaraHomeScreen(
         val p = context.getSharedPreferences("swaara_prefs", Context.MODE_PRIVATE)
         userName = p.getString("user_name", "Music Lover") ?: "Music Lover"
         p.edit().putString("active_language", selectedLanguage).apply()
-        loadLiveFeed(selectedLanguage, false)
+        loadLiveFeed(selectedLanguage, false, false)
     }
 
     val greeting = remember {
@@ -787,7 +856,7 @@ fun SwaaraHomeScreen(
                                     SwaaraRemoteConfig.fetchAndApply(context)
                                     com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.checkAndPostNotifications(context)
                                 }
-                                loadLiveFeed(selectedLanguage, true)
+                                loadLiveFeed(selectedLanguage, true, false)
                             }
                         },
                     contentAlignment = Alignment.Center
@@ -1274,10 +1343,94 @@ fun SwaaraHomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (isLoadingFeed && quickGridItems.isEmpty()) {
+        if (feedError != null && (quickGridItems.isNotEmpty() || liveTrendingSongs.isNotEmpty())) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(SwaaraElevatedSurface)
+                    .border(1.dp, SwaaraMagenta.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = feedError ?: "Offline mode — showing saved feed",
+                    color = SwaaraSecondaryText,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Retry",
+                    color = SwaaraMagenta,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { loadLiveFeed(selectedLanguage, true, false) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        if (isLoadingFeed && quickGridItems.isEmpty() && liveTrendingSongs.isEmpty()) {
             SwaaraBrandLoader(language = selectedLanguage)
             Spacer(modifier = Modifier.height(10.dp))
             SwaaraHomeFeedSkeleton()
+        } else if (feedError != null && quickGridItems.isEmpty() && liveTrendingSongs.isEmpty()) {
+            SwaaraGlassContainer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                shape = RoundedCornerShape(22.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.alert_circle),
+                        contentDescription = null,
+                        tint = SwaaraErrorRed,
+                        modifier = Modifier.size(34.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Couldn't load music feed",
+                        color = SwaaraPrimaryText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = feedError ?: "Check your internet connection and try again.",
+                        color = SwaaraSecondaryText,
+                        fontSize = 12.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
+                            .clickable { loadLiveFeed(selectedLanguage, true, false) }
+                            .padding(horizontal = 24.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = "Retry",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         } else {
             // 3. Primary Content: Jump Back In (2-Column Tactile Grid)
             if (quickGridItems.isNotEmpty()) {

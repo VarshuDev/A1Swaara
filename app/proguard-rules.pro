@@ -48,3 +48,15 @@
 -dontwarn javax.script.**
 -dontwarn org.mozilla.javascript.JavaToJSONConverters
 -dontwarn org.mozilla.javascript.tools.**
+
+# NewPipeExtractor / App models / Logback / HTTP3
+-keep class org.schabi.newpipe.** { *; }
+-keep class com.varshudev.a1swaara.models.** { *; }
+-keep class dev.kathttp3.** { *; }
+-keep class ch.qos.logback.** { *; }
+-dontwarn ch.qos.logback.**
+-dontwarn javax.naming.**
+-dontwarn javax.mail.**
+-dontwarn org.codehaus.janino.**
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn org.checkerframework.**

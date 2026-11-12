@@ -35,6 +35,26 @@ object SwaaraPrecacheEngine {
     private const val TAG = "SwaaraPrecacheEngine"
     private const val PRECACHE_CHUNK_BYTES = 2500000L // 2.5 MB safety buffer
     private const val LOCAL_KEY_PREFIX = "local:"
+    private const val DEFAULT_LOOKAHEAD = 3
+
+    internal fun selectUpcomingRemoteTrackIds(
+        mediaIds: List<String?>,
+        currentIndex: Int,
+        maxLookahead: Int = DEFAULT_LOOKAHEAD
+    ): List<String> {
+        if (currentIndex < 0 || mediaIds.size <= 1 || maxLookahead <= 0) return emptyList()
+        val lookaheadLimit = minOf(currentIndex + maxLookahead, mediaIds.lastIndex)
+        if (lookaheadLimit <= currentIndex) return emptyList()
+
+        return buildList {
+            for (i in (currentIndex + 1)..lookaheadLimit) {
+                val songId = mediaIds[i]
+                if (!songId.isNullOrBlank() && !songId.startsWith(LOCAL_KEY_PREFIX)) {
+                    add(songId)
+                }
+            }
+        }
+    }
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.w(TAG, "Pre-cache background job failed cleanly: ${throwable.message}")
@@ -58,19 +78,10 @@ object SwaaraPrecacheEngine {
         val upcomingSongIds = withContext(Dispatchers.Main) {
             val totalCount = player.mediaItemCount
             val currentIndex = player.currentMediaItemIndex
-            if (currentIndex < 0 || totalCount <= 1) return@withContext emptyList()
-
-            val lookaheadLimit = minOf(currentIndex + 3, totalCount - 1)
-            if (lookaheadLimit <= currentIndex) return@withContext emptyList()
-
-            buildList {
-                for (i in (currentIndex + 1)..lookaheadLimit) {
-                    val songId = runCatching { player.getMediaItemAt(i).mediaId }.getOrNull()
-                    if (!songId.isNullOrBlank() && !songId.startsWith(LOCAL_KEY_PREFIX)) {
-                        add(songId)
-                    }
-                }
+            val mediaIds = (0 until totalCount).map { idx ->
+                runCatching { player.getMediaItemAt(idx).mediaId }.getOrNull()
             }
+            selectUpcomingRemoteTrackIds(mediaIds, currentIndex)
         }
         if (upcomingSongIds.isEmpty()) return
 

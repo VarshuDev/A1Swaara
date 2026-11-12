@@ -41,15 +41,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraMagenta
+import com.varshudev.a1swaara.ui.components.SwaaraObsidian
+import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
+import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
+import com.varshudev.a1swaara.ui.components.SwaaraViolet
 import kotlinx.coroutines.delay
-
-private val SwaaraObsidian = Color(0xFF08080C)
-private val SwaaraDeepSurface = Color(0xFF111119)
-private val SwaaraMagenta = Color(0xFFFF2DAA)
-private val SwaaraViolet = Color(0xFF8B35FF)
-private val SwaaraCyan = Color(0xFF20CFFF)
-private val SwaaraPrimaryText = Color(0xFFF1F1F5)
-private val SwaaraSecondaryText = Color(0xFF8E8EA0)
 
 @Composable
 fun SwaaraSplashScreen(
@@ -79,7 +78,7 @@ fun SwaaraSplashScreen(
     )
 
     LaunchedEffect(Unit) {
-        delay(1800)
+        delay(850)
         onSplashFinished()
     }
 

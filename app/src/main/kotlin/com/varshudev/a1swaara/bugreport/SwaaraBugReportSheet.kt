@@ -77,6 +77,7 @@ import kotlinx.coroutines.launch
 fun SwaaraBugReportSheet(
     onDismiss: () -> Unit,
     binder: PlayerService.Binder?,
+    initialDescription: String = "",
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -84,7 +85,7 @@ fun SwaaraBugReportSheet(
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var descriptionInput by remember { mutableStateOf("") }
+    var descriptionInput by remember(initialDescription) { mutableStateOf(initialDescription) }
     var attachLogs by remember { mutableStateOf(true) }
     var shakeEnabled by remember { mutableStateOf(DataPreferences.isShakeToReportEnabled) }
     var isSubmitting by remember { mutableStateOf(false) }

@@ -64,8 +64,8 @@ android {
         minSdk = 23
         targetSdk = 36
 
-        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 2
-        versionName = "1.0.1"
+        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 3
+        versionName = "1.0.2"
 
         multiDexEnabled = true
 
@@ -122,8 +122,8 @@ android {
         }
 
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             manifestPlaceholders["appName"] = "A1 Swaara"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -162,6 +162,10 @@ android {
     androidResources {
         @Suppress("UnstableApiUsage")
         generateLocaleConfig = true
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 
     lint {
@@ -271,6 +275,7 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.ui)
 
+    testImplementation("junit:junit:4.13.2")
 }
 
 tasks.register("verifyDebug16kZipAlignment") {

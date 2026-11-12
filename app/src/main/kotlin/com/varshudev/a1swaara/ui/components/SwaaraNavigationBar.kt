@@ -2,10 +2,16 @@ package com.varshudev.a1swaara.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,6 +77,7 @@ fun SwaaraNavigationBar(
                     .background(Color.White.copy(alpha = 0.05f))
             )
 
+            val haptics = LocalHapticFeedback.current
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -82,6 +89,13 @@ fun SwaaraNavigationBar(
                 items.forEach { item ->
                     val isSelected = selectedIndex == item.index
                     val interactionSource = remember { MutableInteractionSource() }
+                    val isPressed by interactionSource.collectIsPressedAsState()
+
+                    val pressScale by animateFloatAsState(
+                        targetValue = if (isPressed) 0.92f else 1f,
+                        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                        label = "navScale"
+                    )
 
                     val iconColor by animateColorAsState(
                         targetValue = if (isSelected) SwaaraPrimaryText else SwaaraSecondaryText,
@@ -99,11 +113,13 @@ fun SwaaraNavigationBar(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier
+                            .scale(pressScale)
                             .clip(RoundedCornerShape(12.dp))
                             .clickable(
                                 interactionSource = interactionSource,
-                                indication = null
+                                indication = ripple(color = SwaaraMagenta.copy(alpha = 0.25f))
                             ) {
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onTabSelected(item.index)
                             }
                             .background(pillBgColor)

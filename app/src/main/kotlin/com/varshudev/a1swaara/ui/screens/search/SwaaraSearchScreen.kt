@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,11 +22,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -58,13 +59,24 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import com.varshudev.a1swaara.LocalAppContainer
+import com.varshudev.a1swaara.LocalPlayerAwareWindowInsets
 import com.varshudev.a1swaara.LocalPlayerServiceBinder
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.models.SearchQuery
+import com.varshudev.a1swaara.models.toUiMood
+import com.varshudev.a1swaara.ui.components.ShimmerHost
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
+import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
+import com.varshudev.a1swaara.ui.components.SwaaraMagenta
+import com.varshudev.a1swaara.ui.components.SwaaraObsidian
 import com.varshudev.a1swaara.ui.components.SwaaraPink
+import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
 import com.varshudev.a1swaara.ui.components.SwaaraPurple
+import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
 import com.varshudev.a1swaara.ui.screens.LocalOpenNowPlaying
+import com.varshudev.a1swaara.ui.screens.moodRoute
 import com.varshudev.a1swaara.utils.asMediaItem
 import com.varshudev.a1swaara.utils.forcePlay
 import com.varshudev.a1swaara.utils.playTrack
@@ -74,6 +86,8 @@ import app.a1swaara.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.a1swaara.providers.youtubemusic.innertube.models.NavigationEndpoint
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope as parallelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -112,6 +126,92 @@ fun SwaaraSearchScreen(
     var albumResults by remember { mutableStateOf<List<YoutubeMusicInnertube.AlbumItem>>(emptyList()) }
     var playlistResults by remember { mutableStateOf<List<YoutubeMusicInnertube.PlaylistItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var searchError by remember { mutableStateOf(false) }
+
+    var discoverMoods by remember { mutableStateOf<List<YoutubeMusicInnertube.Mood.Item>>(emptyList()) }
+    var isLoadingMoods by remember { mutableStateOf(true) }
+    var moodsError by remember { mutableStateOf(false) }
+    var moodsReloadTick by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(moodsReloadTick) {
+        isLoadingMoods = true
+        moodsError = false
+        val result = withContext(Dispatchers.IO) {
+            runCatching { container.homeRepository.fetchDiscoverPage() }.getOrNull()
+        }
+        val fetched = result?.getOrNull()?.moods.orEmpty()
+        discoverMoods = fetched
+        moodsError = fetched.isEmpty() && (result == null || result.isFailure)
+        isLoadingMoods = false
+    }
+
+    suspend fun executeSearch(rawQuery: String, filterIndex: Int) {
+        val q = rawQuery.trim()
+        if (q.isEmpty()) return
+
+        var failedAll = false
+        var songsOut = emptyList<YoutubeMusicInnertube.SongItem>()
+        var artistsOut = emptyList<YoutubeMusicInnertube.ArtistItem>()
+        var albumsOut = emptyList<YoutubeMusicInnertube.AlbumItem>()
+        var playlistsOut = emptyList<YoutubeMusicInnertube.PlaylistItem>()
+
+        withContext(Dispatchers.IO) {
+            when (filterIndex) {
+                2 -> {
+                    val res = runCatching { container.searchResultRepository.searchAlbums(q, null) }.getOrNull()
+                    failedAll = res == null || res.isFailure
+                    albumsOut = res?.getOrNull()?.items ?: emptyList()
+                }
+                3 -> {
+                    val res = runCatching { container.searchResultRepository.searchArtists(q, null) }.getOrNull()
+                    failedAll = res == null || res.isFailure
+                    artistsOut = res?.getOrNull()?.items ?: emptyList()
+                }
+                4 -> {
+                    val res = runCatching { container.searchResultRepository.searchPlaylists(q, null) }.getOrNull()
+                    failedAll = res == null || res.isFailure
+                    playlistsOut = res?.getOrNull()?.items ?: emptyList()
+                }
+                5 -> {
+                    val qShows = if (q.contains("podcast", ignoreCase = true)) q else "$q podcast"
+                    val qEpisodes = if (q.contains("podcast", ignoreCase = true)) q else "$q podcast episode"
+                    val (showsRes, episodesRes) = parallelScope {
+                        val s = async { runCatching { container.searchResultRepository.searchPlaylists(qShows, null) }.getOrNull() }
+                        val e = async { runCatching { container.searchResultRepository.searchSongs(qEpisodes, null) }.getOrNull() }
+                        s.await() to e.await()
+                    }
+                    failedAll = (showsRes == null || showsRes.isFailure) && (episodesRes == null || episodesRes.isFailure)
+                    playlistsOut = showsRes?.getOrNull()?.items ?: emptyList()
+                    songsOut = episodesRes?.getOrNull()?.items ?: emptyList()
+                }
+                else -> {
+                    val (songsRes, artistsRes, albumsRes) = parallelScope {
+                        val s = async { runCatching { container.searchResultRepository.searchSongs(q, null) }.getOrNull() }
+                        val ar = if (filterIndex == 0) {
+                            async { runCatching { container.searchResultRepository.searchArtists(q, null) }.getOrNull() }
+                        } else null
+                        val al = if (filterIndex == 0) {
+                            async { runCatching { container.searchResultRepository.searchAlbums(q, null) }.getOrNull() }
+                        } else null
+                        Triple(s.await(), ar?.await(), al?.await())
+                    }
+                    failedAll = (songsRes == null || songsRes.isFailure) &&
+                        (artistsRes == null || artistsRes.isFailure) &&
+                        (albumsRes == null || albumsRes.isFailure)
+                    songsOut = songsRes?.getOrNull()?.items ?: emptyList()
+                    artistsOut = artistsRes?.getOrNull()?.items?.take(1) ?: emptyList()
+                    albumsOut = albumsRes?.getOrNull()?.items?.take(2) ?: emptyList()
+                }
+            }
+        }
+
+        searchResults = songsOut
+        artistResults = artistsOut
+        albumResults = albumsOut
+        playlistResults = playlistsOut
+        searchError = failedAll
+        isLoading = false
+    }
 
     // Instant Real-Time Auto-Search as the user types
     LaunchedEffect(searchQuery, selectedFilterIndex) {
@@ -120,196 +220,38 @@ fun SwaaraSearchScreen(
             artistResults = emptyList()
             albumResults = emptyList()
             playlistResults = emptyList()
+            searchError = false
             isLoading = false
             return@LaunchedEffect
         }
         delay(220) // Fast debounce
         isLoading = true
-        withContext(Dispatchers.IO) {
-            val q = searchQuery.trim()
-            when (selectedFilterIndex) {
-                2 -> {
-                    // Albums Filter
-                    val albums = runCatching {
-                        container.searchResultRepository.searchAlbums(q, null)?.getOrNull()?.items
-                    }.getOrNull() ?: emptyList()
-                    withContext(Dispatchers.Main) {
-                        albumResults = albums
-                        searchResults = emptyList()
-                        artistResults = emptyList()
-                        playlistResults = emptyList()
-                        isLoading = false
-                    }
-                }
-                3 -> {
-                    // Artists Filter
-                    val artists = runCatching {
-                        container.searchResultRepository.searchArtists(q, null)?.getOrNull()?.items
-                    }.getOrNull() ?: emptyList()
-                    withContext(Dispatchers.Main) {
-                        artistResults = artists
-                        searchResults = emptyList()
-                        albumResults = emptyList()
-                        playlistResults = emptyList()
-                        isLoading = false
-                    }
-                }
-                4 -> {
-                    // Playlists Filter
-                    val playlists = runCatching {
-                        container.searchResultRepository.searchPlaylists(q, null)?.getOrNull()?.items
-                    }.getOrNull() ?: emptyList()
-                    withContext(Dispatchers.Main) {
-                        playlistResults = playlists
-                        searchResults = emptyList()
-                        artistResults = emptyList()
-                        albumResults = emptyList()
-                        isLoading = false
-                    }
-                }
-                5 -> {
-                    // Podcasts Filter
-                    val shows = runCatching {
-                        val qShows = if (q.contains("podcast", ignoreCase = true)) q else "$q podcast"
-                        container.searchResultRepository.searchPlaylists(qShows, null)?.getOrNull()?.items
-                    }.getOrNull() ?: emptyList()
-                    val episodes = runCatching {
-                        val qEpisodes = if (q.contains("podcast", ignoreCase = true)) q else "$q podcast episode"
-                        container.searchResultRepository.searchSongs(qEpisodes, null)?.getOrNull()?.items
-                    }.getOrNull() ?: emptyList()
-                    withContext(Dispatchers.Main) {
-                        playlistResults = shows
-                        searchResults = episodes
-                        artistResults = emptyList()
-                        albumResults = emptyList()
-                        isLoading = false
-                    }
-                }
-                else -> {
-                    // All (0) or Songs (1)
-                    val songs = runCatching {
-                        container.searchResultRepository.searchSongs(q, null)?.getOrNull()?.items
-                    }.getOrNull() ?: emptyList()
-                    val artists = if (selectedFilterIndex == 0) {
-                        runCatching {
-                            container.searchResultRepository.searchArtists(q, null)?.getOrNull()?.items?.take(1)
-                        }.getOrNull() ?: emptyList()
-                    } else emptyList()
-                    val albums = if (selectedFilterIndex == 0) {
-                        runCatching {
-                            container.searchResultRepository.searchAlbums(q, null)?.getOrNull()?.items?.take(2)
-                        }.getOrNull() ?: emptyList()
-                    } else emptyList()
-
-                    withContext(Dispatchers.Main) {
-                        searchResults = songs
-                        artistResults = artists
-                        albumResults = albums
-                        playlistResults = emptyList()
-                        isLoading = false
-                    }
-                }
-            }
-        }
+        searchError = false
+        executeSearch(searchQuery, selectedFilterIndex)
     }
 
     val performExplicitSearch: (String) -> Unit = { query ->
         if (query.isNotBlank()) {
             focusManager.clearFocus()
             isLoading = true
+            searchError = false
             coroutineScope.launch {
                 val q = query.trim()
-                container.onlineSearchRepository.saveHistory(q)
                 withContext(Dispatchers.IO) {
-                    when (selectedFilterIndex) {
-                        2 -> {
-                            val albums = runCatching {
-                                container.searchResultRepository.searchAlbums(q, null)?.getOrNull()?.items
-                            }.getOrNull() ?: emptyList()
-                            withContext(Dispatchers.Main) {
-                                albumResults = albums
-                                searchResults = emptyList()
-                                artistResults = emptyList()
-                                playlistResults = emptyList()
-                                isLoading = false
-                            }
-                        }
-                        3 -> {
-                            val artists = runCatching {
-                                container.searchResultRepository.searchArtists(q, null)?.getOrNull()?.items
-                            }.getOrNull() ?: emptyList()
-                            withContext(Dispatchers.Main) {
-                                artistResults = artists
-                                searchResults = emptyList()
-                                albumResults = emptyList()
-                                playlistResults = emptyList()
-                                isLoading = false
-                            }
-                        }
-                        4 -> {
-                            val playlists = runCatching {
-                                container.searchResultRepository.searchPlaylists(q, null)?.getOrNull()?.items
-                            }.getOrNull() ?: emptyList()
-                            withContext(Dispatchers.Main) {
-                                playlistResults = playlists
-                                searchResults = emptyList()
-                                artistResults = emptyList()
-                                albumResults = emptyList()
-                                isLoading = false
-                            }
-                        }
-                        5 -> {
-                            // Podcasts Filter
-                            val shows = runCatching {
-                                val qShows = if (q.contains("podcast", ignoreCase = true)) q else "$q podcast"
-                                container.searchResultRepository.searchPlaylists(qShows, null)?.getOrNull()?.items
-                            }.getOrNull() ?: emptyList()
-                            val episodes = runCatching {
-                                val qEpisodes = if (q.contains("podcast", ignoreCase = true)) q else "$q podcast episode"
-                                container.searchResultRepository.searchSongs(qEpisodes, null)?.getOrNull()?.items
-                            }.getOrNull() ?: emptyList()
-                            withContext(Dispatchers.Main) {
-                                playlistResults = shows
-                                searchResults = episodes
-                                artistResults = emptyList()
-                                albumResults = emptyList()
-                                isLoading = false
-                            }
-                        }
-                        else -> {
-                            val songs = runCatching {
-                                container.searchResultRepository.searchSongs(q, null)?.getOrNull()?.items
-                            }.getOrNull() ?: emptyList()
-                            val artists = if (selectedFilterIndex == 0) {
-                                runCatching {
-                                    container.searchResultRepository.searchArtists(q, null)?.getOrNull()?.items?.take(1)
-                                }.getOrNull() ?: emptyList()
-                            } else emptyList()
-                            val albums = if (selectedFilterIndex == 0) {
-                                runCatching {
-                                    container.searchResultRepository.searchAlbums(q, null)?.getOrNull()?.items?.take(2)
-                                }.getOrNull() ?: emptyList()
-                            } else emptyList()
-
-                            withContext(Dispatchers.Main) {
-                                searchResults = songs
-                                artistResults = artists
-                                albumResults = albums
-                                playlistResults = emptyList()
-                                isLoading = false
-                            }
-                        }
-                    }
+                    container.onlineSearchRepository.saveHistory(q)
                 }
+                executeSearch(q, selectedFilterIndex)
             }
         }
     }
 
+    val bottomClearance = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding()
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF07070B))
-            .padding(bottom = 120.dp)
+            .background(SwaaraObsidian)
+            .padding(bottom = bottomClearance)
     ) {
         // Search Header Bar
         Column(
@@ -403,11 +345,47 @@ fun SwaaraSearchScreen(
 
         // Search Content / Results / History
         if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            ShimmerHost(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                CircularProgressIndicator(color = SwaaraPurple)
+                repeat(7) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SwaaraDeepSurface)
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.08f))
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.65f)
+                                    .height(14.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.White.copy(alpha = 0.12f))
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.42f)
+                                    .height(11.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.White.copy(alpha = 0.07f))
+                            )
+                        }
+                    }
+                }
             }
         } else if (artistResults.isNotEmpty() || albumResults.isNotEmpty() || playlistResults.isNotEmpty() || searchResults.isNotEmpty()) {
             LazyColumn(
@@ -732,19 +710,36 @@ fun SwaaraSearchScreen(
                 }
             }
         } else if (searchQuery.isEmpty()) {
-            // Recent Searches & Trending Suggestions
+            // Recent Searches & Live Browse Moods & Genres Grid
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 if (recentQueries.isNotEmpty()) {
-                    Text(
-                        text = "Recent Searches",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Recent Searches",
+                            color = SwaaraPrimaryText,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Clear all",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { container.onlineSearchRepository.clearHistory() }
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
 
                     FlowRow(
@@ -753,75 +748,222 @@ fun SwaaraSearchScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         recentQueries.take(8).forEach { item: SearchQuery ->
-                            Box(
+                            Row(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF161626))
+                                    .background(SwaaraElevatedSurface)
                                     .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
                                     .clickable {
                                         searchQuery = item.query
                                         performExplicitSearch(item.query)
                                     }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    .padding(start = 12.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
                                     text = item.query,
-                                    color = Color.White.copy(alpha = 0.85f),
-                                    fontSize = 13.sp
+                                    color = SwaaraPrimaryText.copy(alpha = 0.9f),
+                                    fontSize = 13.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(CircleShape)
+                                        .clickable {
+                                            container.onlineSearchRepository.deleteHistory(item)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.close),
+                                        contentDescription = "Remove recent search",
+                                        tint = SwaaraSecondaryText,
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
                 }
 
                 Text(
-                    text = "Trending Now",
-                    color = Color.White,
+                    text = "Browse All Moods & Genres",
+                    color = SwaaraPrimaryText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(10.dp))
 
-                val trendingPicks = listOf("Figuring Out with Raj Shamani", "Raj Shamani Podcast", "The Ranveer Show", "Kannada Golden Hits", "Huberman Lab", "Arijit Singh Hits", "Diljit Dosanjh", "Desi Crime Podcast", "Finshots Daily")
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    trendingPicks.forEach { pick ->
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF161626))
-                                .border(1.dp, SwaaraCyan.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-                            .clickable {
-                                searchQuery = pick
-                                performExplicitSearch(pick)
+                when {
+                    isLoadingMoods && discoverMoods.isEmpty() -> {
+                        ShimmerHost(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            repeat(4) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    repeat(2) {
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(58.dp)
+                                                .clip(RoundedCornerShape(14.dp))
+                                                .background(SwaaraElevatedSurface)
+                                        )
+                                    }
+                                }
                             }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                        }
+                    }
+                    discoverMoods.isNotEmpty() -> {
+                        val rows = discoverMoods.chunked(2)
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            rows.forEach { rowItems ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    rowItems.forEach { moodItem ->
+                                        val stripe = Color(moodItem.stripeColor)
+                                        Row(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(58.dp)
+                                                .clip(RoundedCornerShape(14.dp))
+                                                .background(SwaaraElevatedSurface)
+                                                .border(1.dp, stripe.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
+                                                .clickable {
+                                                    focusManager.clearFocus()
+                                                    moodRoute.global(moodItem.toUiMood())
+                                                }
+                                                .padding(horizontal = 12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(4.dp)
+                                                    .height(28.dp)
+                                                    .clip(RoundedCornerShape(2.dp))
+                                                    .background(stripe)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Text(
+                                                text = moodItem.title,
+                                                color = SwaaraPrimaryText,
+                                                fontSize = 13.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                    if (rowItems.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(SwaaraDeepSurface)
+                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                                .padding(18.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = pick,
-                                color = SwaaraCyan,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium
+                                text = if (moodsError) "Couldn't load Browse genres" else "No genres available right now",
+                                color = SwaaraPrimaryText,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Tap retry to refresh live YouTube Music moods",
+                                color = SwaaraSecondaryText,
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(Brush.horizontalGradient(listOf(SwaaraPurple, SwaaraPink)))
+                                    .clickable { moodsReloadTick++ }
+                                    .padding(horizontal = 18.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = "Retry",
+                                    color = Color.White,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
             }
         } else {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "No songs found for '$searchQuery'",
-                    color = Color.White.copy(alpha = 0.5f),
-                    fontSize = 14.sp
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (searchError) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.alert_circle),
+                            contentDescription = null,
+                            tint = SwaaraErrorRed,
+                            modifier = Modifier.size(34.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Connection error while searching",
+                            color = SwaaraPrimaryText,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Check your internet connection and retry.",
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(Brush.horizontalGradient(listOf(SwaaraPurple, SwaaraMagenta)))
+                                .clickable { performExplicitSearch(searchQuery) }
+                                .padding(horizontal = 22.dp, vertical = 9.dp)
+                        ) {
+                            Text(
+                                text = "Retry Search",
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "No results found for '$searchQuery'",
+                            color = SwaaraSecondaryText,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
             }
         }
     }

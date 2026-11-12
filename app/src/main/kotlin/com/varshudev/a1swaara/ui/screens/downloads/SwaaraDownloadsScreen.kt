@@ -62,7 +62,15 @@ import com.varshudev.a1swaara.models.Song
 import com.varshudev.a1swaara.preferences.DataPreferences
 import com.varshudev.a1swaara.ui.components.LocalMenuState
 import com.varshudev.a1swaara.ui.components.SwaaraBorderSubtle
+import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
+import com.varshudev.a1swaara.ui.components.SwaaraMagenta
+import com.varshudev.a1swaara.ui.components.SwaaraObsidian
+import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
+import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
+import com.varshudev.a1swaara.ui.components.SwaaraViolet
 import com.varshudev.a1swaara.ui.components.themed.HorizontalDivider
 import com.varshudev.a1swaara.ui.components.themed.Menu
 import com.varshudev.a1swaara.ui.components.themed.MenuEntry
@@ -80,15 +88,6 @@ import com.varshudev.a1swaara.utils.toast
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-private val SwaaraObsidian = Color(0xFF08080C)
-private val SwaaraDeepSurface = Color(0xFF111119)
-private val SwaaraElevatedSurface = Color(0xFF191924)
-private val SwaaraMagenta = Color(0xFFFF2DAA)
-private val SwaaraViolet = Color(0xFF8B35FF)
-private val SwaaraCyan = Color(0xFF20CFFF)
-private val SwaaraPrimaryText = Color(0xFFF1F1F5)
-private val SwaaraSecondaryText = Color(0xFF8E8EA0)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

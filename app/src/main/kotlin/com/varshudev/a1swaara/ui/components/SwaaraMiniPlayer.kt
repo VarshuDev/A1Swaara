@@ -2,8 +2,13 @@ package com.varshudev.a1swaara.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ripple
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlin.math.abs
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,25 +65,42 @@ fun SwaaraMiniPlayer(
     val artist = rawArtist.replace(Regex("[,&\\s]{2,}"), ", ").trim(',', ' ')
     val artworkUri = metadata.artworkUri
 
-    var totalDrag by remember { mutableFloatStateOf(0f) }
+    var dragX by remember { mutableFloatStateOf(0f) }
+    var dragY by remember { mutableFloatStateOf(0f) }
+    val haptics = LocalHapticFeedback.current
 
     SwaaraGlassContainer(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 14.dp, vertical = 6.dp)
             .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragStart = { totalDrag = 0f },
-                    onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
+                detectDragGestures(
+                    onDragStart = {
+                        dragX = 0f
+                        dragY = 0f
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        dragX += dragAmount.x
+                        dragY += dragAmount.y
+                    },
                     onDragEnd = {
-                        if (totalDrag < -60f) onNextClick()
-                        else if (totalDrag > 60f) onPreviousClick()
+                        if (abs(dragY) > abs(dragX) && dragY < -50f) {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onTap()
+                        } else if (dragX < -60f) {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onNextClick()
+                        } else if (dragX > 60f) {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onPreviousClick()
+                        }
                     }
                 )
             }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+                indication = ripple(color = accentColor.copy(alpha = 0.25f)),
                 onClick = onTap
             ),
         shape = RoundedCornerShape(16.dp),
@@ -157,17 +179,28 @@ fun SwaaraMiniPlayer(
                             .size(36.dp)
                             .clip(CircleShape)
                             .background(Color.White)
-                            .clickable(onClick = onPlayPauseClick),
+                            .clickable(onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onPlayPauseClick()
+                            }),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            painter = painterResource(
-                                id = if (isPlaying) R.drawable.pause else R.drawable.play
-                            ),
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = SwaaraObsidian,
-                            modifier = Modifier.size(16.dp)
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = SwaaraObsidian,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(
+                                    id = if (isPlaying) R.drawable.pause else R.drawable.play
+                                ),
+                                contentDescription = if (isPlaying) "Pause" else "Play",
+                                tint = SwaaraObsidian,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
 
                     IconButton(

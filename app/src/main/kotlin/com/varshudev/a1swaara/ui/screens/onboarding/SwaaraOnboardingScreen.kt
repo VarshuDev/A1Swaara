@@ -30,8 +30,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,23 +53,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.varshudev.a1swaara.LocalAppContainer
 import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
+import com.varshudev.a1swaara.ui.components.SwaaraMagenta
+import com.varshudev.a1swaara.ui.components.SwaaraObsidian
+import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
+import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
+import com.varshudev.a1swaara.ui.components.SwaaraViolet
+import com.varshudev.a1swaara.utils.thumbnail
 import coil3.compose.AsyncImage
-
-private val SwaaraObsidian = Color(0xFF08080C)
-private val SwaaraDeepSurface = Color(0xFF111119)
-private val SwaaraElevatedSurface = Color(0xFF191924)
-private val SwaaraMagenta = Color(0xFFFF2DAA)
-private val SwaaraViolet = Color(0xFF8B35FF)
-private val SwaaraCyan = Color(0xFF20CFFF)
-private val SwaaraPrimaryText = Color(0xFFF1F1F5)
-private val SwaaraSecondaryText = Color(0xFF8E8EA0)
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 data class SwaaraLangItem(
     val id: String,
     val name: String,
     val nativeScript: String,
-    val avatarUrl: String
+    val singerName: String,
+    val singerMonogram: String
 )
 
 @Composable
@@ -75,22 +83,47 @@ fun SwaaraOnboardingScreen(
     onOnboardingFinished: () -> Unit
 ) {
     val context = LocalContext.current
+    val container = LocalAppContainer.current
 
     val languages = remember {
         listOf(
-            SwaaraLangItem("kannada", "Kannada", "ಕನ್ನಡ", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/a/a2/Vijay_Prakash.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("hindi", "Hindi", "हिंदी", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/d/d2/Arijit_Singh_at_Mirchi_Music_Awards_2014.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("english", "English", "English", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/b/b1/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_4.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("tamil", "Tamil", "தமிழ்", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/d/d9/Anirudh_Ravichander_at_Audio_Launch.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("telugu", "Telugu", "తెలుగు", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/9/91/Sid_Sriram_at_an_event.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("punjabi", "Punjabi", "ਪੰਜਾਬੀ", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/c/c5/Diljit_Dosanjh_at_IIFA_2017.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("malayalam", "Malayalam", "മലയാളം", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/9/94/K._J._Yesudas.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("marathi", "Marathi", "मराठी", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/a/ad/Ajay-Atul.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("bengali", "Bengali", "বাংলা", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/b/be/Shreya_Ghoshal_at_Filmfare_Awards_South.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("gujarati", "Gujarati", "ગુજરાતી", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/1/1a/Alka_Yagnik_in_2017.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("bhojpuri", "Bhojpuri", "भोजपुरी", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/4/4b/Pawan_Singh.jpg&w=400&h=400&fit=cover&output=webp"),
-            SwaaraLangItem("haryanvi", "Haryanvi", "हरियाणवी", "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/9/92/Sonu_Nigam.jpg&w=400&h=400&fit=cover&output=webp")
+            SwaaraLangItem("kannada", "Kannada", "ಕನ್ನಡ", "Vijay Prakash", "VP"),
+            SwaaraLangItem("hindi", "Hindi", "हिंदी", "Arijit Singh", "AS"),
+            SwaaraLangItem("english", "English", "English", "Taylor Swift", "TS"),
+            SwaaraLangItem("tamil", "Tamil", "தமிழ்", "Anirudh Ravichander", "AR"),
+            SwaaraLangItem("telugu", "Telugu", "తెలుగు", "Sid Sriram", "SS"),
+            SwaaraLangItem("punjabi", "Punjabi", "ਪੰਜਾਬੀ", "Diljit Dosanjh", "DD"),
+            SwaaraLangItem("malayalam", "Malayalam", "മലയാളം", "K. J. Yesudas", "KY"),
+            SwaaraLangItem("marathi", "Marathi", "मराठी", "Ajay-Atul", "AA"),
+            SwaaraLangItem("bengali", "Bengali", "বাংলা", "Shreya Ghoshal", "SG"),
+            SwaaraLangItem("gujarati", "Gujarati", "ગુજરાતી", "Alka Yagnik", "AY"),
+            SwaaraLangItem("bhojpuri", "Bhojpuri", "भोजपुरी", "Pawan Singh", "PS"),
+            SwaaraLangItem("haryanvi", "Haryanvi", "हरियाणवी", "Sonu Nigam", "SN")
         )
+    }
+
+    val singerAvatars = remember { mutableStateMapOf<String, String>() }
+
+    LaunchedEffect(Unit) {
+        coroutineScope {
+            languages.map { lang ->
+                async(Dispatchers.IO) {
+                    val fetchedUrl = runCatching {
+                        container.searchResultRepository
+                            .searchArtists(lang.singerName, null)
+                            ?.getOrNull()
+                            ?.items
+                            ?.firstOrNull()
+                            ?.thumbnail
+                            ?.url
+                            ?.thumbnail(400)
+                    }.getOrNull()
+                    if (!fetchedUrl.isNullOrBlank()) {
+                        singerAvatars[lang.id] = fetchedUrl
+                    }
+                }
+            }.awaitAll()
+        }
     }
 
     val selectedLanguages = remember { mutableStateListOf("kannada") }
@@ -294,25 +327,42 @@ fun SwaaraOnboardingScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Artist Portrait with fallback
+                        // Artist Portrait with instant stylized gradient & monogram fallback
+                        val resolvedAvatar = singerAvatars[lang.id]
                         Box(
                             modifier = Modifier
                                 .size(50.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1E1E2E))
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(
+                                            SwaaraViolet.copy(alpha = 0.55f),
+                                            SwaaraMagenta.copy(alpha = 0.45f)
+                                        )
+                                    )
+                                )
                                 .border(
-                                    1.dp,
-                                    if (isSelected) SwaaraCyan.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.08f),
+                                    1.2.dp,
+                                    if (isSelected) SwaaraCyan.copy(alpha = 0.75f) else Color.White.copy(alpha = 0.14f),
                                     CircleShape
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            AsyncImage(
-                                model = lang.avatarUrl,
-                                contentDescription = lang.name,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.matchParentSize()
+                            Text(
+                                text = lang.singerMonogram,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 0.5.sp
                             )
+                            if (!resolvedAvatar.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = resolvedAvatar,
+                                    contentDescription = "${lang.singerName} (${lang.name})",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.matchParentSize()
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(10.dp))
@@ -327,10 +377,12 @@ fun SwaaraOnboardingScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = lang.nativeScript,
+                                text = "${lang.nativeScript} • ${lang.singerName}",
                                 color = if (isSelected) SwaaraCyan else SwaaraSecondaryText,
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Medium
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
