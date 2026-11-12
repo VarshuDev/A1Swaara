@@ -17,13 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -39,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -48,22 +45,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.cloud.SwaaraCloudAuth
 import com.varshudev.a1swaara.cloud.SwaaraCloudSync
 import com.varshudev.a1swaara.cloud.SwaaraJamEngine
 import com.varshudev.a1swaara.ui.screens.jamHubRoute
 import com.varshudev.a1swaara.ui.screens.liveJamRoute
-import com.varshudev.a1swaara.ui.components.SwaaraBorderSubtle
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
 import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
 import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
-import com.varshudev.a1swaara.ui.components.SwaaraGlassContainer
 import com.varshudev.a1swaara.ui.components.SwaaraJamRoomDialog
 import com.varshudev.a1swaara.ui.components.SwaaraMagenta
-import com.varshudev.a1swaara.ui.components.SwaaraModalSurface
 import com.varshudev.a1swaara.ui.components.SwaaraObsidian
 import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
 import com.varshudev.a1swaara.ui.components.SwaaraSecondaryText
@@ -90,11 +82,6 @@ fun SwaaraCloudSyncScreen() {
 
     var showJamDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
-    var showBroadcastDialog by remember { mutableStateOf(false) }
-    var broadcastTitleInput by remember { mutableStateOf("Trending Beats on A1 Swaara") }
-    var broadcastMessageInput by remember { mutableStateOf("Discover top curated tracks with 320 KBPS studio audio.") }
-    var isBroadcasting by remember { mutableStateOf(false) }
-    var fcmTokenState by remember { mutableStateOf(com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.getFcmToken(context)) }
 
     val lastSyncFormatted = remember(auth.lastSyncTimestamp) {
         if (auth.lastSyncTimestamp > 0) {
@@ -110,126 +97,6 @@ fun SwaaraCloudSyncScreen() {
     }
     if (showImportDialog) {
         SwaaraSharePlaylistDialog(onDismiss = { showImportDialog = false })
-    }
-    if (showBroadcastDialog) {
-        Dialog(
-            onDismissRequest = { showBroadcastDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 420.dp)
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                SwaaraGlassContainer(
-                    shape = RoundedCornerShape(24.dp),
-                    backgroundColor = SwaaraModalSurface,
-                    borderBrush = Brush.linearGradient(
-                        listOf(
-                            SwaaraMagenta.copy(alpha = 0.55f),
-                            SwaaraViolet.copy(alpha = 0.30f),
-                            SwaaraCyan.copy(alpha = 0.45f)
-                        )
-                    ),
-                    borderWidth = 1.2.dp,
-                    shadowElevation = 24.dp,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(22.dp)
-                    ) {
-                        Text(
-                            text = "Broadcast Push Notification",
-                            color = SwaaraPrimaryText,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "Send a remote broadcast notification to Firebase Firestore (notifications/broadcast). All connected devices will receive this alert.",
-                            color = SwaaraSecondaryText,
-                            fontSize = 12.sp,
-                            lineHeight = 17.sp
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        OutlinedTextField(
-                            value = broadcastTitleInput,
-                            onValueChange = { broadcastTitleInput = it },
-                            label = { Text("Title") },
-                            singleLine = true,
-                            shape = RoundedCornerShape(14.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SwaaraMagenta,
-                                unfocusedBorderColor = SwaaraBorderSubtle,
-                                focusedContainerColor = SwaaraElevatedSurface,
-                                unfocusedContainerColor = SwaaraElevatedSurface,
-                                focusedTextColor = SwaaraPrimaryText,
-                                unfocusedTextColor = SwaaraPrimaryText
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        OutlinedTextField(
-                            value = broadcastMessageInput,
-                            onValueChange = { broadcastMessageInput = it },
-                            label = { Text("Message") },
-                            shape = RoundedCornerShape(14.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SwaaraCyan,
-                                unfocusedBorderColor = SwaaraBorderSubtle,
-                                focusedContainerColor = SwaaraElevatedSurface,
-                                unfocusedContainerColor = SwaaraElevatedSurface,
-                                focusedTextColor = SwaaraPrimaryText,
-                                unfocusedTextColor = SwaaraPrimaryText
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(18.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            TextButton(onClick = { showBroadcastDialog = false }) {
-                                Text("Cancel", color = SwaaraSecondaryText)
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            TextButton(
-                                onClick = {
-                                    if (broadcastTitleInput.isNotBlank() && broadcastMessageInput.isNotBlank()) {
-                                        isBroadcasting = true
-                                        scope.launch {
-                                            val ok = com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.broadcastNotificationToCloud(
-                                                context,
-                                                broadcastTitleInput.trim(),
-                                                broadcastMessageInput.trim()
-                                            )
-                                            isBroadcasting = false
-                                            showBroadcastDialog = false
-                                            if (ok) {
-                                                context.toast("Push broadcast successfully sent to Firebase!")
-                                            } else {
-                                                context.toast("Failed to dispatch push to Firebase")
-                                            }
-                                        }
-                                    }
-                                },
-                                enabled = !isBroadcasting
-                            ) {
-                                Text(
-                                    text = if (isBroadcasting) "Sending..." else "Send to Firebase",
-                                    color = SwaaraMagenta,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     Column(
@@ -628,204 +495,6 @@ fun SwaaraCloudSyncScreen() {
                     Text("Enter a 6-digit playlist code to import tracks to library", fontSize = 11.5.sp, color = SwaaraSecondaryText)
                 }
                 Icon(painterResource(R.drawable.chevron_forward), null, tint = SwaaraSecondaryText, modifier = Modifier.size(16.dp))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Firebase Cloud Push Notifications Entry
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(SwaaraElevatedSurface)
-                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
-                .padding(16.dp)
-        ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraMagenta.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(painterResource(R.drawable.sparkles), null, tint = SwaaraMagenta, modifier = Modifier.size(19.dp))
-                    }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Firebase Push Notifications", fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = SwaaraPrimaryText)
-                        Text("Cloud Messaging and Firestore Realtime Broadcast", fontSize = 11.5.sp, color = SwaaraSecondaryText)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Firebase Status & Topic Pill
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(SwaaraDeepSurface)
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(SwaaraCyan)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "raaga-music-8e1f2 • Active",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = SwaaraCyan
-                        )
-                    }
-
-                    Text(
-                        "Topics: all • announcements",
-                        fontSize = 10.5.sp,
-                        color = SwaaraSecondaryText
-                    )
-                }
-
-                // FCM Token Row (with copy action)
-                val token = fcmTokenState
-                if (!token.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.04f))
-                            .clickable {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                                clipboard?.setPrimaryClip(ClipData.newPlainText("FCM Token", token))
-                                context.toast("FCM Token copied to clipboard")
-                            }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "FCM: ${token.take(20)}...${token.takeLast(6)}",
-                            fontSize = 10.5.sp,
-                            color = SwaaraSecondaryText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            "Copy",
-                            fontSize = 10.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = SwaaraMagenta
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Row 1: Check Cloud & Send Broadcast
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(SwaaraMagenta.copy(alpha = 0.15f))
-                            .clickable {
-                                scope.launch {
-                                    fcmTokenState = com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.getFcmToken(context)
-                                    val notif = com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.checkAndPostNotifications(context)
-                                    if (notif != null) {
-                                        context.toast("Received: ${notif.title}")
-                                    } else {
-                                        context.toast("No new notifications pending")
-                                    }
-                                }
-                            }
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Check Firebase", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = SwaaraMagenta)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(SwaaraCyan.copy(alpha = 0.2f))
-                            .border(1.dp, SwaaraCyan.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                            .clickable {
-                                showBroadcastDialog = true
-                            }
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Send Broadcast", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = SwaaraCyan)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Row 2: Preset alerts test
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White.copy(alpha = 0.06f))
-                            .clickable {
-                                com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.postTestNotification(context)
-                                context.toast("Test alert sent to status bar")
-                            }
-                            .padding(vertical = 9.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Test Alert", fontSize = 11.5.sp, color = SwaaraPrimaryText)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White.copy(alpha = 0.06f))
-                            .clickable {
-                                com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.postSundayMorningNotification(context)
-                                context.toast("Sunday vibe pushed to status bar")
-                            }
-                            .padding(vertical = 9.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Sunday Vibe", fontSize = 11.5.sp, color = SwaaraPrimaryText)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White.copy(alpha = 0.06f))
-                            .clickable {
-                                com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.postMondayMorningNotification(context)
-                                context.toast("Monday energy pushed to status bar")
-                            }
-                            .padding(vertical = 9.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Monday Energy", fontSize = 11.5.sp, color = SwaaraPrimaryText)
-                    }
-                }
             }
         }
 

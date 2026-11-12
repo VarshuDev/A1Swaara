@@ -204,7 +204,7 @@ object SwaaraPushNotificationEngine {
     /**
      * Pushes a stylized Good Morning Sunday notification celebrating weekend acoustic vibes and 320 KBPS audio.
      */
-    fun postSundayMorningNotification(context: Context) {
+    private fun postSundayMorningNotification(context: Context) {
         val sundayNotif = SwaaraBroadcastNotification(
             id = "sunday_morning_${System.currentTimeMillis()}",
             title = "Good Morning • It's Sunday",
@@ -241,7 +241,7 @@ object SwaaraPushNotificationEngine {
     /**
      * Pushes a stylized Good Morning Monday notification celebrating high-energy motivation and 320 KBPS audio.
      */
-    fun postMondayMorningNotification(context: Context) {
+    private fun postMondayMorningNotification(context: Context) {
         val mondayNotif = SwaaraBroadcastNotification(
             id = "monday_morning_${System.currentTimeMillis()}",
             title = "Good Morning • Monday Energy",
@@ -250,19 +250,6 @@ object SwaaraPushNotificationEngine {
         )
         _activeNotification.value = mondayNotif
         showSystemNotification(context, mondayNotif)
-    }
-
-    /**
-     * Sends an immediate test notification to verify system notification delivery.
-     */
-    fun postTestNotification(context: Context) {
-        val testNotif = SwaaraBroadcastNotification(
-            id = "test_${System.currentTimeMillis()}",
-            title = "A1 Swaara Push Notifications",
-            message = "Push notifications are active and working on this device.",
-            actionUrl = "https://github.com/VarshuDev/A1Swaara_apk"
-        )
-        showSystemNotification(context, testNotif)
     }
 
     /**
@@ -310,41 +297,6 @@ object SwaaraPushNotificationEngine {
      */
     fun initializeFcm(context: Context) {
         Log.i(TAG, "Firebase Push Notification Engine active on project: ${SwaaraCloudConfig.PROJECT_ID}")
-    }
-
-    /**
-     * Dispatches a broadcast notification to Firebase Firestore (notifications/broadcast)
-     * and shows it locally on the calling device.
-     */
-    suspend fun broadcastNotificationToCloud(
-        context: Context,
-        title: String,
-        message: String,
-        actionUrl: String? = "https://github.com/VarshuDev/A1Swaara_apk"
-    ): Boolean = withContext(Dispatchers.IO) {
-        val id = "broadcast_${System.currentTimeMillis()}"
-        val data = mapOf(
-            "id" to id,
-            "title" to title,
-            "message" to message,
-            "actionUrl" to (actionUrl ?: ""),
-            "enabled" to true,
-            "timestamp" to System.currentTimeMillis()
-        )
-        val success = SwaaraCloudConfig.setDocument("notifications/broadcast", data)
-        if (success) {
-            val notif = SwaaraBroadcastNotification(
-                id = id,
-                title = title,
-                message = message,
-                actionUrl = actionUrl,
-                enabled = true,
-                timestamp = System.currentTimeMillis()
-            )
-            _activeNotification.value = notif
-            showSystemNotification(context, notif)
-        }
-        success
     }
 
     /**
