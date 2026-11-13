@@ -246,6 +246,18 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         return super.onBind(intent) ?: binder
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        runCatching {
+            if (!isNotificationStarted) {
+                isNotificationStarted = true
+                startForeground()
+            }
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to guarantee foreground service in onStartCommand", error)
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     override fun onGetSession(
         controllerInfo: MediaSession.ControllerInfo
     ): MediaLibraryService.MediaLibrarySession = mediaSession
@@ -605,7 +617,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         super.onDestroy()
     }
 
-    override fun shouldBeInvincible() = !player.shouldBePlaying
+    override fun shouldBeInvincible() = !player.shouldBePlaying && player.currentMediaItem != null
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         handler.post {
@@ -1080,16 +1092,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             )
         ) return
 
-        val notification = notification()
-
-        if (notification == null) {
-            isNotificationStarted = false
-            makeInvincible(false)
-            stopForeground(false)
-            sendCloseEqualizerIntent()
-            ServiceNotifications.default.cancel(this)
-            return
-        }
+        val hasTrack = player.currentMediaItem != null
 
         if (player.audioSessionId > 0) {
             com.varshudev.a1swaara.audio.SwaaraAudioEngine.bindAudioSession(this@PlayerService, player.audioSessionId)
@@ -1107,8 +1110,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 stopForeground(false)
                 makeInvincible(true)
                 sendCloseEqualizerIntent()
+                if (!hasTrack) {
+                    ServiceNotifications.default.cancel(this)
+                }
             }
-            updateNotification()
+            if (hasTrack) {
+                updateNotification()
+            }
         }
 
         val activeJam = com.varshudev.a1swaara.cloud.SwaaraJamEngine.currentRoom.value
@@ -1127,8 +1135,28 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
     }
 
-    private fun notification(): (NotificationCompat.Builder.() -> NotificationCompat.Builder)? {
-        if (player.currentMediaItem == null) return null
+    private fun notification(): (NotificationCompat.Builder.() -> NotificationCompat.Builder) {
+        val currentMediaItem = player.currentMediaItem
+        if (currentMediaItem == null) {
+            return {
+                this
+                    .setContentTitle(getString(R.string.app_name))
+                    .setContentText("Ready to play")
+                    .setSmallIcon(R.drawable.app_icon)
+                    .setAutoCancel(false)
+                    .setOnlyAlertOnce(true)
+                    .setShowWhen(false)
+                    .setOngoing(false)
+                    .setContentIntent(
+                        activityPendingIntent<MainActivity>(flags = PendingIntent.FLAG_UPDATE_CURRENT)
+                    )
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+                    .setStyle(
+                        MediaStyleNotificationHelper.MediaStyle(mediaSession)
+                    )
+            }
+        }
 
         val mediaMetadata = player.mediaMetadata
 
@@ -1226,7 +1254,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private fun updateNotification(): Unit {
         runCatching {
             handler.post {
-                notification()?.let { ServiceNotifications.default.sendNotification(this, it) }
+                ServiceNotifications.default.sendNotification(this, notification())
                 com.varshudev.a1swaara.widget.SwaaraWidgetManager.updateWidgets(
                     context = this@PlayerService,
                     mediaItem = player.currentMediaItem,
@@ -1239,8 +1267,11 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     }
 
     override fun startForeground() {
-        notification()
-            ?.let { ServiceNotifications.default.startForeground(this, it) }
+        runCatching {
+            ServiceNotifications.default.startForeground(this, notification())
+        }.onFailure {
+            Log.e(TAG, "Failed startForeground in PlayerService", it)
+        }
     }
 
     private fun createMediaSourceFactory() = NewPipeAudioMediaSourceFactory(

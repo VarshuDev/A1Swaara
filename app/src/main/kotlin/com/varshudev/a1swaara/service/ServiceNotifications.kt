@@ -79,7 +79,7 @@ abstract class NotificationChannels {
             service: Service,
             notification: NotificationCompat.Builder.() -> NotificationCompat.Builder
         ) = runCatching {
-            handler.post {
+            val performStart = Runnable {
                 try {
                     upsertChannel(service)
                     val (id, notif) = createNotification(service, notification)
@@ -95,6 +95,12 @@ abstract class NotificationChannels {
                 } catch (e: Exception) {
                     Log.e("ServiceNotifications", "Failed to startForeground safely", e)
                 }
+            }
+
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                performStart.run()
+            } else {
+                handler.post(performStart)
             }
         }
 
