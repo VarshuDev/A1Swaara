@@ -774,9 +774,21 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         val activeRadio = radio
         if (activeRadio != null) {
             coroutineScope.launch(Dispatchers.Main) {
-                val radioItems = activeRadio.process().map { it.withRadioState(activeRadio) }
+                val rawItems = activeRadio.process()
+                if (rawItems.isEmpty()) return@launch
+
+                val currentQueueIds = (0 until player.mediaItemCount).mapNotNull { idx ->
+                    runCatching { player.getMediaItemAt(idx).mediaId }.getOrNull()
+                }
+
+                val reranked = com.varshudev.a1swaara.recommendation.SwaaraRecommendationEngine.rerankRadioQueue(
+                    currentTrack = player.currentMediaItem,
+                    candidates = rawItems,
+                    recentHistoryIds = currentQueueIds
+                ).map { it.withRadioState(activeRadio) }
+
                 syncCurrentMediaItemRadioState(activeRadio)
-                player.addMediaItems(radioItems)
+                player.addMediaItems(reranked)
             }
         } else {
             val curId = player.currentMediaItem?.mediaId

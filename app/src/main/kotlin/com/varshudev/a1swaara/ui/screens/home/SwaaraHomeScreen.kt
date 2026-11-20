@@ -552,38 +552,28 @@ fun SwaaraHomeScreen(
                         )
                     }
 
-                // 2. Build smart queries based on selected category / language
-                val isForYou = lang.equals("for_you", ignoreCase = true)
+                // 2. Build multi-vector taste profile from user history and Database
+                val topDatabaseSongs = runCatching {
+                    Database.songsByPlayTimeDesc(20).first()
+                }.getOrNull().orEmpty()
 
-                // If "For You", determine if we can extract top artists/keywords from history
-                val topHistoryArtist = if (isForYou && historyDisplayItems.isNotEmpty()) {
-                    historyDisplayItems.firstOrNull()?.subtitle?.split(",")?.firstOrNull()?.trim()
-                } else null
+                val topArtistsList = (topDatabaseSongs.mapNotNull { it.artistsText } +
+                        historyDisplayItems.map { it.subtitle })
+                    .flatMap { it.split(",", "&", "/") }
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() && !it.equals("artist", ignoreCase = true) && !it.equals("various artists", ignoreCase = true) }
+                    .distinct()
+                    .take(4)
 
-                val trendingQuery = when {
-                    isForYou && !topHistoryArtist.isNullOrBlank() -> "$topHistoryArtist latest songs hits"
-                    isForYou -> "top trending music hits official"
-                    lang.equals("english", ignoreCase = true) -> "trending top hits official"
-                    else -> "$lang latest trending songs official"
-                }
+                val personalizedQueries = com.varshudev.a1swaara.recommendation.SwaaraRecommendationEngine.buildFeedQueries(
+                    lang = lang,
+                    topArtists = topArtistsList
+                )
 
-                val viralQuery = when {
-                    isForYou -> "viral music hits today"
-                    lang.equals("english", ignoreCase = true) -> "top viral songs"
-                    else -> "$lang viral hits chart"
-                }
-
-                val topChartQuery = when {
-                    isForYou -> "billboard top 50 global hits"
-                    lang.equals("english", ignoreCase = true) -> "billboard top 50"
-                    else -> "$lang top 50 songs chart"
-                }
-
-                val artistQuery = when {
-                    isForYou -> "popular global music artists"
-                    lang.equals("english", ignoreCase = true) -> "popular music artists"
-                    else -> "$lang popular playback singers"
-                }
+                val trendingQuery = personalizedQueries.trendingQuery
+                val viralQuery = personalizedQueries.viralQuery
+                val topChartQuery = personalizedQueries.topChartQuery
+                val artistQuery = personalizedQueries.artistQuery
 
                 val (liveSongsResult, viralResult, topChartResult, liveArtistsResult) = parallelScope {
                     val dSongs = async { runCatching { container.searchResultRepository.searchSongs(trendingQuery, null)?.getOrNull()?.items }.getOrNull() }
@@ -1506,8 +1496,9 @@ fun SwaaraHomeScreen(
             // 5. Trending Music: Horizontal Ranked Cards
             if (liveTrendingSongs.isNotEmpty()) {
                 val isForYou = selectedLanguage.equals("for_you", ignoreCase = true)
-                val shelfTitle = if (isForYou) "Recommended For You" else "Trending ${selectedLanguage.replaceFirstChar { it.uppercase() }} Hits"
-                val shelfSubtitle = if (isForYou) "Curated tracks chosen based on your listening vibe" else "Live charts updating continuously with fresh hits"
+                val timeSlot = com.varshudev.a1swaara.recommendation.SwaaraRecommendationEngine.getTimeOfDaySlot()
+                val shelfTitle = if (isForYou) timeSlot.label else "Trending ${selectedLanguage.replaceFirstChar { it.uppercase() }} Hits"
+                val shelfSubtitle = if (isForYou) "Personalized acoustic flow matching your current listening vibe" else "Live charts updating continuously with fresh hits"
                 SwaaraTrendingShelf(
                     title = shelfTitle,
                     subtitle = shelfSubtitle,
