@@ -492,6 +492,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         updateRepeatMode()
         maybeRestorePlayerQueue()
         com.varshudev.a1swaara.audio.SwaaraAudioEngine.bindAudioSession(this@PlayerService, player.audioSessionId)
+        com.varshudev.a1swaara.audio.SwaaraVisualizerEngine.bindAudioSession(this@PlayerService, player.audioSessionId)
+        com.varshudev.a1swaara.cloud.SwaaraConnectEngine.startSession(this@PlayerService, binder)
 
         mediaSession = MediaLibraryService.MediaLibrarySession.Builder(this, player, AutoSessionCallback())
             .setSessionActivity(activityPendingIntent<MainActivity>())
@@ -598,6 +600,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             safeUnregisterReceiver(notificationActionReceiver)
 
             com.varshudev.a1swaara.audio.SwaaraAudioEngine.releaseHardwareEffects()
+            com.varshudev.a1swaara.audio.SwaaraVisualizerEngine.release()
+            com.varshudev.a1swaara.cloud.SwaaraConnectEngine.stopSession()
             mediaSession.release()
             loudnessEnhancer?.release()
             preferenceUpdaterJob?.cancel()
@@ -1096,7 +1100,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         if (player.audioSessionId > 0) {
             com.varshudev.a1swaara.audio.SwaaraAudioEngine.bindAudioSession(this@PlayerService, player.audioSessionId)
+            com.varshudev.a1swaara.audio.SwaaraVisualizerEngine.bindAudioSession(this@PlayerService, player.audioSessionId)
         }
+        com.varshudev.a1swaara.audio.SwaaraVisualizerEngine.notifyPlaybackState(player.isPlaying)
 
         if (player.shouldBePlaying && !isNotificationStarted) {
             isNotificationStarted = true
@@ -1691,6 +1697,40 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         fun cancelSleepTimer() {
             timerJob?.cancel()
             timerJob = null
+        }
+
+        /**
+         * Switches the audio language track for the currently playing multi-language
+         * podcast or video and resumes seamlessly from the exact playback timestamp.
+         */
+        fun switchAudioTrack(trackKey: String) {
+            val currentItem = player.currentMediaItem ?: return
+            val mediaId = currentItem.mediaId
+            if (mediaId.isBlank() || mediaId.startsWith(LOCAL_KEY_PREFIX)) return
+
+            val currentIndex = player.currentMediaItemIndex
+            if (currentIndex < 0 || currentIndex >= player.mediaItemCount) return
+            val resumePositionMs = player.currentPosition.coerceAtLeast(0L)
+            val shouldResume = player.playWhenReady
+
+            coroutineScope.launch(Dispatchers.IO) {
+                NewPipeAudioMediaSourceFactory.switchAudioTrack(cache, mediaId, trackKey)
+                withContext(Dispatchers.Main) {
+                    if (player.currentMediaItem?.mediaId != mediaId) return@withContext
+                    val idx = player.currentMediaItemIndex
+                    if (idx < 0 || idx >= player.mediaItemCount) return@withContext
+                    val refreshedItem = currentItem.buildUpon()
+                        .setUri(mediaId)
+                        .setCustomCacheKey(mediaId)
+                        .build()
+                    player.replaceMediaItem(idx, refreshedItem)
+                    player.seekTo(idx, resumePositionMs)
+                    player.prepare()
+                    if (shouldResume) {
+                        player.play()
+                    }
+                }
+            }
         }
 
         fun setupRadio(endpoint: NavigationEndpoint.Endpoint.Watch?) =

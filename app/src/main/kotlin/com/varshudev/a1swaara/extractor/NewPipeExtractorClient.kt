@@ -11,11 +11,15 @@ import org.schabi.newpipe.extractor.localization.Localization
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import org.schabi.newpipe.extractor.services.youtube.YoutubeService
 import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.AudioTrackType
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
 import org.schabi.newpipe.extractor.downloader.Downloader
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.io.EOFException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -24,6 +28,8 @@ import java.net.NoRouteToHostException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
@@ -44,6 +50,33 @@ object NewPipeExtractorClient {
     private val appContextRef = AtomicReference<Context?>()
     @Volatile private var sharedSystemDownloader: Downloader? = null
     private var lastSuccessfulDnsIndex: Int? = null
+
+    private val userPreferredTrackKeys = ConcurrentHashMap<String, String>()
+    private val _availableTracksByVideoId = MutableStateFlow<Map<String, List<SwaaraAudioTrackOption>>>(emptyMap())
+    val availableTracksByVideoId: StateFlow<Map<String, List<SwaaraAudioTrackOption>>> = _availableTracksByVideoId.asStateFlow()
+
+    private val _selectedTrackKeyByVideoId = MutableStateFlow<Map<String, String>>(emptyMap())
+    val selectedTrackKeyByVideoId: StateFlow<Map<String, String>> = _selectedTrackKeyByVideoId.asStateFlow()
+
+    fun getPreferredTrackKey(videoId: String): String? = userPreferredTrackKeys[videoId]
+
+    fun setPreferredTrackKey(videoId: String, trackKey: String) {
+        userPreferredTrackKeys[videoId] = trackKey
+        _selectedTrackKeyByVideoId.value = _selectedTrackKeyByVideoId.value + (videoId to trackKey)
+    }
+
+    fun getAvailableTracks(videoId: String): List<SwaaraAudioTrackOption> =
+        _availableTracksByVideoId.value[videoId].orEmpty()
+
+    /**
+     * Populates available audio language tracks for a videoId if not yet in memory
+     * (for example, when playback was served directly from ExoPlayer's disk cache).
+     */
+    fun ensureTracksLoaded(videoId: String) {
+        if (videoId.isBlank() || videoId.startsWith("local:")) return
+        if (_availableTracksByVideoId.value.containsKey(videoId)) return
+        preloadAudioStream(videoId)
+    }
 
     fun ensureInitialized(context: Context) {
         appContextRef.set(context.applicationContext)
@@ -201,7 +234,18 @@ object NewPipeExtractorClient {
         val streamInfo = StreamInfo.getInfo(service, url)
         logStreamInfo(videoId, dnsTarget, streamInfo)
         val audioStreams = getPlayableAudioStreams(streamInfo)
-        val audioStream = selectDefaultAudioStream(audioStreams)
+        val trackOptions = extractAudioTrackOptions(audioStreams)
+        val preferredTrackKey = userPreferredTrackKeys[videoId]
+        val selectedOption = selectAudioTrackOption(trackOptions, preferredTrackKey)
+        val audioStream = selectedOption?.stream ?: selectBestQualityStream(audioStreams)
+
+        if (trackOptions.isNotEmpty()) {
+            _availableTracksByVideoId.value = _availableTracksByVideoId.value + (videoId to trackOptions)
+            selectedOption?.let { opt ->
+                _selectedTrackKeyByVideoId.value = _selectedTrackKeyByVideoId.value + (videoId to opt.trackKey)
+            }
+        }
+
         val videoStream = if (audioStream == null) {
             selectDefaultMuxedVideoStream(getPlayableMuxedVideoStreams(streamInfo))
         } else {
@@ -222,7 +266,9 @@ object NewPipeExtractorClient {
             Log.i(
                 TAG,
                 "Audio stream resolved videoId=$videoId dnsTarget=${dnsTarget.label} " +
-                    "itag=${audioStream.itag} bitrate=${audioStream.averageBitrate}"
+                    "itag=${audioStream.itag} bitrate=${audioStream.averageBitrate} " +
+                    "track=${selectedOption?.displayName} type=${audioStream.audioTrackType} " +
+                    "totalTracks=${trackOptions.size}"
             )
         } else if (videoStream != null) {
             Log.i(
@@ -232,7 +278,14 @@ object NewPipeExtractorClient {
             )
         }
 
-        return NewPipeAudioResult(streamInfo, audioStreams, audioStream, videoStream)
+        return NewPipeAudioResult(
+            streamInfo = streamInfo,
+            audioStreams = audioStreams,
+            audioStream = audioStream,
+            videoStream = videoStream,
+            availableTracks = trackOptions,
+            selectedTrackKey = selectedOption?.trackKey
+        )
     }
 
     private fun configureDownloader(dnsTarget: NewPipeDnsTarget) {
@@ -302,6 +355,7 @@ object NewPipeExtractorClient {
 
     private fun AudioStream.describe(): String =
         "itag=$itag format=$format delivery=$deliveryMethod isUrl=$isUrl bitrate=$averageBitrate " +
+            "trackId=$audioTrackId trackName=$audioTrackName locale=$audioLocale trackType=$audioTrackType " +
             "content=${content.take(80)}"
 
     private fun VideoStream.describe(): String =
@@ -330,10 +384,135 @@ object NewPipeExtractorClient {
         return nonIosStreams.ifEmpty { this }
     }
 
-    private fun selectDefaultAudioStream(streams: List<AudioStream>?): AudioStream? {
-        if (streams.isNullOrEmpty()) return null
+    internal fun extractAudioTrackOptions(
+        streams: List<AudioStream>?,
+        quality: PlayerPreferences.AudioQuality = runCatching { PlayerPreferences.audioQuality }
+            .getOrDefault(PlayerPreferences.AudioQuality.Auto)
+    ): List<SwaaraAudioTrackOption> {
+        if (streams.isNullOrEmpty()) return emptyList()
 
-        val quality = PlayerPreferences.audioQuality
+        val grouped = LinkedHashMap<String, MutableList<AudioStream>>()
+        for (stream in streams) {
+            val key = stream.normalizedTrackKey()
+            grouped.getOrPut(key) { mutableListOf() }.add(stream)
+        }
+
+        return grouped.mapNotNull { (trackKey, groupStreams) ->
+            val best = selectBestQualityStream(groupStreams, quality) ?: return@mapNotNull null
+            val trackName = groupStreams.firstNotNullOfOrNull { it.audioTrackName?.trim()?.takeIf(String::isNotEmpty) }
+            val locale = groupStreams.firstNotNullOfOrNull { it.audioLocale }
+            val trackType = groupStreams.firstNotNullOfOrNull { it.audioTrackType }
+            val displayName = buildTrackDisplayName(trackName, locale, trackType)
+
+            SwaaraAudioTrackOption(
+                trackKey = trackKey,
+                displayName = displayName,
+                languageCode = locale?.toLanguageTag()?.takeIf { it.isNotBlank() },
+                trackType = trackType,
+                bitrateKbps = best.averageBitrate.takeIf { it > 0 } ?: 0,
+                codec = best.format?.name,
+                stream = best
+            )
+        }.sortedWith(
+            compareBy<SwaaraAudioTrackOption> { it.defaultPriorityRank() }
+                .thenBy { it.displayName.lowercase(Locale.ENGLISH) }
+        )
+    }
+
+    internal fun selectAudioTrackOption(
+        options: List<SwaaraAudioTrackOption>,
+        preferredTrackKey: String? = null
+    ): SwaaraAudioTrackOption? {
+        if (options.isEmpty()) return null
+        if (!preferredTrackKey.isNullOrBlank()) {
+            options.firstOrNull { it.trackKey == preferredTrackKey }?.let { return it }
+        }
+        // options are already sorted with ORIGINAL first, then neutral/secondary, then DUBBED, then DESCRIPTIVE
+        return options.firstOrNull()
+    }
+
+    internal fun selectDefaultAudioStream(
+        streams: List<AudioStream>?,
+        preferredTrackKey: String? = null,
+        quality: PlayerPreferences.AudioQuality = runCatching { PlayerPreferences.audioQuality }
+            .getOrDefault(PlayerPreferences.AudioQuality.Auto)
+    ): AudioStream? {
+        if (streams.isNullOrEmpty()) return null
+        val options = extractAudioTrackOptions(streams, quality)
+        val selected = selectAudioTrackOption(options, preferredTrackKey)?.stream
+            ?: selectBestQualityStream(streams, quality)
+
+        runCatching {
+            Log.i(
+                TAG,
+                "Stream selected quality=${quality.name} " +
+                    "codec=${selected?.format?.name} " +
+                    "bitrate=${selected?.averageBitrate}kbps " +
+                    "itag=${selected?.itag} " +
+                    "trackType=${selected?.audioTrackType} " +
+                    "trackName=${selected?.audioTrackName}"
+            )
+        }
+        return selected
+    }
+
+    fun applySelectedTrack(result: NewPipeAudioResult, trackKey: String): NewPipeAudioResult? {
+        val options = result.availableTracks.ifEmpty { extractAudioTrackOptions(result.audioStreams) }
+        val chosen = options.firstOrNull { it.trackKey == trackKey } ?: return null
+        val videoId = result.streamInfo.id
+        if (!videoId.isNullOrBlank()) {
+            setPreferredTrackKey(videoId, trackKey)
+            _availableTracksByVideoId.value = _availableTracksByVideoId.value + (videoId to options)
+        }
+        return result.copy(
+            audioStream = chosen.stream,
+            availableTracks = options,
+            selectedTrackKey = chosen.trackKey
+        )
+    }
+
+    private fun AudioStream.normalizedTrackKey(): String {
+        val id = audioTrackId?.trim()
+        if (!id.isNullOrEmpty()) return id
+        val lang = audioLocale?.toLanguageTag()?.trim().orEmpty()
+        val name = audioTrackName?.trim().orEmpty()
+        val type = audioTrackType?.name.orEmpty()
+        return if (lang.isEmpty() && name.isEmpty() && type.isEmpty()) {
+            DEFAULT_TRACK_KEY
+        } else {
+            "$lang|$name|$type"
+        }
+    }
+
+    private fun buildTrackDisplayName(
+        rawTrackName: String?,
+        locale: Locale?,
+        trackType: AudioTrackType?
+    ): String {
+        val base = rawTrackName?.takeIf { it.isNotBlank() }
+            ?: locale?.getDisplayName(Locale.ENGLISH)?.takeIf { it.isNotBlank() }
+            ?: locale?.getDisplayLanguage(Locale.ENGLISH)?.takeIf { it.isNotBlank() }
+            ?: "Default Audio"
+
+        val normalizedBase = base.replaceFirstChar { it.uppercase() }
+        val hasOriginalWord = normalizedBase.contains("original", ignoreCase = true)
+        val hasDubWord = normalizedBase.contains("dub", ignoreCase = true)
+        val hasDescriptiveWord = normalizedBase.contains("descriptive", ignoreCase = true)
+
+        return when {
+            trackType == AudioTrackType.ORIGINAL && !hasOriginalWord -> "$normalizedBase (Original)"
+            trackType == AudioTrackType.DUBBED && !hasDubWord -> "$normalizedBase (Dubbed)"
+            trackType == AudioTrackType.DESCRIPTIVE && !hasDescriptiveWord -> "$normalizedBase (Descriptive)"
+            else -> normalizedBase
+        }
+    }
+
+    private fun selectBestQualityStream(
+        streams: List<AudioStream>,
+        quality: PlayerPreferences.AudioQuality = runCatching { PlayerPreferences.audioQuality }
+            .getOrDefault(PlayerPreferences.AudioQuality.Auto)
+    ): AudioStream? {
+        if (streams.isEmpty()) return null
         return when (quality) {
             PlayerPreferences.AudioQuality.Normal -> {
                 // Pick stream closest to 128kbps
@@ -347,14 +526,6 @@ object NewPipeExtractorClient {
                 // Auto and Maximum: always pick highest quality
                 streams.maxWithOrNull(audioStreamComparator)
             }
-        }.also { selected ->
-            Log.i(
-                TAG,
-                "Stream selected quality=${quality.name} " +
-                    "codec=${selected?.format?.name} " +
-                    "bitrate=${selected?.averageBitrate}kbps " +
-                    "itag=${selected?.itag}"
-            )
         }
     }
 
@@ -395,15 +566,49 @@ object NewPipeExtractorClient {
     }
 
     private const val TAG = "NewPipeExtractorClient"
+    private const val DEFAULT_TRACK_KEY = "default"
     private const val DNS_RESOLVED_ADDRESS_ATTEMPTS = 4
     private const val PLAYBACK_RESOLVE_TIMEOUT_SECONDS = 45L
     private const val PRELOAD_RESOLVE_TIMEOUT_SECONDS = 10L
     private val RESOLVER_EXECUTOR = Executors.newCachedThreadPool()
 }
 
+data class SwaaraAudioTrackOption(
+    val trackKey: String,
+    val displayName: String,
+    val languageCode: String?,
+    val trackType: AudioTrackType?,
+    val bitrateKbps: Int,
+    val codec: String?,
+    val stream: AudioStream
+) {
+    val isOriginal: Boolean
+        get() = trackType == AudioTrackType.ORIGINAL ||
+            displayName.contains("original", ignoreCase = true)
+
+    val isDubbed: Boolean
+        get() = trackType == AudioTrackType.DUBBED ||
+            displayName.contains("dub", ignoreCase = true)
+
+    val isDescriptive: Boolean
+        get() = trackType == AudioTrackType.DESCRIPTIVE ||
+            displayName.contains("descriptive", ignoreCase = true)
+
+    fun defaultPriorityRank(): Int = when {
+        isOriginal -> 0
+        trackType == null && !isDubbed && !isDescriptive -> 1
+        trackType == AudioTrackType.SECONDARY && !isDubbed && !isDescriptive -> 2
+        isDubbed -> 3
+        isDescriptive -> 4
+        else -> 2
+    }
+}
+
 data class NewPipeAudioResult(
     val streamInfo: StreamInfo,
     val audioStreams: List<AudioStream>,
     val audioStream: AudioStream?,
-    val videoStream: VideoStream?
+    val videoStream: VideoStream?,
+    val availableTracks: List<SwaaraAudioTrackOption> = emptyList(),
+    val selectedTrackKey: String? = null
 )

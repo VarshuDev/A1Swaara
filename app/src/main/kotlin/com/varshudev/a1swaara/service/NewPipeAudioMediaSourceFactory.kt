@@ -230,6 +230,36 @@ class NewPipeAudioMediaSourceFactory(
             }
         }
 
+        /**
+         * Switches the active audio language track for a multi-language video/podcast.
+         * Updates the in-memory stream result without re-extracting when possible, and evicts
+         * cached bytes for [mediaId] so ExoPlayer immediately streams the newly selected language.
+         */
+        fun switchAudioTrack(cache: Cache, mediaId: String, trackKey: String): Boolean {
+            NewPipeExtractorClient.setPreferredTrackKey(mediaId, trackKey)
+
+            synchronized(preloadedAudioResults) {
+                val existing = preloadedAudioResults[mediaId]?.takeIf { it.isFresh() }?.result
+                if (existing != null) {
+                    val updated = NewPipeExtractorClient.applySelectedTrack(existing, trackKey)
+                    if (updated != null) {
+                        preloadedAudioResults[mediaId] = PreloadedAudioResult(updated, System.currentTimeMillis())
+                    } else {
+                        preloadedAudioResults.remove(mediaId)
+                    }
+                } else {
+                    preloadedAudioResults.remove(mediaId)
+                }
+            }
+
+            runCatching {
+                cache.removeResource(mediaId)
+            }.onFailure {
+                Log.w(TAG, "Failed to evict disk cache for $mediaId during audio track switch", it)
+            }
+            return true
+        }
+
         fun createDataSourceFactory(
             context: Context,
             cache: Cache,
@@ -291,14 +321,29 @@ class NewPipeAudioMediaSourceFactory(
             return isCached(mediaId, 0L, contentLength)
         }
 
-        private fun resolveAudioResult(mediaId: String): com.varshudev.a1swaara.extractor.NewPipeAudioResult =
-            synchronized(preloadedAudioResults) {
+        private fun resolveAudioResult(mediaId: String): com.varshudev.a1swaara.extractor.NewPipeAudioResult {
+            val preferredKey = NewPipeExtractorClient.getPreferredTrackKey(mediaId)
+            val cached = synchronized(preloadedAudioResults) {
                 preloadedAudioResults[mediaId]?.takeIf { it.isFresh() }?.result
-            } ?: resolveAudioResultUncached(mediaId).also { result ->
+            }
+            if (cached != null) {
+                if (!preferredKey.isNullOrBlank() && cached.selectedTrackKey != preferredKey) {
+                    val switched = NewPipeExtractorClient.applySelectedTrack(cached, preferredKey)
+                    if (switched != null) {
+                        synchronized(preloadedAudioResults) {
+                            preloadedAudioResults[mediaId] = PreloadedAudioResult(switched, System.currentTimeMillis())
+                        }
+                        return switched
+                    }
+                }
+                return cached
+            }
+            return resolveAudioResultUncached(mediaId).also { result ->
                 synchronized(preloadedAudioResults) {
                     preloadedAudioResults[mediaId] = PreloadedAudioResult(result, System.currentTimeMillis())
                 }
             }
+        }
 
         private fun PreloadedAudioResult.isFresh() =
             System.currentTimeMillis() - createdAtMs <= PRELOADED_RESULT_TTL_MS

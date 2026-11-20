@@ -294,6 +294,8 @@ fun SwaaraNowPlayingScreen(
     val isSleepTimerActive = sleepTimerMillisLeft != null && sleepTimerMillisLeft > 0
 
     var isLyricsMode by remember { mutableStateOf(false) }
+    var isStudioVisualizerMode by remember { mutableStateOf(false) }
+    var showConnectSheet by remember { mutableStateOf(false) }
     var isBoomMode by remember { mutableStateOf(false) }
     var shouldShowSynchronizedLyrics by remember { mutableStateOf(true) }
     var showQueueSheet by remember { mutableStateOf(false) }
@@ -306,8 +308,32 @@ fun SwaaraNowPlayingScreen(
     var showMoreSheet by remember { mutableStateOf(false) }
     var showAddToPlaylistSheet by remember { mutableStateOf(false) }
     var showLoopCounterDialog by remember { mutableStateOf(false) }
+    var showAudioLanguageSheet by remember { mutableStateOf(false) }
     val remainingLoops by SwaaraLoopCounter.remainingCount.collectAsState()
     val activeJamRoom by SwaaraJamEngine.currentRoom.collectAsState()
+    val allAvailableAudioTracks by com.varshudev.a1swaara.extractor.NewPipeExtractorClient.availableTracksByVideoId.collectAsState()
+    val allSelectedTrackKeys by com.varshudev.a1swaara.extractor.NewPipeExtractorClient.selectedTrackKeyByVideoId.collectAsState()
+    val availableAudioTracks = remember(videoId, allAvailableAudioTracks) {
+        videoId?.let { allAvailableAudioTracks[it] }.orEmpty()
+    }
+    val selectedAudioTrackKey = remember(videoId, allSelectedTrackKeys) {
+        videoId?.let { allSelectedTrackKeys[it] }
+    }
+    val activeAudioTrack = remember(availableAudioTracks, selectedAudioTrackKey) {
+        availableAudioTracks.firstOrNull { it.trackKey == selectedAudioTrackKey }
+            ?: availableAudioTracks.firstOrNull()
+    }
+
+    LaunchedEffect(videoId) {
+        val id = videoId
+        if (!id.isNullOrBlank() && !id.startsWith("local:") && availableAudioTracks.isEmpty()) {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    com.varshudev.a1swaara.extractor.NewPipeExtractorClient.ensureTracksLoaded(id)
+                }
+            }
+        }
+    }
     // Audio quality now backed by PlayerPreferences.audioQuality (Swaara Lossless Engine v1.1.4)
     var audioQualityIndex by remember { mutableIntStateOf(PlayerPreferences.audioQuality.ordinal) }
     var showAudioQualitySheet by remember { mutableStateOf(false) }
@@ -999,6 +1025,42 @@ fun SwaaraNowPlayingScreen(
                     }
                 }
 
+                // Audio Language Selector (for multi-language podcasts & videos)
+                if (availableAudioTracks.size > 1 || isPodcast) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                showMoreSheet = false
+                                showAudioLanguageSheet = true
+                            }
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.radio),
+                            contentDescription = null,
+                            tint = SwaaraCyan,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Audio Language Track",
+                                color = SwaaraPrimaryText,
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = activeAudioTrack?.displayName ?: "Original Audio",
+                                color = SwaaraCyan,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+
                 // Sleep Timer
                 Row(
                     modifier = Modifier
@@ -1074,6 +1136,22 @@ fun SwaaraNowPlayingScreen(
             onCreatedOrAdded = { playlistName ->
                 context.toast("Added to \"$playlistName\"")
             }
+        )
+    }
+
+    if (showConnectSheet) {
+        SwaaraConnectSheet(onDismiss = { showConnectSheet = false })
+    }
+
+    if (showAudioLanguageSheet) {
+        SwaaraAudioLanguageSheet(
+            tracks = availableAudioTracks,
+            selectedTrackKey = selectedAudioTrackKey,
+            onSelectTrack = { track ->
+                binder.switchAudioTrack(track.trackKey)
+                context.toast("Switched audio to ${track.displayName}")
+            },
+            onDismiss = { showAudioLanguageSheet = false }
         )
     }
 
@@ -1528,12 +1606,13 @@ fun SwaaraNowPlayingScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    // Player Segment
+                                    // 1. Player Segment
+                                    val isPlayerSelected = !isLyricsMode && !isStudioVisualizerMode
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(18.dp))
                                             .background(
-                                                if (!isLyricsMode) Brush.horizontalGradient(
+                                                if (isPlayerSelected) Brush.horizontalGradient(
                                                     listOf(
                                                         SwaaraMagenta.copy(alpha = 0.28f),
                                                         SwaaraViolet.copy(alpha = 0.20f)
@@ -1543,34 +1622,37 @@ fun SwaaraNowPlayingScreen(
                                             )
                                             .border(
                                                 1.dp,
-                                                if (!isLyricsMode) SwaaraMagenta.copy(alpha = 0.65f)
+                                                if (isPlayerSelected) SwaaraMagenta.copy(alpha = 0.65f)
                                                 else Color.Transparent,
                                                 RoundedCornerShape(18.dp)
                                             )
-                                            .clickable { isLyricsMode = false }
-                                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                                            .clickable {
+                                                isLyricsMode = false
+                                                isStudioVisualizerMode = false
+                                            }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
                                         ) {
                                             Icon(
                                                 painter = painterResource(id = R.drawable.disc),
                                                 contentDescription = null,
-                                                tint = if (!isLyricsMode) SwaaraMagenta else SwaaraSecondaryText,
+                                                tint = if (isPlayerSelected) SwaaraMagenta else SwaaraSecondaryText,
                                                 modifier = Modifier.size(13.dp)
                                             )
                                             Text(
                                                 text = "Player",
-                                                color = if (!isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
-                                                fontSize = 12.sp,
-                                                fontWeight = if (!isLyricsMode) FontWeight.Bold else FontWeight.Medium
+                                                color = if (isPlayerSelected) SwaaraPrimaryText else SwaaraSecondaryText,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = if (isPlayerSelected) FontWeight.Bold else FontWeight.Medium
                                             )
                                         }
                                     }
 
-                                    // Lyrics Segment
+                                    // 2. Lyrics Segment
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(18.dp))
@@ -1589,13 +1671,16 @@ fun SwaaraNowPlayingScreen(
                                                 else Color.Transparent,
                                                 RoundedCornerShape(18.dp)
                                             )
-                                            .clickable { isLyricsMode = true }
-                                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                                            .clickable {
+                                                isLyricsMode = true
+                                                isStudioVisualizerMode = false
+                                            }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
                                         ) {
                                             Icon(
                                                 painter = painterResource(id = R.drawable.musical_notes),
@@ -1606,8 +1691,53 @@ fun SwaaraNowPlayingScreen(
                                             Text(
                                                 text = "Lyrics",
                                                 color = if (isLyricsMode) SwaaraPrimaryText else SwaaraSecondaryText,
-                                                fontSize = 12.sp,
+                                                fontSize = 11.5.sp,
                                                 fontWeight = if (isLyricsMode) FontWeight.Bold else FontWeight.Medium
+                                            )
+                                        }
+                                    }
+
+                                    // 3. Studio Visualizer Segment
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(
+                                                if (isStudioVisualizerMode) Brush.horizontalGradient(
+                                                    listOf(
+                                                        SwaaraCyan.copy(alpha = 0.28f),
+                                                        SwaaraViolet.copy(alpha = 0.20f)
+                                                    )
+                                                )
+                                                else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (isStudioVisualizerMode) SwaaraCyan.copy(alpha = 0.65f)
+                                                else Color.Transparent,
+                                                RoundedCornerShape(18.dp)
+                                            )
+                                            .clickable {
+                                                isStudioVisualizerMode = true
+                                                isLyricsMode = false
+                                            }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.equalizer),
+                                                contentDescription = null,
+                                                tint = if (isStudioVisualizerMode) SwaaraCyan else SwaaraSecondaryText,
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Text(
+                                                text = "Studio",
+                                                color = if (isStudioVisualizerMode) SwaaraPrimaryText else SwaaraSecondaryText,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = if (isStudioVisualizerMode) FontWeight.Bold else FontWeight.Medium
                                             )
                                         }
                                     }
@@ -1615,21 +1745,44 @@ fun SwaaraNowPlayingScreen(
                             }
                         }
 
-                        // Quick Action Button: Add to Playlist
-                        IconButton(
-                            onClick = { showAddToPlaylistSheet = true },
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(SwaaraElevatedSurface.copy(alpha = 0.85f))
-                                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
+                        // Quick Action Buttons: Swaara Connect & Add to Playlist
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.bookmark_outline),
-                                contentDescription = "Add to Playlist",
-                                tint = SwaaraPrimaryText,
-                                modifier = Modifier.size(19.dp)
-                            )
+                            // Swaara Connect Handoff Button
+                            IconButton(
+                                onClick = { showConnectSheet = true },
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(SwaaraElevatedSurface.copy(alpha = 0.85f))
+                                    .border(1.dp, SwaaraCyan.copy(alpha = 0.45f), CircleShape)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.radio),
+                                    contentDescription = "Swaara Connect",
+                                    tint = SwaaraCyan,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            // Add to Playlist
+                            IconButton(
+                                onClick = { showAddToPlaylistSheet = true },
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(SwaaraElevatedSurface.copy(alpha = 0.85f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.bookmark_outline),
+                                    contentDescription = "Add to Playlist",
+                                    tint = SwaaraPrimaryText,
+                                    modifier = Modifier.size(19.dp)
+                                )
+                            }
                         }
                     }
 
@@ -1742,6 +1895,21 @@ fun SwaaraNowPlayingScreen(
                                     modifier = Modifier.matchParentSize()
                                 )
                             }
+                        }
+                    } else if (isStudioVisualizerMode) {
+                        // Studio Master Neon Visualizer View
+                        SwaaraGlassContainer(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(dynamicAuraSize.coerceAtLeast(300.dp))
+                                .padding(2.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            backgroundColor = SwaaraDeepSurface.copy(alpha = 0.94f),
+                            borderColor = SwaaraCyan.copy(alpha = 0.40f)
+                        ) {
+                            SwaaraStudioVisualizer(
+                                onDismiss = { isStudioVisualizerMode = false }
+                            )
                         }
                     } else if (!isLyricsMode) {
                         Box(
@@ -1937,48 +2105,97 @@ fun SwaaraNowPlayingScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Studio Audio Spec Pill with Clear Dropdown & Change Affordance
+                        // Studio Audio Spec Pill + Audio Language Selector Pill (when multi-language tracks exist)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(SwaaraDeepSurface.copy(alpha = 0.90f))
-                                .border(
-                                    1.dp,
-                                    Brush.horizontalGradient(
-                                        listOf(
-                                            SwaaraViolet.copy(alpha = 0.60f),
-                                            SwaaraMagenta.copy(alpha = 0.35f)
-                                        )
-                                    ),
-                                    RoundedCornerShape(12.dp)
-                                )
-                                .clickable { showAudioQualitySheet = true }
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.equalizer),
-                                contentDescription = null,
-                                tint = SwaaraViolet,
-                                modifier = Modifier.size(11.dp)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = dynamicAudioBadgeText,
-                                color = SwaaraViolet,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp,
-                                maxLines = 1,
-                                softWrap = false
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                painter = painterResource(id = R.drawable.chevron_down),
-                                contentDescription = "Change Audio Quality",
-                                tint = SwaaraViolet.copy(alpha = 0.75f),
-                                modifier = Modifier.size(11.dp)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SwaaraDeepSurface.copy(alpha = 0.90f))
+                                    .border(
+                                        1.dp,
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                SwaaraViolet.copy(alpha = 0.60f),
+                                                SwaaraMagenta.copy(alpha = 0.35f)
+                                            )
+                                        ),
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .clickable { showAudioQualitySheet = true }
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.equalizer),
+                                    contentDescription = null,
+                                    tint = SwaaraViolet,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = dynamicAudioBadgeText,
+                                    color = SwaaraViolet,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.chevron_down),
+                                    contentDescription = "Change Audio Quality",
+                                    tint = SwaaraViolet.copy(alpha = 0.75f),
+                                    modifier = Modifier.size(11.dp)
+                                )
+                            }
+
+                            if (availableAudioTracks.size > 1) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(SwaaraDeepSurface.copy(alpha = 0.92f))
+                                        .border(
+                                            1.dp,
+                                            Brush.horizontalGradient(
+                                                listOf(
+                                                    SwaaraCyan.copy(alpha = 0.70f),
+                                                    SwaaraMagenta.copy(alpha = 0.45f)
+                                                )
+                                            ),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable { showAudioLanguageSheet = true }
+                                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.radio),
+                                        contentDescription = null,
+                                        tint = SwaaraCyan,
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = activeAudioTrack?.displayName ?: "Audio Track",
+                                        color = SwaaraCyan,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.chevron_down),
+                                        contentDescription = "Select Audio Language",
+                                        tint = SwaaraCyan.copy(alpha = 0.80f),
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -2437,6 +2654,21 @@ fun SwaaraNowPlayingScreen(
                                 modifier = Modifier.matchParentSize()
                             )
                         }
+                    } else if (isStudioVisualizerMode) {
+                        // Studio Master Neon Visualizer View
+                        SwaaraGlassContainer(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(dynamicAuraSize.coerceAtLeast(300.dp))
+                                .padding(2.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            backgroundColor = SwaaraDeepSurface.copy(alpha = 0.94f),
+                            borderColor = SwaaraCyan.copy(alpha = 0.40f)
+                        ) {
+                            SwaaraStudioVisualizer(
+                                onDismiss = { isStudioVisualizerMode = false }
+                            )
+                        }
                     } else if (!isLyricsMode) {
                         Box(
                             modifier = Modifier
@@ -2502,44 +2734,93 @@ fun SwaaraNowPlayingScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(SwaaraDeepSurface.copy(alpha = 0.90f))
-                            .border(
-                                1.dp,
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        SwaaraViolet.copy(alpha = 0.60f),
-                                        SwaaraMagenta.copy(alpha = 0.35f)
-                                    )
-                                ),
-                                RoundedCornerShape(10.dp)
-                            )
-                            .clickable { showAudioQualitySheet = true }
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.equalizer),
-                            contentDescription = null,
-                            tint = SwaaraViolet,
-                            modifier = Modifier.size(10.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = dynamicAudioBadgeText,
-                            color = SwaaraViolet,
-                            fontSize = 9.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Icon(
-                            painter = painterResource(id = R.drawable.chevron_down),
-                            contentDescription = "Change Audio Quality",
-                            tint = SwaaraViolet.copy(alpha = 0.75f),
-                            modifier = Modifier.size(10.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(SwaaraDeepSurface.copy(alpha = 0.90f))
+                                .border(
+                                    1.dp,
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            SwaaraViolet.copy(alpha = 0.60f),
+                                            SwaaraMagenta.copy(alpha = 0.35f)
+                                        )
+                                    ),
+                                    RoundedCornerShape(10.dp)
+                                )
+                                .clickable { showAudioQualitySheet = true }
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.equalizer),
+                                contentDescription = null,
+                                tint = SwaaraViolet,
+                                modifier = Modifier.size(10.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = dynamicAudioBadgeText,
+                                color = SwaaraViolet,
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Icon(
+                                painter = painterResource(id = R.drawable.chevron_down),
+                                contentDescription = "Change Audio Quality",
+                                tint = SwaaraViolet.copy(alpha = 0.75f),
+                                modifier = Modifier.size(10.dp)
+                            )
+                        }
+
+                        if (availableAudioTracks.size > 1) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(SwaaraDeepSurface.copy(alpha = 0.92f))
+                                    .border(
+                                        1.dp,
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                SwaaraCyan.copy(alpha = 0.70f),
+                                                SwaaraMagenta.copy(alpha = 0.45f)
+                                            )
+                                        ),
+                                        RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable { showAudioLanguageSheet = true }
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.radio),
+                                    contentDescription = null,
+                                    tint = SwaaraCyan,
+                                    modifier = Modifier.size(10.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = activeAudioTrack?.displayName ?: "Audio Track",
+                                    color = SwaaraCyan,
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.chevron_down),
+                                    contentDescription = "Select Audio Language",
+                                    tint = SwaaraCyan.copy(alpha = 0.80f),
+                                    modifier = Modifier.size(10.dp)
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))

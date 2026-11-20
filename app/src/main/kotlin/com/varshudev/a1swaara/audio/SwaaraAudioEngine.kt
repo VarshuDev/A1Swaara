@@ -54,8 +54,15 @@ object SwaaraAudioEngine {
     private val _isBoomActive = MutableStateFlow(false)
     val isBoomActive: StateFlow<Boolean> = _isBoomActive.asStateFlow()
 
+    private val _isTubeWarmthActive = MutableStateFlow(false)
+    val isTubeWarmthActive: StateFlow<Boolean> = _isTubeWarmthActive.asStateFlow()
+
+    private val _isKaraokeMode = MutableStateFlow(false)
+    val isKaraokeMode: StateFlow<Boolean> = _isKaraokeMode.asStateFlow()
+
     @Volatile
     private var activeAudioSessionId: Int = -1
+    val currentAudioSessionId: Int get() = activeAudioSessionId
 
     @Volatile
     private var equalizer: Equalizer? = null
@@ -90,6 +97,8 @@ object SwaaraAudioEngine {
         _bassBoostLevel.value = prefs.getFloat("bass_boost_level", 500f)
         _virtualizerLevel.value = prefs.getFloat("virtualizer_level", 350f)
         _isBoomActive.value = prefs.getBoolean("is_boom_active", false)
+        _isTubeWarmthActive.value = prefs.getBoolean("is_tube_warmth_active", false)
+        _isKaraokeMode.value = prefs.getBoolean("is_karaoke_mode", false)
     }
 
     @Suppress("DEPRECATION")
@@ -143,7 +152,20 @@ object SwaaraAudioEngine {
                 val range = eq.bandLevelRange
                 val minMillibels = range?.getOrNull(0) ?: -1500.toShort()
                 val maxMillibels = range?.getOrNull(1) ?: 1500.toShort()
-                val levels = _bandLevels.value
+                val baseLevels = _bandLevels.value
+                val levels = baseLevels.toMutableList()
+
+                if (_isTubeWarmthActive.value && levels.size >= 5) {
+                    levels[0] = (levels[0] + 2.5f).coerceIn(-10f, 10f)
+                    levels[1] = (levels[1] + 1.2f).coerceIn(-10f, 10f)
+                    levels[4] = (levels[4] - 1.2f).coerceIn(-10f, 10f)
+                }
+
+                if (_isKaraokeMode.value && levels.size >= 5) {
+                    levels[2] = (levels[2] - 10f).coerceIn(-12f, 10f)
+                    levels[3] = (levels[3] - 7f).coerceIn(-12f, 10f)
+                }
+
                 val numBands = eq.numberOfBands.toInt()
 
                 for (i in 0 until minOf(numBands, levels.size)) {
@@ -217,6 +239,18 @@ object SwaaraAudioEngine {
         _isBoomActive.value = active
         applyActiveSettingsToHardware()
         sharedPrefs?.edit()?.putBoolean("is_boom_active", active)?.apply()
+    }
+
+    fun setTubeWarmthActive(active: Boolean) {
+        _isTubeWarmthActive.value = active
+        applyActiveSettingsToHardware()
+        sharedPrefs?.edit()?.putBoolean("is_tube_warmth_active", active)?.apply()
+    }
+
+    fun setKaraokeMode(enabled: Boolean) {
+        _isKaraokeMode.value = enabled
+        applyActiveSettingsToHardware()
+        sharedPrefs?.edit()?.putBoolean("is_karaoke_mode", enabled)?.apply()
     }
 
     fun releaseHardwareEffects() {

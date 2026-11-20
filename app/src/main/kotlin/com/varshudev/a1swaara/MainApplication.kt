@@ -179,6 +179,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
             DatabaseAutoBackupWorker.upsert(applicationContext)
             com.varshudev.a1swaara.ui.screens.settings.VersionCheckWorker.upsert(applicationContext, DataPreferences.versionCheckPeriod.period)
             com.varshudev.a1swaara.work.SwaaraPushWorker.upsert(applicationContext)
+            com.varshudev.a1swaara.downloader.SwaaraSmartStashWorker.upsert(applicationContext)
         }
 
 

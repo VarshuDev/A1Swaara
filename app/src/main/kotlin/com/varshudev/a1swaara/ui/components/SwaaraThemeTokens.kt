@@ -17,4 +17,7 @@ object SwaaraColors {
     val PrimaryText = Color(0xFFF1F1F5)
     val SecondaryText = Color(0xFF8E8EA0)
     val TertiaryText = Color(0xFF555566)
+    val Emerald = Color(0xFF2CE69B)
 }
+
+val SwaaraEmerald = SwaaraColors.Emerald
