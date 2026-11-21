@@ -132,6 +132,18 @@ class SwaaraSmartStashWorker(
             }
 
             Log.i(TAG, "Smart Stash run finished: cached $stashedCount new track(s)")
+            if (stashedCount > 0) {
+                com.varshudev.a1swaara.notifications.SwaaraNotificationStore.addNotification(
+                    applicationContext,
+                    com.varshudev.a1swaara.notifications.SwaaraNotificationItem(
+                        id = "smart_stash_${System.currentTimeMillis()}",
+                        title = "Smart Stash Ready",
+                        message = "$stashedCount favorite track(s) cached in studio quality for seamless offline playback.",
+                        timestamp = System.currentTimeMillis(),
+                        type = com.varshudev.a1swaara.notifications.SwaaraNotificationType.SMART_STASH
+                    )
+                )
+            }
             Result.success()
         } catch (e: CancellationException) {
             throw e

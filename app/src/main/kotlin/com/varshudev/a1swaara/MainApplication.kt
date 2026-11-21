@@ -175,6 +175,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         appContainer = AppContainer(this).also(AppContainer::initialize)
         ServiceNotifications.createAll(this)
         backgroundInitScope.launch {
+            com.varshudev.a1swaara.notifications.SwaaraNotificationStore.initialize(applicationContext)
             NewPipeExtractorClient.ensureInitialized(applicationContext)
             DatabaseAutoBackupWorker.upsert(applicationContext)
             com.varshudev.a1swaara.ui.screens.settings.VersionCheckWorker.upsert(applicationContext, DataPreferences.versionCheckPeriod.period)

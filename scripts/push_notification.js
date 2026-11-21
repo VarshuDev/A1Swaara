@@ -14,6 +14,8 @@ const args = process.argv.slice(2);
 const title = args[0] || 'A1 Swaara Update';
 const message = args[1] || 'A new update and features are available in A1 Swaara!';
 const actionUrl = args[2] || 'https://github.com/VarshuDev/A1Swaara_apk';
+const type = args[3] || 'announcement';
+const playQuery = args[4] || '';
 
 const id = 'broadcast_' + Date.now();
 const timestamp = Date.now().toString();
@@ -24,6 +26,8 @@ const postData = JSON.stringify({
     title: { stringValue: title },
     message: { stringValue: message },
     actionUrl: { stringValue: actionUrl },
+    type: { stringValue: type },
+    playQuery: { stringValue: playQuery },
     enabled: { booleanValue: true },
     timestamp: { integerValue: timestamp }
   }

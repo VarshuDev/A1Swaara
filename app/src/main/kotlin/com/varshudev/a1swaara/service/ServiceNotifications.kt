@@ -212,4 +212,20 @@ object ServiceNotifications : NotificationChannels() {
     ) {
         setLightsEnabled(true).setVibrationEnabled(true)
     }
+
+    val musicDrops by channel(
+        name = "music_drops",
+        description = R.string.music_drops_channel,
+        importance = NotificationManagerCompat.IMPORTANCE_HIGH,
+        singleNotification = false
+    ) {
+        setLightsEnabled(true).setVibrationEnabled(true)
+    }
+
+    val smartStash by channel(
+        name = "smart_stash",
+        description = R.string.smart_stash_channel,
+        importance = NotificationManagerCompat.IMPORTANCE_LOW,
+        singleNotification = false
+    )
 }

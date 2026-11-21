@@ -8,16 +8,17 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-
 import com.varshudev.a1swaara.MainActivity
 import com.varshudev.a1swaara.R
+import com.varshudev.a1swaara.notifications.SwaaraNotificationItem
+import com.varshudev.a1swaara.notifications.SwaaraNotificationStore
+import com.varshudev.a1swaara.notifications.SwaaraNotificationType
 import com.varshudev.a1swaara.service.ServiceNotifications
 import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class SwaaraBroadcastNotification(
@@ -26,12 +27,16 @@ data class SwaaraBroadcastNotification(
     val message: String,
     val actionUrl: String? = null,
     val enabled: Boolean = true,
-    val timestamp: Long = 0L
+    val timestamp: Long = 0L,
+    val type: String = "announcement",
+    val artworkUrl: String? = null,
+    val playQuery: String? = null
 )
 
 /**
- * Cloud Push Notification Engine for A1 Swaara.
- * Listens for remote broadcast notifications and displays high-priority Android system status bar alerts.
+ * Flagship Cloud Push Notification Engine for A1 Swaara.
+ * Listens for remote broadcast notifications, logs them to the in-app Activity Center,
+ * and displays rich interactive Android system status bar alerts without intrusive toasts.
  */
 object SwaaraPushNotificationEngine {
     private const val TAG = "SwaaraPushEngine"
@@ -64,6 +69,9 @@ object SwaaraPushNotificationEngine {
                 val title = doc["title"] as? String ?: ""
                 val message = doc["message"] as? String ?: ""
                 val actionUrl = doc["actionUrl"] as? String
+                val artworkUrl = doc["artworkUrl"] as? String
+                val playQuery = doc["playQuery"] as? String
+                val type = doc["type"] as? String ?: "announcement"
                 val timestamp = when (val t = doc["timestamp"]) {
                     is Number -> t.toLong()
                     is String -> t.toLongOrNull() ?: 0L
@@ -81,9 +89,28 @@ object SwaaraPushNotificationEngine {
                     message = message,
                     actionUrl = actionUrl,
                     enabled = enabled,
-                    timestamp = timestamp
+                    timestamp = timestamp,
+                    type = type,
+                    artworkUrl = artworkUrl,
+                    playQuery = playQuery
                 )
                 _activeNotification.value = notification
+
+                // Persist into in-app Notification Activity Center
+                SwaaraNotificationStore.addNotification(
+                    context,
+                    SwaaraNotificationItem(
+                        id = id,
+                        title = title,
+                        message = message,
+                        timestamp = if (timestamp > 0L) timestamp else System.currentTimeMillis(),
+                        type = SwaaraNotificationType.fromString(type),
+                        actionUrl = actionUrl,
+                        artworkUrl = artworkUrl,
+                        isRead = false,
+                        playQuery = playQuery
+                    )
+                )
 
                 val lastShownId = prefs.getString(KEY_LAST_SHOWN_ID, "")
                 val permitted = hasNotificationPermission(context)
@@ -118,21 +145,23 @@ object SwaaraPushNotificationEngine {
     }
 
     /**
-     * Displays a system status bar notification with high priority, sound, vibration, and tap intent.
+     * Displays a system status bar notification with high priority, sound, vibration,
+     * category-specific routing, and 1-tap interactive actions (Play Now / Explore).
      */
     fun showSystemNotification(context: Context, notification: SwaaraBroadcastNotification) {
         try {
-            val contentIntent = if (!notification.actionUrl.isNullOrBlank() && notification.actionUrl.startsWith("http")) {
-                Intent(Intent.ACTION_VIEW, Uri.parse(notification.actionUrl)).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val contentIntent = Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("open_activity_center", true)
+                putExtra("from_push_notification", true)
+                putExtra("notification_id", notification.id)
+                putExtra("notification_title", notification.title)
+                putExtra("notification_message", notification.message)
+                if (!notification.playQuery.isNullOrBlank()) {
+                    putExtra("play_query", notification.playQuery)
                 }
-            } else {
-                Intent(context, MainActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    putExtra("from_push_notification", true)
-                    putExtra("notification_id", notification.id)
-                    putExtra("notification_title", notification.title)
-                    putExtra("notification_message", notification.message)
+                if (!notification.actionUrl.isNullOrBlank()) {
+                    putExtra("action_url", notification.actionUrl)
                 }
             }
 
@@ -143,7 +172,14 @@ object SwaaraPushNotificationEngine {
                 PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
             )
 
-            ServiceNotifications.announcement.sendNotification(context) {
+            val parsedType = SwaaraNotificationType.fromString(notification.type)
+            val channel = when (parsedType) {
+                SwaaraNotificationType.MUSIC_DROP -> ServiceNotifications.musicDrops
+                SwaaraNotificationType.SMART_STASH -> ServiceNotifications.smartStash
+                else -> ServiceNotifications.announcement
+            }
+
+            channel.sendNotification(context) {
                 setSmallIcon(R.drawable.app_icon)
                 setContentTitle(notification.title)
                 setContentText(notification.message)
@@ -157,20 +193,49 @@ object SwaaraPushNotificationEngine {
                 setPriority(NotificationCompat.PRIORITY_MAX)
                 setDefaults(NotificationCompat.DEFAULT_ALL)
                 setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                setCategory(
+                    if (parsedType == SwaaraNotificationType.MUSIC_DROP)
+                        NotificationCompat.CATEGORY_RECOMMENDATION
+                    else
+                        NotificationCompat.CATEGORY_EVENT
+                )
+
+                // Interactive 1-tap Play Now Action button
+                if (!notification.playQuery.isNullOrBlank()) {
+                    val playIntent = Intent(context, MainActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        putExtra("play_query", notification.playQuery)
+                    }
+                    val playPending = PendingIntent.getActivity(
+                        context,
+                        (notification.id + "_play").hashCode(),
+                        playIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
+                    )
+                    addAction(R.drawable.play, "▶ Play Now", playPending)
+                }
+
+                // Interactive Explore / Action button
                 if (!notification.actionUrl.isNullOrBlank()) {
-                    addAction(R.drawable.radio, "Open", pendingIntent)
+                    val exploreIntent = if (notification.actionUrl.startsWith("http")) {
+                        Intent(Intent.ACTION_VIEW, Uri.parse(notification.actionUrl)).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                    } else {
+                        Intent(context, MainActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            putExtra("open_activity_center", true)
+                        }
+                    }
+                    val explorePending = PendingIntent.getActivity(
+                        context,
+                        (notification.id + "_explore").hashCode(),
+                        exploreIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
+                    )
+                    addAction(R.drawable.radio, "Explore", explorePending)
                 }
                 this
-            }
-
-            kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
-                try {
-                    android.widget.Toast.makeText(
-                        context,
-                        "${notification.title}\n${notification.message}",
-                        android.widget.Toast.LENGTH_LONG
-                    ).show()
-                } catch (_: Exception) {}
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error posting system notification", e)
@@ -179,44 +244,59 @@ object SwaaraPushNotificationEngine {
 
     /**
      * Checks if today is Sunday, and if a Sunday morning notification has not been posted yet today,
-     * delivers a warm atmospheric push alert.
+     * delivers a warm atmospheric push alert with 1-tap acoustic listening.
      */
-     fun checkAndPostSundayNotification(
-         context: Context,
-         prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-     ) {
-         val cal = Calendar.getInstance()
-         val isSunday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
-         val hour = cal.get(Calendar.HOUR_OF_DAY)
+    fun checkAndPostSundayNotification(
+        context: Context,
+        prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    ) {
+        val cal = Calendar.getInstance()
+        val isSunday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
+        val hour = cal.get(Calendar.HOUR_OF_DAY)
 
-         // Deliver during daytime (5 AM to 8 PM)
-         if (isSunday && hour in 5..20) {
-             val dateKey = "${cal.get(Calendar.YEAR)}_${cal.get(Calendar.MONTH)}_${cal.get(Calendar.DAY_OF_MONTH)}"
-             val lastShownDate = prefs.getString(KEY_LAST_SUNDAY_NOTIF_DATE, "")
-             if (lastShownDate != dateKey) {
-                 postSundayMorningNotification(context)
-                 prefs.edit().putString(KEY_LAST_SUNDAY_NOTIF_DATE, dateKey).apply()
-                 Log.i(TAG, "Sunday morning push notification posted for $dateKey")
-             }
-         }
-     }
+        // Deliver during daytime (5 AM to 8 PM)
+        if (isSunday && hour in 5..20) {
+            val dateKey = "${cal.get(Calendar.YEAR)}_${cal.get(Calendar.MONTH)}_${cal.get(Calendar.DAY_OF_MONTH)}"
+            val lastShownDate = prefs.getString(KEY_LAST_SUNDAY_NOTIF_DATE, "")
+            if (lastShownDate != dateKey) {
+                postSundayMorningNotification(context)
+                prefs.edit().putString(KEY_LAST_SUNDAY_NOTIF_DATE, dateKey).apply()
+                Log.i(TAG, "Sunday morning push notification posted for $dateKey")
+            }
+        }
+    }
 
     /**
      * Pushes a stylized Good Morning Sunday notification celebrating weekend acoustic vibes and 320 KBPS audio.
      */
     private fun postSundayMorningNotification(context: Context) {
+        val notifId = "sunday_morning_${System.currentTimeMillis()}"
         val sundayNotif = SwaaraBroadcastNotification(
-            id = "sunday_morning_${System.currentTimeMillis()}",
-            title = "Good Morning • It's Sunday",
+            id = notifId,
+            title = "Good Morning • Sunday Acoustic Vibes",
             message = "No alarms, no rush. Slow down with acoustic melodies, morning coffee, and 320 KBPS lossless sound on A1 Swaara.",
-            actionUrl = "https://github.com/VarshuDev/A1Swaara_apk"
+            actionUrl = "https://github.com/VarshuDev/A1Swaara_apk",
+            type = "music_drop",
+            playQuery = "Acoustic Relaxing Chill Morning"
+        )
+        SwaaraNotificationStore.addNotification(
+            context,
+            SwaaraNotificationItem(
+                id = notifId,
+                title = sundayNotif.title,
+                message = sundayNotif.message,
+                timestamp = System.currentTimeMillis(),
+                type = SwaaraNotificationType.MUSIC_DROP,
+                actionUrl = sundayNotif.actionUrl,
+                playQuery = sundayNotif.playQuery
+            )
         )
         showSystemNotification(context, sundayNotif)
     }
 
     /**
      * Checks if today is Monday, and if a Monday morning notification has not been posted yet today,
-     * delivers a high-energy motivational push alert.
+     * delivers a high-energy motivational push alert with 1-tap workout/energy listening.
      */
     fun checkAndPostMondayNotification(
         context: Context,
@@ -242,13 +322,28 @@ object SwaaraPushNotificationEngine {
      * Pushes a stylized Good Morning Monday notification celebrating high-energy motivation and 320 KBPS audio.
      */
     private fun postMondayMorningNotification(context: Context) {
+        val notifId = "monday_morning_${System.currentTimeMillis()}"
         val mondayNotif = SwaaraBroadcastNotification(
-            id = "monday_morning_${System.currentTimeMillis()}",
+            id = notifId,
             title = "Good Morning • Monday Energy",
             message = "Start your week strong with high-energy beats, studio bass boost, and 320 KBPS lossless music on A1 Swaara.",
-            actionUrl = "https://github.com/VarshuDev/A1Swaara_apk"
+            actionUrl = "https://github.com/VarshuDev/A1Swaara_apk",
+            type = "music_drop",
+            playQuery = "High Energy Gym Motivation Beats"
         )
         _activeNotification.value = mondayNotif
+        SwaaraNotificationStore.addNotification(
+            context,
+            SwaaraNotificationItem(
+                id = notifId,
+                title = mondayNotif.title,
+                message = mondayNotif.message,
+                timestamp = System.currentTimeMillis(),
+                type = SwaaraNotificationType.MUSIC_DROP,
+                actionUrl = mondayNotif.actionUrl,
+                playQuery = mondayNotif.playQuery
+            )
+        )
         showSystemNotification(context, mondayNotif)
     }
 

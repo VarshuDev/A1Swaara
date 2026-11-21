@@ -167,6 +167,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
         bindService(intent<PlayerService>(), serviceConnection, Context.BIND_AUTO_CREATE)
 
         lifecycleScope.launch(Dispatchers.IO) {
+            com.varshudev.a1swaara.notifications.SwaaraNotificationStore.initialize(this@MainActivity)
             com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.checkAndPostNotifications(this@MainActivity)
         }
     }
@@ -211,6 +212,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
+            com.varshudev.a1swaara.notifications.SwaaraNotificationStore.initialize(this@MainActivity)
             com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.checkAndPostNotifications(this@MainActivity)
         }
 
@@ -392,6 +394,15 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
     @Suppress("CyclomaticComplexMethod")
     private fun handleIntent(intent: Intent) = lifecycleScope.launch(Dispatchers.IO) {
         val extras = intent.extras?.activityIntentBundle
+
+        if (intent.getBooleanExtra("open_activity_center", false) || intent.getBooleanExtra("from_push_notification", false)) {
+            com.varshudev.a1swaara.notifications.SwaaraNotificationStore.requestOpenActivityCenter()
+        }
+
+        val directPlayQuery = intent.getStringExtra("play_query")
+        if (!directPlayQuery.isNullOrBlank()) {
+            vm.awaitBinder().playFromSearch(directPlayQuery)
+        }
 
         when (intent.action) {
             Intent.ACTION_SEARCH -> {

@@ -440,6 +440,8 @@
         <item quantity="other">%1$d songs</item>
     </plurals>
     <string name="announcements_channel">Announcements and Updates</string>
+    <string name="music_drops_channel">Music Drops and New Releases</string>
+    <string name="smart_stash_channel">Smart Stash and Offline</string>
     <string name="crossfade">Smart crossfade</string>
     <string name="crossfade_description">Smoothly blends audio between consecutive tracks for seamless studio transitions</string>
     <string name="format_seconds">%1$d s</string>
