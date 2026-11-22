@@ -244,32 +244,14 @@ fun SwaaraHomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(SwaaraElevatedSurface)
-                    .border(1.dp, SwaaraMagenta.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
                     .padding(24.dp)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(Brush.linearGradient(listOf(SwaaraViolet, SwaaraMagenta))),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.person),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
                     Text(
                         text = "Sign in to A1 Swaara",
-                        fontSize = 20.sp,
+                        fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
                         color = SwaaraPrimaryText
                     )
@@ -277,7 +259,7 @@ fun SwaaraHomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Connect your Google account to back up your liked songs and playlists, earn Top Listener ranks on leaderboards, and listen together in Live Jam rooms.",
+                        text = "Connect your Google account to back up your liked songs, earn Top Listener ranks on leaderboards, and listen together in Live Jam rooms.",
                         fontSize = 13.sp,
                         color = SwaaraSecondaryText,
                         textAlign = TextAlign.Center,
@@ -289,9 +271,9 @@ fun SwaaraHomeScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
+                            .height(46.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White)
                             .clickable {
                                 showSignInModal = false
                                 userPrefs.edit().putBoolean("google_signin_prompt_dismissed", true).apply()
@@ -302,34 +284,27 @@ fun SwaaraHomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Sign In with Google",
-                            color = Color.White,
-                            fontSize = 15.sp,
+                            text = "Sign in with Google",
+                            color = SwaaraObsidian,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Box(
+                    Text(
+                        text = "Maybe later",
+                        color = SwaaraSecondaryText,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(42.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color.White.copy(alpha = 0.06f))
                             .clickable {
                                 showSignInModal = false
                                 userPrefs.edit().putBoolean("google_signin_prompt_dismissed", true).apply()
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Continue as Guest",
-                            color = SwaaraSecondaryText,
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                            }
+                            .padding(8.dp)
+                    )
                 }
             }
         }
@@ -654,19 +629,19 @@ fun SwaaraHomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile & Greeting
+            // Profile avatar + greeting
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .weight(1f)
                     .clickable { profileRoute.global() }
             ) {
+                // Profile photo — no gradient ring, no border
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(34.dp)
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(SwaaraViolet, SwaaraMagenta)))
-                        .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
+                        .background(SwaaraElevatedSurface),
                     contentAlignment = Alignment.Center
                 ) {
                     if (!cloudAuth.avatarUrl.isNullOrBlank()) {
@@ -679,7 +654,7 @@ fun SwaaraHomeScreen(
                     } else {
                         Text(
                             text = cloudAuth.displayName.firstOrNull()?.uppercase() ?: "S",
-                            color = Color.White,
+                            color = SwaaraMagenta,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -691,7 +666,7 @@ fun SwaaraHomeScreen(
                 Text(
                     text = displayGreeting,
                     color = SwaaraPrimaryText,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.3).sp,
                     maxLines = 1,
@@ -699,125 +674,50 @@ fun SwaaraHomeScreen(
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                // Jam Hub Beacon
+            // Only 2 icon buttons — no circles, no backgrounds, no borders
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Notification bell — plain icon, unread dot only
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(SwaaraElevatedSurface)
-                        .border(1.dp, SwaaraMagenta.copy(alpha = 0.5f), CircleShape)
-                        .clickable { jamHubRoute.global() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.musical_notes),
-                        contentDescription = "Jam Hub",
-                        tint = SwaaraMagenta,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-
-                // Manual Refresh Feed Button
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(SwaaraElevatedSurface)
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
-                        .clickable {
-                            if (!isRefreshing && !isLoadingFeed) {
-                                isRefreshing = true
-                                context.toast("Refreshing chartbusters & cloud feed...")
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    SwaaraRemoteConfig.fetchAndApply(context)
-                                    com.varshudev.a1swaara.cloud.SwaaraPushNotificationEngine.checkAndPostNotifications(context)
-                                }
-                                loadLiveFeed(selectedLanguage, true, false)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            color = SwaaraMagenta,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(id = R.drawable.sync),
-                            contentDescription = "Refresh Feed",
-                            tint = SwaaraPrimaryText,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-
-                // Activity & Notification Beacon
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(SwaaraElevatedSurface)
-                        .border(
-                            1.dp,
-                            if (hasUnreadBroadcast) SwaaraMagenta.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.08f),
-                            CircleShape
-                        )
                         .clickable { showNotificationDialog = true },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_notification_bell),
-                        contentDescription = "Activity and Notifications",
-                        tint = if (hasUnreadBroadcast) SwaaraMagenta else SwaaraPrimaryText,
-                        modifier = Modifier.size(16.dp)
+                        contentDescription = "Notifications",
+                        tint = if (hasUnreadBroadcast) SwaaraMagenta else SwaaraSecondaryText,
+                        modifier = Modifier.size(20.dp)
                     )
                     if (hasUnreadBroadcast) {
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(3.dp)
-                                .size(8.dp)
+                                .padding(top = 6.dp, end = 6.dp)
+                                .size(7.dp)
                                 .clip(CircleShape)
                                 .background(SwaaraMagenta)
                         )
                     }
                 }
 
+                // Search — plain icon
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(SwaaraElevatedSurface)
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
                         .clickable(onClick = onSearchClick),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.search),
                         contentDescription = "Search",
-                        tint = SwaaraPrimaryText,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(SwaaraElevatedSurface)
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
-                        .clickable(onClick = onSettingsClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.settings),
-                        contentDescription = "Settings",
-                        tint = SwaaraPrimaryText,
-                        modifier = Modifier.size(16.dp)
+                        tint = SwaaraSecondaryText,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -826,81 +726,55 @@ fun SwaaraHomeScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 6.dp),
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
+            val isMusic = selectedFeedMode == SwaaraFeedMode.MUSIC
+            val isPodcast = selectedFeedMode == SwaaraFeedMode.PODCASTS
+
+            Column(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(SwaaraElevatedSurface)
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(22.dp))
-                .padding(3.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable { selectedFeedMode = SwaaraFeedMode.MUSIC }
+                    .padding(vertical = 4.dp)
             ) {
-                val isMusic = selectedFeedMode == SwaaraFeedMode.MUSIC
-                val isPodcast = selectedFeedMode == SwaaraFeedMode.PODCASTS
-
-                val musicBgModifier = if (isMusic) {
-                    Modifier.background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
-                } else {
-                    Modifier.background(Color.Transparent)
-                }
-
-                val podcastBgModifier = if (isPodcast) {
-                    Modifier.background(Brush.horizontalGradient(listOf(SwaaraCyan, SwaaraViolet)))
-                } else {
-                    Modifier.background(Color.Transparent)
-                }
-
+                Text(
+                    text = "Music",
+                    fontSize = 15.sp,
+                    fontWeight = if (isMusic) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isMusic) SwaaraPrimaryText else SwaaraSecondaryText
+                )
+                Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(18.dp))
-                        .then(musicBgModifier)
-                        .clickable { selectedFeedMode = SwaaraFeedMode.MUSIC }
-                        .padding(horizontal = 16.dp, vertical = 7.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.musical_notes),
-                            contentDescription = null,
-                            tint = if (isMusic) Color.White else SwaaraSecondaryText,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Music",
-                            fontSize = 12.5.sp,
-                            fontWeight = if (isMusic) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isMusic) Color.White else SwaaraSecondaryText
-                        )
-                    }
-                }
+                        .width(22.dp)
+                        .height(2.dp)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(if (isMusic) SwaaraMagenta else Color.Transparent)
+                )
+            }
 
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable { selectedFeedMode = SwaaraFeedMode.PODCASTS }
+                    .padding(vertical = 4.dp)
+            ) {
+                Text(
+                    text = "Podcasts",
+                    fontSize = 15.sp,
+                    fontWeight = if (isPodcast) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isPodcast) SwaaraPrimaryText else SwaaraSecondaryText
+                )
+                Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(18.dp))
-                        .then(podcastBgModifier)
-                        .clickable { selectedFeedMode = SwaaraFeedMode.PODCASTS }
-                        .padding(horizontal = 16.dp, vertical = 7.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.radio),
-                            contentDescription = null,
-                            tint = if (isPodcast) Color.Black else SwaaraSecondaryText,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Podcasts",
-                            fontSize = 12.5.sp,
-                            fontWeight = if (isPodcast) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isPodcast) Color.Black else SwaaraSecondaryText
-                        )
-                    }
-                }
+                        .width(26.dp)
+                        .height(2.dp)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(if (isPodcast) SwaaraCyan else Color.Transparent)
+                )
             }
         }
 
@@ -910,9 +784,8 @@ fun SwaaraHomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Brush.horizontalGradient(listOf(Color(0xFF1E1035), Color(0xFF2A153A))))
-                    .border(1.dp, SwaaraViolet.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SwaaraDeepSurface)
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Row(
@@ -924,62 +797,50 @@ fun SwaaraHomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Brush.linearGradient(listOf(SwaaraViolet, SwaaraMagenta))),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.person),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(id = R.drawable.person),
+                            contentDescription = null,
+                            tint = SwaaraSecondaryText,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
                                 text = "Connect Google Account",
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                fontWeight = FontWeight.SemiBold,
+                                color = SwaaraPrimaryText
                             )
                             Text(
                                 text = "Sync playlists & join live jams",
                                 fontSize = 11.sp,
-                                color = Color.White.copy(alpha = 0.75f)
+                                color = SwaaraSecondaryText
                             )
                         }
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Box(
+                        Text(
+                            text = "Sign In",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = SwaaraMagenta,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
+                                .clip(RoundedCornerShape(6.dp))
                                 .clickable {
                                     coroutineScope.launch {
                                         SwaaraGoogleAuthManager.launchGoogleSignIn(context)
                                     }
                                 }
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = "Sign In",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        )
 
                         Icon(
                             painter = painterResource(id = R.drawable.close),
                             contentDescription = "Dismiss",
-                            tint = Color.White.copy(alpha = 0.6f),
+                            tint = SwaaraSecondaryText.copy(alpha = 0.5f),
                             modifier = Modifier
                                 .size(16.dp)
                                 .clickable { showSignInBanner = false }
@@ -997,8 +858,8 @@ fun SwaaraHomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SwaaraDeepSurface)
                     .clickable { liveJamRoute.global() }
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
@@ -1007,60 +868,51 @@ fun SwaaraHomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Box(
                             modifier = Modifier
-                                .size(28.dp)
+                                .size(8.dp)
                                 .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.radio),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        }
+                                .background(SwaaraMagenta)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Live Jam: ${r.roomName} (${r.roomCode})",
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                text = "Live Jam · ${r.roomName}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = SwaaraPrimaryText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = if (r.isHost) "Hosting synchronized playback" else "Listening with ${r.hostName} (${r.activeListenersCount} listeners)",
-                                fontSize = 10.5.sp,
-                                color = Color.White.copy(alpha = 0.85f)
+                                text = if (r.isHost) "Hosting (${r.roomCode})" else "With ${r.hostName} · ${r.activeListenersCount} listening",
+                                fontSize = 11.sp,
+                                color = SwaaraSecondaryText
                             )
                         }
                     }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.2f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "LIVE",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White,
-                            letterSpacing = 1.sp
-                        )
-                    }
+                    Text(
+                        text = "Open",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SwaaraMagenta,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
             }
+            Spacer(modifier = Modifier.height(4.dp))
         } else if (currentJamRoom != null) {
             val activeRoom = currentJamRoom!!
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SwaaraDeepSurface)
                     .clickable { liveJamRoute.global() }
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
@@ -1069,53 +921,43 @@ fun SwaaraHomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Box(
                             modifier = Modifier
-                                .size(28.dp)
+                                .size(8.dp)
                                 .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.radio),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        }
+                                .background(SwaaraMagenta)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Live Jam: ${activeRoom.roomName} (${activeRoom.roomCode})",
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                text = "Live Jam · ${activeRoom.roomName}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = SwaaraPrimaryText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = if (activeRoom.isHost) "Hosting synchronized playback" else "Listening with ${activeRoom.hostName}",
-                                fontSize = 10.5.sp,
-                                color = Color.White.copy(alpha = 0.85f)
+                                text = if (activeRoom.isHost) "Hosting (${activeRoom.roomCode})" else "Listening with ${activeRoom.hostName}",
+                                fontSize = 11.sp,
+                                color = SwaaraSecondaryText
                             )
                         }
                     }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.2f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "OPEN",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White,
-                            letterSpacing = 1.sp
-                        )
-                    }
+                    Text(
+                        text = "Open",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SwaaraMagenta,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
         }
 
         // Cloud Broadcast Announcement Banner
@@ -1125,37 +967,29 @@ fun SwaaraHomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(SwaaraElevatedSurface)
-                    .border(1.dp, SwaaraCyan.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-                    .padding(12.dp)
             ) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
+                        .background(SwaaraCyan)
+                        .align(Alignment.CenterStart)
+                )
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 14.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraCyan.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.sparkles),
-                            contentDescription = null,
-                            tint = SwaaraCyan,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = activeAnnouncement.title,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = SwaaraPrimaryText
                         )
                         Spacer(modifier = Modifier.height(2.dp))
@@ -1171,9 +1005,9 @@ fun SwaaraHomeScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.close),
                             contentDescription = "Dismiss",
-                            tint = SwaaraSecondaryText,
+                            tint = SwaaraSecondaryText.copy(alpha = 0.5f),
                             modifier = Modifier
-                                .size(18.dp)
+                                .size(16.dp)
                                 .clickable {
                                     SwaaraRemoteConfig.dismissAnnouncement(context, activeAnnouncement.id)
                                 }
@@ -1261,52 +1095,30 @@ fun SwaaraHomeScreen(
             Spacer(modifier = Modifier.height(10.dp))
             SwaaraHomeFeedSkeleton()
         } else if (feedError != null && quickGridItems.isEmpty() && liveTrendingSongs.isEmpty()) {
-            SwaaraGlassContainer(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                shape = RoundedCornerShape(22.dp)
+                    .padding(horizontal = 24.dp, vertical = 56.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.alert_circle),
-                        contentDescription = null,
-                        tint = SwaaraErrorRed,
-                        modifier = Modifier.size(34.dp)
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Couldn't load music feed",
-                        color = SwaaraPrimaryText,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = feedError ?: "Check your internet connection and try again.",
+                        text = feedError ?: "Couldn't load music feed",
                         color = SwaaraSecondaryText,
-                        fontSize = 12.5.sp
+                        fontSize = 13.5.sp,
+                        textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Box(
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "Retry",
+                        color = SwaaraMagenta,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Brush.horizontalGradient(listOf(SwaaraViolet, SwaaraMagenta)))
+                            .clip(RoundedCornerShape(8.dp))
                             .clickable { loadLiveFeed(selectedLanguage, true, false) }
-                            .padding(horizontal = 24.dp, vertical = 10.dp)
-                    ) {
-                        Text(
-                            text = "Retry",
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
                 }
             }
         } else {

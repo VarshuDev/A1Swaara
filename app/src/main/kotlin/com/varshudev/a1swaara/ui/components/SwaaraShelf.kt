@@ -66,11 +66,10 @@ fun SwaaraQuickGridItem(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(SwaaraDeepSurface)
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(end = 10.dp),
+            .padding(end = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -97,21 +96,6 @@ fun SwaaraQuickGridItem(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.play),
-                contentDescription = "Play",
-                tint = SwaaraPrimaryText,
-                modifier = Modifier.size(12.dp)
-            )
-        }
     }
 }
 
@@ -153,7 +137,6 @@ fun SwaaraCuratedShelf(
                         .height(180.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(Brush.linearGradient(mix.gradientColors))
-                        .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(16.dp))
                         .clickable { onMixClick(mix) }
                         .padding(14.dp)
                 ) {
@@ -161,20 +144,12 @@ fun SwaaraCuratedShelf(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.20f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = mix.iconId),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(id = mix.iconId),
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(22.dp)
+                        )
 
                         Column {
                             Text(
