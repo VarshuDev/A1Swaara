@@ -138,10 +138,9 @@ fun SwaaraDownloadsScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(SwaaraElevatedSurface)
-                    .border(1.5.dp, SwaaraMagenta.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SwaaraDeepSurface)
                     .clickable { showUpdateDialog = true }
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
@@ -157,51 +156,37 @@ fun SwaaraDownloadsScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(8.dp)
                                 .clip(CircleShape)
-                                .background(SwaaraMagenta.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.download),
-                                contentDescription = null,
-                                tint = SwaaraMagenta,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                                .background(SwaaraMagenta)
+                        )
 
                         Column {
                             Text(
                                 text = "Offline Mode Active • Update Required",
                                 color = SwaaraPrimaryText,
-                                fontSize = 12.5.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "Online streaming locked. Only offline tracks playable.",
                                 color = SwaaraSecondaryText,
-                                fontSize = 11.sp
+                                fontSize = 11.5.sp
                             )
                         }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet)))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Update",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text(
+                        text = "Update",
+                        color = SwaaraMagenta,
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
             }
         }
+
         // 1. Header Section
         Row(
             modifier = Modifier
@@ -214,35 +199,31 @@ fun SwaaraDownloadsScreen(
                 Text(
                     text = "Downloads",
                     color = SwaaraPrimaryText,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (-0.5).sp
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = if (offlineSongs.isNotEmpty()) "${offlineSongs.size} Songs • Ready Offline (320 kbps)"
+                    text = if (offlineSongs.isNotEmpty()) "${offlineSongs.size} Songs • Ready Offline"
                            else "Saved offline music library",
                     color = SwaaraSecondaryText,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium
+                    fontSize = 12.5.sp
                 )
             }
 
-            // Search Toggle Button
+            // Search Toggle Button (clean ghost icon)
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
-                    .background(SwaaraElevatedSurface)
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
                     .clickable { isSearchActive = !isSearchActive },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.search),
                     contentDescription = "Search Downloads",
-                    tint = if (isSearchActive) SwaaraCyan else SwaaraPrimaryText,
-                    modifier = Modifier.size(18.dp)
+                    tint = if (isSearchActive) SwaaraMagenta else SwaaraSecondaryText,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -311,23 +292,17 @@ fun SwaaraDownloadsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Play All Button (Gradient Primary Hero)
+                // Play All Button (Solid Magenta)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
-                        .shadow(
-                            elevation = 12.dp,
-                            shape = RoundedCornerShape(24.dp),
-                            ambientColor = Color.Black.copy(alpha = 0.5f),
-                            spotColor = SwaaraMagenta.copy(alpha = 0.35f)
-                        )
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet)))
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SwaaraMagenta)
                         .clickable {
                             val active = binder ?: com.varshudev.a1swaara.service.PlayerService.activeBinder.value
                             active?.player?.forcePlayFromBeginning(offlineSongs.map { it.asMediaItem })
@@ -337,31 +312,30 @@ fun SwaaraDownloadsScreen(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.play),
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "Play All",
                             color = Color.White,
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
 
-                // Shuffle Button (Glass Elevated Secondary)
+                // Shuffle Button (Elevated Surface)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(24.dp))
                         .clickable {
                             val active = binder ?: com.varshudev.a1swaara.service.PlayerService.activeBinder.value
                             active?.player?.forcePlayFromBeginning(offlineSongs.shuffled().map { it.asMediaItem })
@@ -371,18 +345,18 @@ fun SwaaraDownloadsScreen(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.shuffle),
                             contentDescription = null,
                             tint = SwaaraCyan,
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "Shuffle",
                             color = SwaaraPrimaryText,
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -401,34 +375,25 @@ fun SwaaraDownloadsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraDeepSurface)
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.download),
-                            contentDescription = null,
-                            tint = SwaaraMagenta.copy(alpha = 0.70f),
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Icon(
+                        painter = painterResource(id = R.drawable.download),
+                        contentDescription = null,
+                        tint = SwaaraSecondaryText,
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = if (searchQuery.isNotBlank()) "No matching downloads" else "No offline downloads yet",
                         color = SwaaraPrimaryText,
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = if (searchQuery.isNotBlank()) "Try searching for a different song or artist"
-                               else "Tap the download button on any song to save it offline in HQ 320 kbps.",
+                               else "Tap the download button on any song to save it offline.",
                         color = SwaaraSecondaryText,
-                        fontSize = 13.sp,
+                        fontSize = 12.5.sp,
                         textAlign = TextAlign.Center
                     )
                 }

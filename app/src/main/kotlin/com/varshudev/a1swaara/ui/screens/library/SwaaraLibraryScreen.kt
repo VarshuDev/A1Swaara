@@ -70,6 +70,7 @@ import com.varshudev.a1swaara.ui.screens.artistRoute
 import com.varshudev.a1swaara.ui.screens.localPlaylistRoute
 import com.varshudev.a1swaara.ui.components.SwaaraBorderSubtle
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
 import com.varshudev.a1swaara.ui.components.SwaaraDisplayItem
 import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.ui.components.SwaaraGlassContainer
@@ -358,83 +359,35 @@ fun SwaaraLibraryScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .padding(horizontal = 20.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
                     text = "Your Library",
-                    color = Color.White,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Black
+                    color = SwaaraPrimaryText,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "${allSongs.size} tracks • ${userPlaylists.size} playlists • ${savedAlbums.size} albums",
-                    color = Color.White.copy(alpha = 0.50f),
-                    fontSize = 13.sp
+                    color = SwaaraSecondaryText,
+                    fontSize = 12.5.sp
                 )
             }
 
-            // Action Buttons: Jam Room + Cloud Sync + Create Playlist
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Jam Room Button
+            // Action Buttons: Offline Mode + Cloud Sync + Create Playlist
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Offline Only Toggle
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF1B1B2C))
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
-                        .clickable {
-                            if (SwaaraJamEngine.currentRoom.value != null) {
-                                liveJamRoute.global()
-                            } else {
-                                jamHubRoute.global()
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.radio),
-                        contentDescription = "Live Jam",
-                        tint = SwaaraPurple,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                // Cloud Sync Button
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF1B1B2C))
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
-                        .clickable { showCloudSyncDialog = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.sync),
-                        contentDescription = "Cloud Sync",
-                        tint = SwaaraCyan,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                // Offline Only Toggle Button
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isOfflineOnlyMode) SwaaraCyan.copy(alpha = 0.25f)
-                            else Color(0xFF1B1B2C)
-                        )
-                        .border(
-                            1.dp,
-                            if (isOfflineOnlyMode) SwaaraCyan else Color.White.copy(alpha = 0.12f),
-                            CircleShape
-                        )
                         .clickable {
                             isOfflineOnlyMode = !isOfflineOnlyMode
                             context.toast(
@@ -447,17 +400,33 @@ fun SwaaraLibraryScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.download),
                         contentDescription = "Offline Mode",
-                        tint = if (isOfflineOnlyMode) SwaaraCyan else Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp)
+                        tint = if (isOfflineOnlyMode) SwaaraCyan else SwaaraSecondaryText,
+                        modifier = Modifier.size(19.dp)
+                    )
+                }
+
+                // Cloud Sync
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .clickable { showCloudSyncDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.sync),
+                        contentDescription = "Cloud Sync",
+                        tint = SwaaraSecondaryText,
+                        modifier = Modifier.size(19.dp)
                     )
                 }
 
                 // Create Playlist Button
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(SwaaraPink, SwaaraPurple)))
+                        .background(SwaaraMagenta)
                         .clickable { showCreatePlaylistDialog = true },
                     contentAlignment = Alignment.Center
                 ) {
@@ -476,11 +445,10 @@ fun SwaaraLibraryScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(SwaaraCyan.copy(alpha = 0.15f))
-                    .border(1.dp, SwaaraCyan.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
-                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SwaaraDeepSurface)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -491,10 +459,10 @@ fun SwaaraLibraryScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Offline Mode Active: Showing only local tracks (${offlineSongs.size} tracks)",
-                        color = Color.White,
+                        text = "Offline Mode: Showing local tracks only (${offlineSongs.size} tracks)",
+                        color = SwaaraPrimaryText,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
@@ -513,105 +481,94 @@ fun SwaaraLibraryScreen(
                 val isSelected = selectedTabIndex == index
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(
-                            if (isSelected) Brush.horizontalGradient(listOf(SwaaraPink, SwaaraPurple))
-                            else Brush.horizontalGradient(listOf(Color(0xFF151524), Color(0xFF151524)))
-                        )
-                        .border(
-                            1.dp,
-                            if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.12f),
-                            RoundedCornerShape(14.dp)
+                            if (isSelected) SwaaraMagenta
+                            else SwaaraElevatedSurface
                         )
                         .clickable { selectedTabIndex = index }
                         .padding(horizontal = 14.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = tab,
-                        color = Color.White,
+                        color = if (isSelected) Color.White else SwaaraSecondaryText,
                         fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Hero Liked Songs Gradient Card
+        // Hero Liked Songs Card
         if (selectedTabIndex == 0 || selectedTabIndex == 1) {
-            SwaaraGlassContainer(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(SwaaraDeepSurface)
                     .clickable {
                         likedSongs.firstOrNull()?.let { playSong(it) }
-                    },
-                shape = RoundedCornerShape(22.dp),
-                backgroundColor = Color(0xFF1F1235).copy(alpha = 0.88f),
-                borderColor = SwaaraPink.copy(alpha = 0.40f),
-                borderWidth = 1.2.dp,
-                shadowElevation = 14.dp
+                    }
+                    .padding(14.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
-                            .shadow(12.dp, RoundedCornerShape(16.dp), ambientColor = SwaaraPink)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Brush.linearGradient(listOf(SwaaraPink, SwaaraPurple))),
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Brush.linearGradient(listOf(SwaaraViolet, SwaaraMagenta))),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.heart),
                             contentDescription = "Liked Songs",
                             tint = Color.White,
-                            modifier = Modifier.size(30.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Liked Songs",
-                            color = Color.White,
-                            fontSize = 18.sp,
+                            color = SwaaraPrimaryText,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = "${likedSongs.size} favorite tracks",
-                            color = SwaaraCyan,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
+                            color = SwaaraSecondaryText,
+                            fontSize = 12.5.sp
                         )
                     }
 
                     // Play Button
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
-                            .background(Brush.linearGradient(listOf(SwaaraPink, SwaaraPurple))),
+                            .background(Color.White.copy(alpha = 0.08f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.play),
                             contentDescription = "Play",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
+                            tint = SwaaraPrimaryText,
+                            modifier = Modifier.size(15.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
 
         // Tab Content
@@ -664,7 +621,7 @@ fun SwaaraLibraryScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFF131322))
+                                .background(SwaaraDeepSurface)
                                 .clickable { showCreatePlaylistDialog = true }
                                 .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -705,7 +662,7 @@ fun SwaaraLibraryScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFF131322))
+                                    .background(SwaaraDeepSurface)
                                     .clickable {
                                         localPlaylistRoute.global(playlist.id)
                                     }
@@ -815,7 +772,7 @@ fun SwaaraLibraryScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF131322))
+                                .background(SwaaraDeepSurface)
                                 .clickable { playSong(song) }
                                 .padding(10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -983,8 +940,8 @@ fun SwaaraLibraryScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(Brush.horizontalGradient(listOf(SwaaraCyan, SwaaraPurple)))
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(SwaaraMagenta)
                                         .clickable {
                                             val active = binder ?: com.varshudev.a1swaara.service.PlayerService.activeBinder.value
                                             if (offlineSongs.isNotEmpty() && active != null) {
@@ -1066,7 +1023,7 @@ fun SwaaraLibraryScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(Color(0xFF131322))
+                                    .background(SwaaraDeepSurface)
                                     .clickable { playSong(song) }
                                     .padding(10.dp),
                                 verticalAlignment = Alignment.CenterVertically
@@ -1143,32 +1100,24 @@ fun SwaaraLibraryScreen(
                                 .padding(22.dp)
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .clip(CircleShape)
-                                        .background(Brush.linearGradient(listOf(SwaaraPink, SwaaraPurple))),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.disc),
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
+                                Icon(
+                                    painter = painterResource(R.drawable.disc),
+                                    contentDescription = null,
+                                    tint = SwaaraSecondaryText,
+                                    modifier = Modifier.size(36.dp)
+                                )
                                 Spacer(modifier = Modifier.height(14.dp))
                                 Text(
                                     text = "Scan On-Device Music",
-                                    color = Color.White,
-                                    fontSize = 18.sp,
+                                    color = SwaaraPrimaryText,
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = "Allow A1 Swaara to index and play your offline MP3, FLAC, M4A, and WAV music files stored directly on your device.",
-                                    color = Color.White.copy(alpha = 0.65f),
+                                    color = SwaaraSecondaryText,
                                     fontSize = 13.sp,
                                     textAlign = TextAlign.Center
                                 )
@@ -1180,8 +1129,8 @@ fun SwaaraLibraryScreen(
                                     Box(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clip(RoundedCornerShape(14.dp))
-                                            .background(Brush.horizontalGradient(listOf(SwaaraPink, SwaaraPurple)))
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(SwaaraMagenta)
                                             .clickable { audioPermissionLauncher.launch(audioPermission) }
                                             .padding(vertical = 12.dp),
                                         contentAlignment = Alignment.Center
@@ -1281,8 +1230,8 @@ fun SwaaraLibraryScreen(
                                     Box(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clip(RoundedCornerShape(14.dp))
-                                            .background(Brush.horizontalGradient(listOf(SwaaraPink, SwaaraPurple)))
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(SwaaraMagenta)
                                             .clickable {
                                                 if (filteredLocalSongs.isNotEmpty()) {
                                                     binder?.player?.forcePlayFromBeginning(filteredLocalSongs.map { it.asMediaItem })
@@ -1392,7 +1341,7 @@ fun SwaaraLibraryScreen(
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp)
                                         .clip(RoundedCornerShape(14.dp))
-                                        .background(Color(0xFF131322))
+                                        .background(SwaaraDeepSurface)
                                         .clickable {
                                             binder?.player?.forcePlayAtIndex(filteredLocalSongs.map { it.asMediaItem }, index)
                                             openNowPlaying()
@@ -1509,7 +1458,7 @@ fun SwaaraLibraryScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(Color(0xFF131322))
+                                    .background(SwaaraDeepSurface)
                                     .clickable {
                                         albumRoute.global(album.id)
                                     }
@@ -1608,7 +1557,7 @@ fun SwaaraLibraryScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(Color(0xFF131322))
+                                    .background(SwaaraDeepSurface)
                                     .clickable {
                                         artistRoute.global(artist.id)
                                     }
@@ -1619,12 +1568,12 @@ fun SwaaraLibraryScreen(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(CircleShape)
-                                        .background(Brush.linearGradient(listOf(SwaaraPink, SwaaraPurple))),
+                                        .background(SwaaraElevatedSurface),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = artist.name?.take(1) ?: "A",
-                                        color = Color.White,
+                                        color = SwaaraMagenta,
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -1678,7 +1627,7 @@ fun SwaaraLibraryScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF131322))
+                                .background(SwaaraDeepSurface)
                                 .clickable { playSong(song) }
                                 .padding(10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -1743,7 +1692,7 @@ fun SwaaraLibraryScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF131322))
+                                .background(SwaaraDeepSurface)
                                 .clickable { playSong(song) }
                                 .padding(10.dp),
                             verticalAlignment = Alignment.CenterVertically

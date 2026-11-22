@@ -316,15 +316,10 @@ fun SwaaraSearchScreen(
                     val isSelected = selectedFilterIndex == index
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (isSelected) Brush.horizontalGradient(listOf(SwaaraPink, SwaaraPurple))
-                                else Brush.horizontalGradient(listOf(Color(0xFF161626), Color(0xFF161626)))
-                            )
-                            .border(
-                                1.dp,
-                                if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.12f),
-                                RoundedCornerShape(14.dp)
+                                if (isSelected) SwaaraMagenta
+                                else SwaaraElevatedSurface
                             )
                             .clickable {
                                 selectedFilterIndex = index
@@ -334,9 +329,9 @@ fun SwaaraSearchScreen(
                     ) {
                         Text(
                             text = filter,
-                            color = Color.White,
+                            color = if (isSelected) Color.White else SwaaraSecondaryText,
                             fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                         )
                     }
                 }
@@ -410,8 +405,8 @@ fun SwaaraSearchScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFF131322))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SwaaraDeepSurface)
                                 .clickable {
                                     focusManager.clearFocus()
                                     container.onlineSearchRepository.saveHistory(artistName)
@@ -424,12 +419,12 @@ fun SwaaraSearchScreen(
                                 modifier = Modifier
                                     .size(52.dp)
                                     .clip(CircleShape)
-                                    .background(Brush.linearGradient(listOf(SwaaraPink, SwaaraPurple))),
+                                    .background(SwaaraElevatedSurface),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = artistName.take(1),
-                                    color = Color.White,
+                                    color = SwaaraMagenta,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -490,8 +485,8 @@ fun SwaaraSearchScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFF131322))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SwaaraDeepSurface)
                                 .clickable {
                                     focusManager.clearFocus()
                                     container.onlineSearchRepository.saveHistory(albumTitle)
@@ -560,8 +555,8 @@ fun SwaaraSearchScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFF131322))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SwaaraDeepSurface)
                                 .clickable {
                                     focusManager.clearFocus()
                                     container.onlineSearchRepository.saveHistory(playlistTitle)
@@ -636,8 +631,8 @@ fun SwaaraSearchScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF131322))
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SwaaraDeepSurface)
                             .clickable {
                                 focusManager.clearFocus()
                                 coroutineScope.launch {
@@ -659,7 +654,7 @@ fun SwaaraSearchScreen(
                         Box(
                             modifier = Modifier
                                 .size(52.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(Color.DarkGray)
                         ) {
                             AsyncImage(
@@ -694,16 +689,16 @@ fun SwaaraSearchScreen(
                         // Play Button
                         Box(
                             modifier = Modifier
-                                .size(34.dp)
+                                .size(32.dp)
                                 .clip(CircleShape)
-                                .background(Brush.linearGradient(listOf(SwaaraPink, SwaaraPurple))),
+                                .background(Color.White.copy(alpha = 0.08f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.play),
                                 contentDescription = "Play",
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
+                                tint = SwaaraPrimaryText,
+                                modifier = Modifier.size(13.dp)
                             )
                         }
                     }
@@ -750,9 +745,8 @@ fun SwaaraSearchScreen(
                         recentQueries.take(8).forEach { item: SearchQuery ->
                             Row(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(SwaaraElevatedSurface)
-                                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
                                     .clickable {
                                         searchQuery = item.query
                                         performExplicitSearch(item.query)
@@ -836,10 +830,9 @@ fun SwaaraSearchScreen(
                                         Row(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .height(58.dp)
-                                                .clip(RoundedCornerShape(14.dp))
+                                                .height(56.dp)
+                                                .clip(RoundedCornerShape(12.dp))
                                                 .background(SwaaraElevatedSurface)
-                                                .border(1.dp, stripe.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
                                                 .clickable {
                                                     focusManager.clearFocus()
                                                     moodRoute.global(moodItem.toUiMood())
@@ -894,21 +887,17 @@ fun SwaaraSearchScreen(
                                 color = SwaaraSecondaryText,
                                 fontSize = 12.sp
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Box(
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Retry",
+                                color = SwaaraMagenta,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(Brush.horizontalGradient(listOf(SwaaraPurple, SwaaraPink)))
+                                    .clip(RoundedCornerShape(8.dp))
                                     .clickable { moodsReloadTick++ }
-                                    .padding(horizontal = 18.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = "Retry",
-                                    color = Color.White,
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                            )
                         }
                     }
                 }
@@ -941,21 +930,17 @@ fun SwaaraSearchScreen(
                             color = SwaaraSecondaryText,
                             fontSize = 12.5.sp
                         )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Box(
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Retry Search",
+                            color = SwaaraMagenta,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(Brush.horizontalGradient(listOf(SwaaraPurple, SwaaraMagenta)))
+                                .clip(RoundedCornerShape(8.dp))
                                 .clickable { performExplicitSearch(searchQuery) }
-                                .padding(horizontal = 22.dp, vertical = 9.dp)
-                        ) {
-                            Text(
-                                text = "Retry Search",
-                                color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        )
                     } else {
                         Text(
                             text = "No results found for '$searchQuery'",
