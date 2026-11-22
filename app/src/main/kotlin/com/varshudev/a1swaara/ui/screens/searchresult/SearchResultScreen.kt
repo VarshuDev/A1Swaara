@@ -95,7 +95,6 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                                 .padding(vertical = 4.dp)
                                 .clip(16.dp.roundedShape)
                                 .background(SwaaraDeepSurface)
-                                .border(1.dp, Color.White.copy(alpha = 0.08f), 16.dp.roundedShape)
                                 .clickable {
                                     persistMap?.clean("searchResults/$query/")
                                     onSearchAgain()
@@ -122,7 +121,6 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                                 modifier = Modifier
                                     .clip(10.dp.roundedShape)
                                     .background(colorPalette.secondaryAccent.copy(alpha = 0.14f))
-                                    .border(1.dp, colorPalette.secondaryAccent.copy(alpha = 0.30f), 10.dp.roundedShape)
                                     .padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {

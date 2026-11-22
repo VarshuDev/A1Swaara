@@ -194,9 +194,8 @@ fun SwaaraStoryCreatorSheet(
             // 2. Mode Selector: [ Image Story | Video Story (30s/60s) ]
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(22.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .background(SwaaraDeepSurface)
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(22.dp))
                     .padding(4.dp)
             ) {
                 Row(
@@ -206,9 +205,9 @@ fun SwaaraStoryCreatorSheet(
                     // Image Story
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(18.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
-                                if (selectedMode == 0) Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet))
+                                if (selectedMode == 0) SolidColor(SwaaraMagenta)
                                 else SolidColor(Color.Transparent)
                             )
                             .clickable { selectedMode = 0 }
@@ -236,9 +235,9 @@ fun SwaaraStoryCreatorSheet(
                     // Video Story
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(18.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
-                                if (selectedMode == 1) Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet))
+                                if (selectedMode == 1) SolidColor(SwaaraMagenta)
                                 else SolidColor(Color.Transparent)
                             )
                             .clickable { selectedMode = 1 }
@@ -271,9 +270,8 @@ fun SwaaraStoryCreatorSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(22.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(SwaaraDeepSurface)
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(22.dp))
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -281,10 +279,8 @@ fun SwaaraStoryCreatorSheet(
                 Box(
                     modifier = Modifier
                         .size(72.dp)
-                        .shadow(12.dp, RoundedCornerShape(16.dp), ambientColor = Color.Black, spotColor = SwaaraMagenta.copy(alpha = 0.4f))
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(1.dp, SwaaraMagenta.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
                 ) {
                     AsyncImage(
                         model = artworkUrl?.thumbnail(800) ?: "https://i.ytimg.com/vi/placeholder/hqdefault.jpg",
@@ -323,14 +319,9 @@ fun SwaaraStoryCreatorSheet(
                     // Circular Duration Badge
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(SwaaraElevatedSurface)
-                            .border(
-                                1.5.dp,
-                                Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet)),
-                                CircleShape
-                            )
                             .clickable {
                                 videoDurationSeconds = if (videoDurationSeconds == 15) 30 else 15
                                 if (snippetStartSec > (totalDurationSec - videoDurationSeconds)) {
@@ -343,7 +334,7 @@ fun SwaaraStoryCreatorSheet(
                             text = "$videoDurationSeconds",
                             color = SwaaraPrimaryText,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Black
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
@@ -535,10 +526,9 @@ fun SwaaraStoryCreatorSheet(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp)
-                        .clip(RoundedCornerShape(25.dp))
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(25.dp))
                         .clickable {
                             isExporting = true
                             exportProgress = 5
@@ -592,15 +582,9 @@ fun SwaaraStoryCreatorSheet(
                 Box(
                     modifier = Modifier
                         .weight(1.3f)
-                        .height(50.dp)
-                        .shadow(
-                            elevation = 16.dp,
-                            shape = RoundedCornerShape(25.dp),
-                            ambientColor = Color.Black.copy(alpha = 0.6f),
-                            spotColor = SwaaraMagenta.copy(alpha = 0.45f)
-                        )
-                        .clip(RoundedCornerShape(25.dp))
-                        .background(Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet)))
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SwaaraMagenta)
                         .clickable {
                             isExporting = true
                             exportProgress = 5

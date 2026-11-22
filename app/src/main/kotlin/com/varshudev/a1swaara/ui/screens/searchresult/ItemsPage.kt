@@ -177,11 +177,6 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
                             color = SwaaraDeepSurface,
                             shape = 16.dp.roundedShape
                         )
-                        .border(
-                            width = 1.dp,
-                            color = Color.White.copy(alpha = 0.08f),
-                            shape = 16.dp.roundedShape
-                        )
                         .padding(horizontal = 24.dp, vertical = 32.dp),
                     contentAlignment = Alignment.Center
                 ) {

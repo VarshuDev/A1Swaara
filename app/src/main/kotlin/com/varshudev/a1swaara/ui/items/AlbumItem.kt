@@ -81,7 +81,6 @@ fun AlbumItem(
         modifier = Modifier
             .clip(thumbnailShape)
             .background(colorPalette.background1)
-            .border(0.75.dp, colorPalette.glassBorder, thumbnailShape)
             .size(thumbnailSize)
     )
 

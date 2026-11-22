@@ -76,120 +76,97 @@ fun SwaaraSleepTimerDialog(
                 .widthIn(max = 420.dp)
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(SwaaraDeepSurface)
+                .padding(22.dp)
         ) {
-            SwaaraGlassContainer(
-                shape = RoundedCornerShape(24.dp),
-                backgroundColor = SwaaraModalSurface,
-                borderBrush = Brush.linearGradient(
-                    listOf(
-                        SwaaraMagenta.copy(alpha = 0.50f),
-                        SwaaraViolet.copy(alpha = 0.30f),
-                        SwaaraCyan.copy(alpha = 0.45f)
-                    )
-                ),
-                borderWidth = 1.2.dp,
-                shadowElevation = 24.dp,
+            Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(22.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
+                    Icon(
+                        painter = painterResource(id = R.drawable.time),
+                        contentDescription = null,
+                        tint = SwaaraMagenta,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Column {
+                        Text(
+                            text = "Sleep Timer",
+                            color = SwaaraPrimaryText,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (isRunning) formattedRemaining else "Fade out & stop playback",
+                            color = if (isRunning) SwaaraCyan else SwaaraSecondaryText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    presets.forEach { preset ->
+                        Row(
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(SwaaraBrandGradient),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.time),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
-                        Column {
-                            Text(
-                                text = "Sleep Timer",
-                                color = SwaaraPrimaryText,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = if (isRunning) formattedRemaining else "Fade out & stop playback",
-                                color = if (isRunning) SwaaraCyan else SwaaraSecondaryText,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        presets.forEach { preset ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(SwaaraElevatedSurface)
-                                    .border(1.dp, SwaaraBorderSubtle, RoundedCornerShape(14.dp))
-                                    .clickable {
-                                        onSetTimer(preset.minutes * 60 * 1000L)
-                                        onDismiss()
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = preset.label,
-                                    color = SwaaraPrimaryText,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Icon(
-                                    painter = painterResource(id = R.drawable.chevron_forward),
-                                    contentDescription = null,
-                                    tint = SwaaraSecondaryText,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = onDismiss) {
-                            Text("Close", color = SwaaraSecondaryText)
-                        }
-                        if (isRunning) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(
-                                onClick = {
-                                    onCancelTimer()
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(SwaaraElevatedSurface)
+                                .clickable {
+                                    onSetTimer(preset.minutes * 60 * 1000L)
                                     onDismiss()
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = SwaaraErrorRed),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text("Turn Off Timer", color = Color.White, fontWeight = FontWeight.Bold)
-                            }
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = preset.label,
+                                color = SwaaraPrimaryText,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Icon(
+                                painter = painterResource(id = R.drawable.chevron_forward),
+                                contentDescription = null,
+                                tint = SwaaraSecondaryText,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Close", color = SwaaraSecondaryText)
+                    }
+                    if (isRunning) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                onCancelTimer()
+                                onDismiss()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = SwaaraErrorRed),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Turn Off Timer", color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

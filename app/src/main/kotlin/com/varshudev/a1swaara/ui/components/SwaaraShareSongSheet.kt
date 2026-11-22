@@ -92,9 +92,8 @@ fun SwaaraShareSongSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF14141E))
-                    .border(1.dp, Color(0xFF262636), RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(SwaaraElevatedSurface)
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -103,7 +102,7 @@ fun SwaaraShareSongSheet(
                     contentDescription = null,
                     modifier = Modifier
                         .size(54.dp)
-                        .clip(RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(10.dp)),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -126,24 +125,22 @@ fun SwaaraShareSongSheet(
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = "320 KBPS CD-QUALITY AUDIO",
+                        text = "320 kbps • CD Quality",
                         color = SwaaraCyan,
-                        fontSize = 9.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.05.sp
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // URL Copy Box
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF1A1A26))
-                    .border(1.dp, Color(0xFF2C2C3E), RoundedCornerShape(12.dp))
+                    .background(SwaaraElevatedSurface)
                     .padding(horizontal = 14.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween

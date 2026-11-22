@@ -148,26 +148,23 @@ fun SwaaraFeatureTourScreen(
             // Step Pill Badge
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(SwaaraElevated)
-                    .border(1.dp, SwaaraCyan.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = "STEP ${currentStepIndex + 1} OF ${tourSteps.size}",
+                    text = "Step ${currentStepIndex + 1} of ${tourSteps.size}",
                     color = SwaaraCyan,
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
             // Skip Button
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(Color.White.copy(alpha = 0.06f))
-                    .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
                     .clickable { completeTour() }
                     .padding(horizontal = 14.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
@@ -180,7 +177,7 @@ fun SwaaraFeatureTourScreen(
                         text = "Skip Tour",
                         color = SwaaraTextSecondary,
                         fontSize = 12.5.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Medium
                     )
                     Icon(
                         painter = painterResource(id = R.drawable.chevron_forward),
@@ -205,13 +202,13 @@ fun SwaaraFeatureTourScreen(
                 Box(
                     modifier = Modifier
                         .weight(if (isCurrent) 2f else 1f)
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
                         .background(
                             when {
-                                isCurrent -> Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraCyan))
-                                isPassed -> Brush.horizontalGradient(listOf(SwaaraPurple.copy(alpha = 0.7f), SwaaraPurple.copy(alpha = 0.7f)))
-                                else -> Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.12f), Color.White.copy(alpha = 0.12f)))
+                                isCurrent -> SwaaraMagenta
+                                isPassed -> SwaaraMagenta.copy(alpha = 0.4f)
+                                else -> Color.White.copy(alpha = 0.12f)
                             }
                         )
                 )
@@ -259,16 +256,14 @@ fun SwaaraFeatureTourScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                        .background(SwaaraMagenta.copy(alpha = 0.15f))
-                        .border(1.dp, SwaaraMagenta.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .background(SwaaraMagenta.copy(alpha = 0.15f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = step.highlightBadge,
                             color = SwaaraMagenta,
-                            fontSize = 10.5.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
 
@@ -279,9 +274,8 @@ fun SwaaraFeatureTourScreen(
                         text = step.title,
                         color = SwaaraTextPrimary,
                         fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        textAlign = TextAlign.Center,
-                        letterSpacing = (-0.3).sp
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -291,7 +285,7 @@ fun SwaaraFeatureTourScreen(
                         text = step.subtitle,
                         color = SwaaraCyan,
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
                     )
 
@@ -315,27 +309,18 @@ fun SwaaraFeatureTourScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
                             .background(SwaaraDeepCard)
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(CircleShape)
-                                    .background(SwaaraCyan.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.hand_gesture),
-                                    contentDescription = null,
-                                    tint = SwaaraCyan,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
+                            Icon(
+                                painter = painterResource(id = R.drawable.hand_gesture),
+                                contentDescription = null,
+                                tint = SwaaraCyan,
+                                modifier = Modifier.size(20.dp)
+                            )
                             Text(
                                 text = step.gestureTip,
                                 color = SwaaraTextPrimary,
@@ -361,10 +346,9 @@ fun SwaaraFeatureTourScreen(
             if (currentStepIndex > 0) {
                 Box(
                     modifier = Modifier
-                        .size(54.dp)
-                        .clip(RoundedCornerShape(18.dp))
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(SwaaraElevated)
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
                         .clickable { currentStepIndex-- },
                     contentAlignment = Alignment.Center
                 ) {
@@ -382,23 +366,9 @@ fun SwaaraFeatureTourScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(54.dp)
-                    .shadow(
-                        elevation = 20.dp,
-                        shape = RoundedCornerShape(18.dp),
-                        ambientColor = Color.Black.copy(alpha = 0.8f),
-                        spotColor = SwaaraMagenta.copy(alpha = 0.5f)
-                    )
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                SwaaraMagenta,
-                                SwaaraPurple,
-                                SwaaraCyan
-                            )
-                        )
-                    )
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(SwaaraMagenta)
                     .clickable {
                         if (isFinalStep) {
                             completeTour()
@@ -488,16 +458,6 @@ private fun TourGestureVisualizer(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
             .background(SwaaraDeepCard)
-            .border(
-                1.5.dp,
-                Brush.linearGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.12f),
-                        Color.White.copy(alpha = 0.03f)
-                    )
-                ),
-                RoundedCornerShape(24.dp)
-            )
             .padding(18.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -510,18 +470,17 @@ private fun TourGestureVisualizer(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "EXPLORE BY LANGUAGE",
+                        text = "Explore by Language",
                         color = SwaaraCyan,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraPurple)))
+                                .background(SwaaraMagenta)
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text("Kannada (ಕನ್ನಡ)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -530,7 +489,6 @@ private fun TourGestureVisualizer(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(SwaaraElevated)
-                                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text("Hindi (हिंदी)", color = SwaaraTextSecondary, fontSize = 12.sp)
@@ -542,7 +500,6 @@ private fun TourGestureVisualizer(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(SwaaraElevated)
-                                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text("Tamil (தமிழ்)", color = SwaaraTextSecondary, fontSize = 12.sp)
@@ -551,7 +508,6 @@ private fun TourGestureVisualizer(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(SwaaraElevated)
-                                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text("Telugu (తెలుగు)", color = SwaaraTextSecondary, fontSize = 12.sp)
@@ -593,10 +549,8 @@ private fun TourGestureVisualizer(
                     Box(
                         modifier = Modifier
                             .size(130.dp)
-                            .shadow(24.dp, RoundedCornerShape(20.dp), ambientColor = SwaaraPurple, spotColor = SwaaraMagenta)
                             .clip(RoundedCornerShape(20.dp))
-                            .background(Brush.linearGradient(listOf(SwaaraMagenta.copy(alpha = 0.6f), SwaaraPurple.copy(alpha = 0.8f))))
-                            .border(1.5.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp)),
+                            .background(SwaaraElevated),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -632,7 +586,7 @@ private fun TourGestureVisualizer(
                             modifier = Modifier
                                 .width(160.dp)
                                 .height(2.dp)
-                                .background(Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraCyan)))
+                                .background(SwaaraMagenta)
                         )
 
                         // Gliding Hand
@@ -655,7 +609,7 @@ private fun TourGestureVisualizer(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("LIVE KARAOKE STREAM", color = SwaaraMagenta, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("Live Karaoke Stream", color = SwaaraMagenta, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
 
                     // Line 1 (Past)
                     Text("I was caught in the middle of a dream", color = SwaaraTextSecondary.copy(alpha = 0.5f), fontSize = 12.5.sp)
@@ -666,7 +620,6 @@ private fun TourGestureVisualizer(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraMagenta.copy(alpha = 0.22f))
-                            .border(1.dp, SwaaraMagenta.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Row(
@@ -681,7 +634,7 @@ private fun TourGestureVisualizer(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "[01:24]",
+                                text = "01:24",
                                 color = SwaaraCyan,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -721,13 +674,13 @@ private fun TourGestureVisualizer(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("STUDIO SOUND LAB PRESETS", color = SwaaraCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("Studio Sound Lab Presets", color = SwaaraCyan, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Brush.horizontalGradient(listOf(SwaaraPurple, SwaaraMagenta)))
+                                .background(SwaaraMagenta)
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text("Slowed + Reverb", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
@@ -736,7 +689,6 @@ private fun TourGestureVisualizer(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(SwaaraElevated)
-                                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(10.dp))
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text("Nightcore", color = SwaaraTextSecondary, fontSize = 11.5.sp)
@@ -766,7 +718,7 @@ private fun TourGestureVisualizer(
                             modifier = Modifier
                                 .fillMaxWidth(0.6f)
                                 .height(6.dp)
-                                .background(Brush.horizontalGradient(listOf(SwaaraCyan, SwaaraMagenta)))
+                                .background(SwaaraCyan)
                         )
                     }
 
@@ -790,7 +742,7 @@ private fun TourGestureVisualizer(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("OFFLINE HUB & CAR MODE", color = SwaaraMagenta, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("Offline Hub & Car Mode", color = SwaaraMagenta, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -802,7 +754,6 @@ private fun TourGestureVisualizer(
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(SwaaraCyan.copy(alpha = 0.15f))
-                                .border(1.dp, SwaaraCyan.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
                                 .padding(12.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -820,7 +771,6 @@ private fun TourGestureVisualizer(
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(SwaaraMagenta.copy(alpha = 0.15f))
-                                .border(1.dp, SwaaraMagenta.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
                                 .padding(12.dp),
                             contentAlignment = Alignment.Center
                         ) {

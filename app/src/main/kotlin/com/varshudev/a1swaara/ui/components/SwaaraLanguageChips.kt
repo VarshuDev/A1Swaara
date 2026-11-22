@@ -60,13 +60,9 @@ fun SwaaraLanguageChips(
                 (selectedLanguage.equals("kannada", ignoreCase = true) && lang.id == "for_you" && selectedLanguage == "for_you")
 
             val bgModifier = if (isSelected) {
-                Modifier
-                    .background(SwaaraElevatedSurface)
-                    .border(1.dp, SwaaraMagenta.copy(alpha = 0.50f), RoundedCornerShape(20.dp))
+                Modifier.background(SwaaraMagenta)
             } else {
-                Modifier
-                    .background(SwaaraDeepSurface)
-                    .border(1.dp, Color.White.copy(alpha = 0.04f), RoundedCornerShape(20.dp))
+                Modifier.background(SwaaraElevatedSurface)
             }
 
             Box(
@@ -79,9 +75,9 @@ fun SwaaraLanguageChips(
             ) {
                 Text(
                     text = lang.label,
-                    color = if (isSelected) SwaaraPrimaryText else SwaaraSecondaryText,
+                    color = if (isSelected) Color.White else SwaaraSecondaryText,
                     fontSize = 12.5.sp,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                 )
             }
         }

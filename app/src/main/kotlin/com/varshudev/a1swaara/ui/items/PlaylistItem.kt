@@ -193,7 +193,6 @@ fun PlaylistItem(
         modifier = centeredModifier
             .clip(thumbShape)
             .background(color = colorPalette.background1)
-            .border(0.75.dp, colorPalette.glassBorder, thumbShape)
             .requiredSize(thumbnailSize)
     ) {
         thumbnailContent(Modifier.fillMaxSize())

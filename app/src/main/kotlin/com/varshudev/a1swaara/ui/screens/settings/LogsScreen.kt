@@ -202,7 +202,6 @@ fun LazyItemScope.FormattedLine(
         modifier = modifier
             .clip(14.dp.roundedShape)
             .background(SwaaraDeepSurface)
-            .border(1.dp, accentColor.copy(alpha = 0.35f), 14.dp.roundedShape)
             .clickable { singleLine = !singleLine }
             .padding(14.dp)
             .animateItem()
@@ -212,7 +211,6 @@ fun LazyItemScope.FormattedLine(
                 modifier = Modifier
                     .clip(8.dp.roundedShape)
                     .background(accentColor.copy(alpha = 0.16f))
-                    .border(1.dp, accentColor.copy(alpha = 0.35f), 8.dp.roundedShape)
                     .padding(horizontal = 7.dp, vertical = 3.dp),
                 contentAlignment = Alignment.Center
             ) {

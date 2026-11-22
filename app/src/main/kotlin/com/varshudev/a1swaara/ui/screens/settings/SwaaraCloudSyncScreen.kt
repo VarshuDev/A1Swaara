@@ -114,7 +114,6 @@ fun SwaaraCloudSyncScreen() {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
                 .background(SwaaraDeepSurface)
-                .border(1.dp, SwaaraMagenta.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                 .padding(18.dp)
         ) {
             Column {
@@ -277,7 +276,6 @@ fun SwaaraCloudSyncScreen() {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(SwaaraElevatedSurface)
-                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                 .padding(16.dp)
         ) {
             Row(
@@ -383,7 +381,6 @@ fun SwaaraCloudSyncScreen() {
                     .weight(1f)
                     .clip(RoundedCornerShape(14.dp))
                     .background(SwaaraElevatedSurface)
-                    .border(1.dp, SwaaraCyan.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
                     .clickable(enabled = !isBackingUp && !isRestoring) {
                         scope.launch {
                             isRestoring = true
@@ -424,11 +421,10 @@ fun SwaaraCloudSyncScreen() {
 
         // Collaborative & Social Tools
         Text(
-            text = "COLLABORATIVE FEATURES",
+            text = "Collaborative Features",
             fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = SwaaraSecondaryText,
-            letterSpacing = 1.sp
+            fontWeight = FontWeight.SemiBold,
+            color = SwaaraSecondaryText
         )
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -438,7 +434,6 @@ fun SwaaraCloudSyncScreen() {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(SwaaraElevatedSurface)
-                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                 .clickable {
                     if (SwaaraJamEngine.currentRoom.value != null) {
                         liveJamRoute.global()
@@ -475,7 +470,6 @@ fun SwaaraCloudSyncScreen() {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(SwaaraElevatedSurface)
-                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                 .clickable { showImportDialog = true }
                 .padding(16.dp)
         ) {

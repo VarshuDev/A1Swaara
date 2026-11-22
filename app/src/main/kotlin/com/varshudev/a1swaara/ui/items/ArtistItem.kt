@@ -80,7 +80,6 @@ fun ArtistItem(
         modifier = Modifier
             .clip(CircleShape)
             .background(colorPalette.background1)
-            .border(0.75.dp, colorPalette.glassBorder, CircleShape)
             .requiredSize(thumbnailSize)
     )
 

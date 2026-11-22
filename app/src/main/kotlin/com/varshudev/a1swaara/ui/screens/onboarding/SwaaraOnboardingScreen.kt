@@ -161,19 +161,8 @@ fun SwaaraOnboardingScreen(
             Box(
                 modifier = Modifier
                     .size(52.dp)
-                    .shadow(
-                        elevation = 16.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        ambientColor = Color.Black.copy(alpha = 0.8f),
-                        spotColor = SwaaraMagenta.copy(alpha = 0.5f)
-                    )
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(SwaaraElevatedSurface)
-                    .border(
-                        1.5.dp,
-                        Brush.linearGradient(listOf(SwaaraMagenta, SwaaraViolet, SwaaraCyan)),
-                        RoundedCornerShape(16.dp)
-                    ),
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(SwaaraElevatedSurface),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.foundation.Image(
@@ -188,36 +177,25 @@ fun SwaaraOnboardingScreen(
                     text = "Welcome to A1 Swaara",
                     color = SwaaraPrimaryText,
                     fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = (-0.3).sp
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "High-Fidelity Sovereign Audio Experience",
-                    color = SwaaraCyan.copy(alpha = 0.9f),
+                    color = SwaaraCyan,
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Normal
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Frosted Glass Name Input Container
+        // Name Input Container
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(SwaaraDeepSurface.copy(alpha = 0.92f))
-                .border(
-                    1.dp,
-                    Brush.horizontalGradient(
-                        listOf(
-                            Color.White.copy(alpha = 0.12f),
-                            Color.White.copy(alpha = 0.04f)
-                        )
-                    ),
-                    RoundedCornerShape(18.dp)
-                )
+                .clip(RoundedCornerShape(14.dp))
+                .background(SwaaraDeepSurface)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -299,17 +277,11 @@ fun SwaaraOnboardingScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(74.dp)
-                        .clip(RoundedCornerShape(18.dp))
+                        .height(72.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(
-                            if (isSelected) SwaaraElevatedSurface
+                            if (isSelected) SwaaraMagenta.copy(alpha = 0.18f)
                             else SwaaraDeepSurface
-                        )
-                        .border(
-                            1.5.dp,
-                            if (isSelected) Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet))
-                            else Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.05f))),
-                            RoundedCornerShape(18.dp)
                         )
                         .clickable {
                             if (isSelected) {
@@ -327,33 +299,19 @@ fun SwaaraOnboardingScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Artist Portrait with instant stylized gradient & monogram fallback
                         val resolvedAvatar = singerAvatars[lang.id]
                         Box(
                             modifier = Modifier
-                                .size(50.dp)
+                                .size(48.dp)
                                 .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(
-                                            SwaaraViolet.copy(alpha = 0.55f),
-                                            SwaaraMagenta.copy(alpha = 0.45f)
-                                        )
-                                    )
-                                )
-                                .border(
-                                    1.2.dp,
-                                    if (isSelected) SwaaraCyan.copy(alpha = 0.75f) else Color.White.copy(alpha = 0.14f),
-                                    CircleShape
-                                ),
+                                .background(SwaaraElevatedSurface),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = lang.singerMonogram,
-                                color = Color.White,
+                                color = SwaaraSecondaryText,
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 0.5.sp
+                                fontWeight = FontWeight.Bold
                             )
                             if (!resolvedAvatar.isNullOrBlank()) {
                                 AsyncImage(
@@ -392,7 +350,7 @@ fun SwaaraOnboardingScreen(
                                 modifier = Modifier
                                     .size(22.dp)
                                     .clip(CircleShape)
-                                    .background(Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet))),
+                                    .background(SwaaraMagenta),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -414,23 +372,9 @@ fun SwaaraOnboardingScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp)
-                .shadow(
-                    elevation = 20.dp,
-                    shape = RoundedCornerShape(27.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.7f),
-                    spotColor = SwaaraMagenta.copy(alpha = 0.55f)
-                )
-                .clip(RoundedCornerShape(27.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            SwaaraMagenta,
-                            SwaaraViolet,
-                            SwaaraCyan.copy(alpha = 0.8f)
-                        )
-                    )
-                )
+                .height(52.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(SwaaraMagenta)
                 .clickable { completeWelcome() },
             contentAlignment = Alignment.Center
         ) {
@@ -442,8 +386,7 @@ fun SwaaraOnboardingScreen(
                     text = "Start Listening to A1 Swaara",
                     color = Color.White,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 0.3.sp
+                    fontWeight = FontWeight.Bold
                 )
                 Icon(
                     painter = painterResource(id = R.drawable.play),

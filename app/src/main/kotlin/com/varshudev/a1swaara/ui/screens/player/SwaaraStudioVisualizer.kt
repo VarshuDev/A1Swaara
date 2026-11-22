@@ -56,6 +56,7 @@ import com.varshudev.a1swaara.audio.SwaaraVisualizerEngine
 import com.varshudev.a1swaara.audio.VisualizerFrame
 import com.varshudev.a1swaara.ui.components.SwaaraColors
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
 import com.varshudev.a1swaara.ui.components.SwaaraEmerald
 import com.varshudev.a1swaara.ui.components.SwaaraMagenta
 import com.varshudev.a1swaara.ui.components.SwaaraObsidian
@@ -111,8 +112,7 @@ fun SwaaraStudioVisualizer(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(999.dp))
-                    .background(Color(0xFF0F1018))
-                    .border(1.dp, Color(0xFF232538), RoundedCornerShape(999.dp))
+                    .background(SwaaraDeepSurface)
                     .padding(horizontal = 14.dp, vertical = 6.dp)
             ) {
                 Row(
@@ -126,12 +126,10 @@ fun SwaaraStudioVisualizer(
                             .background(SwaaraEmerald.copy(alpha = pulseAlpha))
                     )
                     Text(
-                        text = if (isHardware) "32-BIT FLOAT DAC • 48 kHz • 320 KBPS LIVE" else "STUDIO MASTER ENGINE • 320 KBPS DSP",
-                        color = Color(0xFFB0B4CE),
+                        text = if (isHardware) "32-bit Float DAC • 48 kHz • 320 kbps" else "Studio Master Engine • 320 kbps DSP",
+                        color = SwaaraSecondaryText,
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        letterSpacing = 0.5.sp
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -142,33 +140,24 @@ fun SwaaraStudioVisualizer(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF13141F))
-                    .border(1.dp, Color(0xFF22253A), RoundedCornerShape(16.dp))
+                    .background(SwaaraDeepSurface)
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 VisualizerStyle.entries.forEach { style ->
                     val isSelected = style == selectedStyle
-                    val bgBrush = if (isSelected) {
-                        Brush.horizontalGradient(listOf(SwaaraMagenta.copy(alpha = 0.35f), SwaaraViolet.copy(alpha = 0.25f)))
-                    } else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
 
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(bgBrush)
-                            .border(
-                                1.dp,
-                                if (isSelected) SwaaraMagenta.copy(alpha = 0.65f) else Color.Transparent,
-                                RoundedCornerShape(12.dp)
-                            )
+                            .background(if (isSelected) SwaaraMagenta else Color.Transparent)
                             .clickable { selectedStyle = style }
                             .padding(horizontal = 12.dp, vertical = 5.dp)
                     ) {
                         Text(
                             text = style.label,
-                            color = if (isSelected) SwaaraPrimaryText else SwaaraSecondaryText,
-                            fontSize = 11.sp,
+                            color = if (isSelected) Color.White else SwaaraSecondaryText,
+                            fontSize = 11.5.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }
@@ -183,15 +172,7 @@ fun SwaaraStudioVisualizer(
                 .weight(1f)
                 .padding(vertical = 12.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0xFF0B0C14),
-                            Color(0xFF08080E)
-                        )
-                    )
-                )
-                .border(1.dp, Color(0xFF1E2135), RoundedCornerShape(24.dp)),
+                .background(SwaaraDeepSurface),
             contentAlignment = Alignment.Center
         ) {
             when (selectedStyle) {
@@ -214,16 +195,7 @@ fun SwaaraStudioVisualizer(
                     .weight(1f)
                     .clip(RoundedCornerShape(16.dp))
                     .background(
-                        if (isTubeWarmth) Brush.horizontalGradient(
-                            listOf(Color(0xFFE88A2E).copy(alpha = 0.25f), Color(0xFFD64527).copy(alpha = 0.15f))
-                        ) else Brush.horizontalGradient(
-                            listOf(Color(0xFF11131E), Color(0xFF11131E))
-                        )
-                    )
-                    .border(
-                        1.dp,
-                        if (isTubeWarmth) Color(0xFFE88A2E).copy(alpha = 0.75f) else Color(0xFF202336),
-                        RoundedCornerShape(16.dp)
+                        if (isTubeWarmth) Color(0xFFE88A2E).copy(alpha = 0.18f) else SwaaraDeepSurface
                     )
                     .clickable { SwaaraAudioEngine.setTubeWarmthActive(!isTubeWarmth) }
                     .padding(horizontal = 10.dp, vertical = 8.dp)
@@ -261,16 +233,7 @@ fun SwaaraStudioVisualizer(
                     .weight(1f)
                     .clip(RoundedCornerShape(16.dp))
                     .background(
-                        if (isKaraoke) Brush.horizontalGradient(
-                            listOf(SwaaraCyan.copy(alpha = 0.25f), SwaaraViolet.copy(alpha = 0.15f))
-                        ) else Brush.horizontalGradient(
-                            listOf(Color(0xFF11131E), Color(0xFF11131E))
-                        )
-                    )
-                    .border(
-                        1.dp,
-                        if (isKaraoke) SwaaraCyan.copy(alpha = 0.75f) else Color(0xFF202336),
-                        RoundedCornerShape(16.dp)
+                        if (isKaraoke) SwaaraCyan.copy(alpha = 0.18f) else SwaaraDeepSurface
                     )
                     .clickable { SwaaraAudioEngine.setKaraokeMode(!isKaraoke) }
                     .padding(horizontal = 10.dp, vertical = 8.dp)

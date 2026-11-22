@@ -223,7 +223,7 @@ fun SwaaraBoomSpectrum(
 }
 
 /**
- * Futuristic Cyberpunk "BOOM BASS" HUD Toggle Button
+ * Flagship audio boost toggle button
  */
 @Composable
 fun SwaaraBoomButton(
@@ -233,54 +233,14 @@ fun SwaaraBoomButton(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "boom_btn_transition")
-
-    val borderGlow by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = if (isBoomActive) 1.0f else 0.4f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "btn_glow"
-    )
-
-    val neonPink = Color(0xFFFF007A)
-    val neonCyan = Color(0xFF00F5D4)
+    val containerColor = if (isBoomActive) SwaaraColors.Magenta else SwaaraColors.ElevatedSurface
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                if (isBoomActive) Brush.horizontalGradient(
-                    listOf(
-                        Color(0xFF2A0845).copy(alpha = 0.95f),
-                        Color(0xFF6441A5).copy(alpha = 0.90f)
-                    )
-                )
-                else Brush.horizontalGradient(
-                    listOf(
-                        Color(0xFF141422).copy(alpha = 0.85f),
-                        Color(0xFF1B1B2C).copy(alpha = 0.85f)
-                    )
-                )
-            )
-            .border(
-                width = if (isBoomActive) 1.6.dp else 1.dp,
-                brush = if (isBoomActive) Brush.horizontalGradient(
-                    listOf(
-                        neonPink.copy(alpha = borderGlow),
-                        neonCyan.copy(alpha = borderGlow)
-                    )
-                ) else Brush.horizontalGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.12f),
-                        Color.White.copy(alpha = 0.12f)
-                    )
-                ),
-                shape = RoundedCornerShape(20.dp)
-            )
+            .clip(RoundedCornerShape(16.dp))
+            .background(containerColor)
             .clickable(onClick = onToggle)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
+            .padding(horizontal = 14.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -290,16 +250,15 @@ fun SwaaraBoomButton(
             Icon(
                 painter = painterResource(id = R.drawable.musical_notes),
                 contentDescription = null,
-                tint = if (isBoomActive) SwaaraMagenta else SwaaraCyan,
+                tint = if (isBoomActive) Color.White else SwaaraColors.SecondaryText,
                 modifier = Modifier.size(13.dp)
             )
 
             Text(
-                text = if (isBoomActive) "BOOM BASS" else "BASS BOOST",
-                color = if (isBoomActive) Color.White else Color.White.copy(alpha = 0.75f),
-                fontSize = 11.5.sp,
-                fontWeight = if (isBoomActive) FontWeight.Black else FontWeight.SemiBold,
-                letterSpacing = 0.8.sp
+                text = if (isBoomActive) "Boom Bass" else "Bass Boost",
+                color = if (isBoomActive) Color.White else SwaaraColors.SecondaryText,
+                fontSize = 12.sp,
+                fontWeight = if (isBoomActive) FontWeight.SemiBold else FontWeight.Medium
             )
 
             // Animated mini equalizer indicator inside the button
@@ -333,7 +292,7 @@ fun SwaaraBoomButton(
                             .width(2.5.dp)
                             .height((12 * factor).dp)
                             .clip(RoundedCornerShape(1.dp))
-                            .background(if (isBoomActive) neonCyan else Color.White.copy(alpha = 0.4f))
+                            .background(if (isBoomActive) Color.White else SwaaraColors.SecondaryText.copy(alpha = 0.6f))
                     )
                 }
             }

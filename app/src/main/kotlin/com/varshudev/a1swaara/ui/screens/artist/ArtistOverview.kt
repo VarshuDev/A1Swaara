@@ -126,11 +126,6 @@ fun ArtistOverview(
                                 modifier = Modifier
                                     .clip(pillShape)
                                     .background(colorPalette.secondaryAccent.copy(alpha = 0.14f))
-                                    .border(
-                                        width = 1.dp,
-                                        color = colorPalette.secondaryAccent.copy(alpha = 0.35f),
-                                        shape = pillShape
-                                    )
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 BasicText(
@@ -149,43 +144,11 @@ fun ArtistOverview(
                 Box(
                     modifier = Modifier
                         .padding(vertical = 16.dp)
-                        .size(170.dp),
+                        .size(150.dp)
+                        .clip(CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Ambient Glow behind artist portrait
-                    Box(
-                        modifier = Modifier
-                            .size(165.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(
-                                        colorPalette.tertiaryAccent.copy(alpha = 0.45f),
-                                        colorPalette.accent.copy(alpha = 0.22f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .clip(CircleShape)
-                            .border(
-                                2.dp,
-                                Brush.sweepGradient(
-                                    listOf(
-                                        colorPalette.accent,
-                                        colorPalette.tertiaryAccent,
-                                        colorPalette.secondaryAccent,
-                                        colorPalette.accent
-                                    )
-                                ),
-                                CircleShape
-                            )
-                    ) {
-                        thumbnailContent()
-                    }
+                    thumbnailContent()
                 }
             }
 
@@ -352,11 +315,6 @@ private fun ArtistOverviewSectionHeader(
                 modifier = Modifier
                     .clip(pillShape)
                     .background(pillColor.copy(alpha = 0.14f))
-                    .border(
-                        width = 1.dp,
-                        color = pillColor.copy(alpha = 0.35f),
-                        shape = pillShape
-                    )
                     .clickable(onClick = onClick)
                     .padding(horizontal = 12.dp, vertical = 5.dp)
             ) {

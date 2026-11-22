@@ -121,7 +121,6 @@ private fun CommunitySongCard(
             .width(135.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(SwaaraElevatedSurface)
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(10.dp)
     ) {
@@ -147,7 +146,6 @@ private fun CommunitySongCard(
                     .padding(6.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(Color.Black.copy(alpha = 0.75f))
-                    .border(1.dp, SwaaraCyan.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(

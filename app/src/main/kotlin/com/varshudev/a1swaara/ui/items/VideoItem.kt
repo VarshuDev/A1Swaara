@@ -73,7 +73,6 @@ fun VideoItem(
             modifier = Modifier
                 .clip(thumbShape)
                 .background(colorPalette.background1)
-                .border(0.75.dp, colorPalette.glassBorder, thumbShape)
                 .size(width = thumbnailWidth, height = thumbnailHeight)
         )
 

@@ -161,11 +161,6 @@ fun BuiltInPlaylistSongs(
                                         .height(36.dp)
                                         .clip(chipShape)
                                         .background(colorPalette.secondaryAccent.copy(alpha = 0.14f))
-                                        .border(
-                                            width = 1.dp,
-                                            color = colorPalette.secondaryAccent.copy(alpha = 0.35f),
-                                            shape = chipShape
-                                        )
                                         .clickable { dialogShowing = true }
                                         .padding(horizontal = 12.dp)
                                 ) {

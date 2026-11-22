@@ -166,14 +166,9 @@ fun SwaaraPodcastEnvironment(
             genres.forEachIndexed { index, genre ->
                 val isSelected = selectedGenreIndex == index
                 val chipBg by animateColorAsState(
-                    targetValue = if (isSelected) SwaaraElevatedSurface else SwaaraDeepSurface,
+                    targetValue = if (isSelected) SwaaraMagenta else SwaaraElevatedSurface,
                     animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
                     label = "genre_chip_bg"
-                )
-                val chipBorder by animateColorAsState(
-                    targetValue = if (isSelected) SwaaraCyan.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.05f),
-                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                    label = "genre_chip_border"
                 )
                 val chipTextColor by animateColorAsState(
                     targetValue = if (isSelected) Color.White else SwaaraSecondaryText,
@@ -194,7 +189,6 @@ fun SwaaraPodcastEnvironment(
                         .scale(chipScale)
                         .clip(RoundedCornerShape(18.dp))
                         .background(chipBg)
-                        .border(1.dp, chipBorder, RoundedCornerShape(18.dp))
                         .clickable(
                             interactionSource = interactionSource,
                             indication = null
@@ -323,15 +317,13 @@ fun SwaaraPodcastEnvironment(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(SwaaraCyan.copy(alpha = 0.20f))
-                                .border(1.dp, SwaaraCyan.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = "AUDIO ONLY",
+                                text = "Audio only",
                                 color = SwaaraCyan,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 0.5.sp
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -401,10 +393,8 @@ fun SwaaraAnimatedSoundwaveHero(
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp)
             .scale(heroScale)
-            .shadow(24.dp, RoundedCornerShape(26.dp), ambientColor = Color.Black, spotColor = SwaaraCyan.copy(alpha = auraPulse * 0.4f))
             .clip(RoundedCornerShape(26.dp))
-            .background(Brush.verticalGradient(listOf(Color(0xFF0F1424), Color(0xFF080B14))))
-            .border(1.2.dp, Brush.horizontalGradient(listOf(SwaaraCyan.copy(alpha = auraPulse), SwaaraViolet.copy(alpha = 0.6f))), RoundedCornerShape(26.dp))
+            .background(SwaaraElevatedSurface)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -596,7 +586,6 @@ fun SwaaraFeaturedPodcastCard(
                 .height(124.dp)
                 .clip(RoundedCornerShape(18.dp))
                 .background(SwaaraElevatedSurface)
-                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
         ) {
             AsyncImage(
                 model = episode.thumbnailUrl,
@@ -612,7 +601,6 @@ fun SwaaraFeaturedPodcastCard(
                         .padding(8.dp)
                         .clip(RoundedCornerShape(6.dp))
                         .background(Color.Black.copy(alpha = 0.85f))
-                        .border(0.8.dp, SwaaraCyan.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
@@ -670,7 +658,6 @@ fun SwaaraPodcastEpisodeRow(
             .scale(rowScale)
             .clip(RoundedCornerShape(18.dp))
             .background(SwaaraElevatedSurface)
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(18.dp))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -846,18 +833,8 @@ fun SwaaraRajShamaniSpotlightBanner(
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 4.dp)
             .scale(scale)
-            .shadow(18.dp, RoundedCornerShape(22.dp), ambientColor = Color.Black, spotColor = SwaaraCyan.copy(alpha = 0.35f))
             .clip(RoundedCornerShape(22.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Color(0xFF0C1426),
-                        Color(0xFF131936),
-                        Color(0xFF0A0E1D)
-                    )
-                )
-            )
-            .border(1.2.dp, Brush.horizontalGradient(listOf(SwaaraCyan.copy(alpha = 0.75f), SwaaraViolet.copy(alpha = 0.5f))), RoundedCornerShape(22.dp))
+            .background(SwaaraElevatedSurface)
             .padding(18.dp)
     ) {
         Column {
@@ -873,11 +850,10 @@ fun SwaaraRajShamaniSpotlightBanner(
                         .padding(horizontal = 9.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "FEATURED SPOTLIGHT",
+                        text = "Featured Spotlight",
                         color = SwaaraCyan,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.8.sp
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
@@ -952,7 +928,6 @@ fun SwaaraRajShamaniSpotlightBanner(
                         .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color.White.copy(alpha = 0.08f))
-                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
                         .clickable(onClick = onViewShow)
                         .padding(vertical = 9.dp),
                     contentAlignment = Alignment.Center

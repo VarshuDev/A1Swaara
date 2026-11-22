@@ -74,174 +74,154 @@ fun SwaaraStoryCardDialog(
                 .widthIn(max = 420.dp)
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(SwaaraDeepSurface)
+                .padding(22.dp)
         ) {
-            SwaaraGlassContainer(
-                shape = RoundedCornerShape(24.dp),
-                backgroundColor = SwaaraModalSurface,
-                borderBrush = Brush.linearGradient(
-                    listOf(
-                        SwaaraMagenta.copy(alpha = 0.50f),
-                        SwaaraViolet.copy(alpha = 0.30f),
-                        SwaaraCyan.copy(alpha = 0.45f)
-                    )
-                ),
-                borderWidth = 1.2.dp,
-                shadowElevation = 24.dp,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.share_social),
+                        contentDescription = null,
+                        tint = SwaaraMagenta,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Share Story Card",
+                        color = SwaaraPrimaryText,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Story Sticker Card Preview
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(22.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(SwaaraElevatedSurface)
+                        .padding(20.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.share_social),
-                            contentDescription = null,
-                            tint = SwaaraMagenta,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "Share Story Card",
-                            color = SwaaraPrimaryText,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Story Sticker Card Preview
-                    SwaaraGlassContainer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        shape = RoundedCornerShape(22.dp),
-                        backgroundColor = SwaaraElevatedSurface,
-                        borderColor = SwaaraMagenta.copy(alpha = 0.45f),
-                        borderWidth = 1.2.dp,
-                        shadowElevation = 18.dp
-                    ) {
-                        Column(
+                        // Artwork
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .size(170.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SwaaraDeepSurface)
                         ) {
-                            // Artwork with Neon Glow
-                            Box(
-                                modifier = Modifier
-                                    .size(170.dp)
-                                    .shadow(16.dp, RoundedCornerShape(20.dp), ambientColor = SwaaraMagenta, spotColor = SwaaraViolet)
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(SwaaraDeepSurface)
-                            ) {
-                                AsyncImage(
-                                    model = artworkUri,
-                                    contentDescription = songTitle,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.matchParentSize()
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(18.dp))
-
-                            // Waveform Graphic
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.height(24.dp)
-                            ) {
-                                val bars = listOf(8, 14, 22, 12, 18, 24, 10, 16, 20, 14, 8, 18, 22, 12)
-                                bars.forEach { h ->
-                                    Box(
-                                        modifier = Modifier
-                                            .width(3.dp)
-                                            .height(h.dp)
-                                            .clip(RoundedCornerShape(2.dp))
-                                            .background(Brush.verticalGradient(listOf(SwaaraMagenta, SwaaraCyan)))
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            Text(
-                                text = songTitle,
-                                color = SwaaraPrimaryText,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                            AsyncImage(
+                                model = artworkUri,
+                                contentDescription = songTitle,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.matchParentSize()
                             )
+                        }
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                            Text(
-                                text = artistName,
-                                color = SwaaraCyan,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // App Badge
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.White.copy(alpha = 0.08f))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.musical_notes),
-                                    contentDescription = null,
-                                    tint = SwaaraMagenta,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Text(
-                                    text = "A1 SWAARA",
-                                    color = SwaaraPrimaryText.copy(alpha = 0.85f),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 1.sp
+                        // Waveform Graphic
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.height(24.dp)
+                        ) {
+                            val bars = listOf(8, 14, 22, 12, 18, 24, 10, 16, 20, 14, 8, 18, 22, 12)
+                            bars.forEach { h ->
+                                Box(
+                                    modifier = Modifier
+                                        .width(3.dp)
+                                        .height(h.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(SwaaraMagenta)
                                 )
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(
+                            text = songTitle,
+                            color = SwaaraPrimaryText,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = artistName,
+                            color = SwaaraSecondaryText,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // App Badge
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White.copy(alpha = 0.08f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.musical_notes),
+                                contentDescription = null,
+                                tint = SwaaraMagenta,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = "A1 Swaara",
+                                color = SwaaraPrimaryText.copy(alpha = 0.85f),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel", color = SwaaraSecondaryText)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            shareIntent()
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = SwaaraMagenta),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        TextButton(onClick = onDismiss) {
-                            Text("Cancel", color = SwaaraSecondaryText)
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                shareIntent()
-                                onDismiss()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = SwaaraViolet),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Text("Share Card", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
+                        Text("Share Card", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }

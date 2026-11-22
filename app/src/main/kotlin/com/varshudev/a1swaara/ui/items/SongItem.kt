@@ -182,7 +182,6 @@ fun SongItem(
                 modifier = Modifier
                     .clip(thumbnailShape)
                     .background(colorPalette.background2)
-                    .border(0.75.dp, colorPalette.glassBorder, thumbnailShape)
                     .fillMaxSize()
             ) {
                 Image(

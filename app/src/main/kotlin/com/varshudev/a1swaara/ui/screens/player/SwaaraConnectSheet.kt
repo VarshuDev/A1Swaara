@@ -42,6 +42,8 @@ import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.cloud.SwaaraConnectEngine
 import com.varshudev.a1swaara.cloud.SwaaraDevice
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.ui.components.SwaaraEmerald
 import com.varshudev.a1swaara.ui.components.SwaaraMagenta
 import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
@@ -127,16 +129,8 @@ fun SwaaraConnectSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                SwaaraMagenta.copy(alpha = 0.20f),
-                                SwaaraViolet.copy(alpha = 0.12f)
-                            )
-                        )
-                    )
-                    .border(1.dp, SwaaraMagenta.copy(alpha = 0.50f), RoundedCornerShape(18.dp))
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(SwaaraElevatedSurface)
                     .padding(14.dp)
             ) {
                 Row(
@@ -146,14 +140,14 @@ fun SwaaraConnectSheet(
                     Box(
                         modifier = Modifier
                             .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(SwaaraMagenta.copy(alpha = 0.35f)),
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SwaaraMagenta.copy(alpha = 0.20f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.musical_notes),
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = SwaaraMagenta,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -200,9 +194,8 @@ fun SwaaraConnectSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF10121C))
-                        .border(1.dp, Color(0xFF1E2133), RoundedCornerShape(18.dp))
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SwaaraDeepSurface)
                         .padding(20.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -248,9 +241,8 @@ private fun DeviceItemRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF131522))
-            .border(1.dp, Color(0xFF22263C), RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
+            .background(SwaaraElevatedSurface)
             .clickable { onTransfer() }
             .padding(14.dp)
     ) {
@@ -261,8 +253,8 @@ private fun DeviceItemRow(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF1E2238)),
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(SwaaraDeepSurface),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -289,9 +281,8 @@ private fun DeviceItemRow(
 
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(SwaaraCyan.copy(alpha = 0.15f))
-                    .border(1.dp, SwaaraCyan.copy(alpha = 0.40f), RoundedCornerShape(10.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(

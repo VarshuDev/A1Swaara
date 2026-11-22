@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import com.varshudev.a1swaara.R
 import com.varshudev.a1swaara.extractor.SwaaraAudioTrackOption
 import com.varshudev.a1swaara.ui.components.SwaaraCyan
+import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.ui.components.SwaaraEmerald
 import com.varshudev.a1swaara.ui.components.SwaaraMagenta
 import com.varshudev.a1swaara.ui.components.SwaaraPrimaryText
@@ -52,14 +54,14 @@ fun SwaaraAudioLanguageSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color(0xFF0C0D14),
+        containerColor = SwaaraDeepSurface,
         dragHandle = {
             Box(
                 modifier = Modifier
                     .padding(vertical = 10.dp)
                     .size(width = 36.dp, height = 4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFF2A2D42))
+                    .background(Color.White.copy(alpha = 0.20f))
             )
         }
     ) {
@@ -88,9 +90,8 @@ fun SwaaraAudioLanguageSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF131522))
-                        .border(1.dp, Color(0xFF22263C), RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SwaaraElevatedSurface)
                         .padding(18.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -109,25 +110,10 @@ fun SwaaraAudioLanguageSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(
-                                    if (isSelected) {
-                                        Brush.horizontalGradient(
-                                            listOf(
-                                                SwaaraMagenta.copy(alpha = 0.22f),
-                                                SwaaraViolet.copy(alpha = 0.16f)
-                                            )
-                                        )
-                                    } else {
-                                        Brush.horizontalGradient(
-                                            listOf(Color(0xFF131522), Color(0xFF131522))
-                                        )
-                                    }
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) SwaaraMagenta.copy(alpha = 0.65f) else Color(0xFF22263C),
-                                    shape = RoundedCornerShape(16.dp)
+                                    if (isSelected) SwaaraMagenta.copy(alpha = 0.18f)
+                                    else SwaaraElevatedSurface
                                 )
                                 .clickable {
                                     onSelectTrack(track)
@@ -143,10 +129,10 @@ fun SwaaraAudioLanguageSheet(
                                 Box(
                                     modifier = Modifier
                                         .size(38.dp)
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(10.dp))
                                         .background(
                                             if (isSelected) SwaaraMagenta.copy(alpha = 0.30f)
-                                            else Color(0xFF1C1F32)
+                                            else SwaaraDeepSurface
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -180,10 +166,10 @@ fun SwaaraAudioLanguageSheet(
                                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                                             ) {
                                                 Text(
-                                                    text = "ORIGINAL",
+                                                    text = "Original",
                                                     color = SwaaraCyan,
-                                                    fontSize = 9.sp,
-                                                    fontWeight = FontWeight.ExtraBold
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Medium
                                                 )
                                             }
                                         }
@@ -213,9 +199,8 @@ fun SwaaraAudioLanguageSheet(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(10.dp))
+                                            .clip(RoundedCornerShape(8.dp))
                                             .background(SwaaraEmerald.copy(alpha = 0.16f))
-                                            .border(1.dp, SwaaraEmerald.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
                                             .padding(horizontal = 9.dp, vertical = 4.dp)
                                     ) {
                                         Box(

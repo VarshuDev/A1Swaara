@@ -92,9 +92,8 @@ fun SwaaraCloudSyncDialog(
         Box(
             modifier = Modifier
                 .padding(24.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(SwaaraDeepSurface)
-                .border(1.dp, SwaaraMagenta.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -110,20 +109,12 @@ fun SwaaraCloudSyncDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(SwaaraMagenta.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.sync),
-                                contentDescription = null,
-                                tint = SwaaraMagenta,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(R.drawable.sync),
+                            contentDescription = null,
+                            tint = SwaaraMagenta,
+                            modifier = Modifier.size(24.dp)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = "Cloud Sync & Backup",
@@ -147,9 +138,8 @@ fun SwaaraCloudSyncDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                         .padding(14.dp)
                 ) {
                     Text(
@@ -313,7 +303,6 @@ fun SwaaraCloudSyncDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(1.dp, SwaaraCyan.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
                         .clickable(enabled = !isBackingUp && !isRestoring) {
                             scope.launch {
                                 isRestoring = true
@@ -367,9 +356,8 @@ fun SwaaraSharePlaylistDialog(
         Box(
             modifier = Modifier
                 .padding(24.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(SwaaraDeepSurface)
-                .border(1.dp, SwaaraCyan.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -451,7 +439,6 @@ fun SwaaraSharePlaylistDialog(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(SwaaraElevatedSurface)
-                                    .border(1.dp, SwaaraCyan.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                                     .clickable {
                                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                         clipboard.setPrimaryClip(ClipData.newPlainText("Playlist Code", shareCode))
@@ -485,7 +472,7 @@ fun SwaaraSharePlaylistDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(SwaaraViolet)
+                            .background(SwaaraMagenta)
                             .clickable(enabled = !isFetchingPreview && importCodeInput.length >= 4) {
                                 scope.launch {
                                     isFetchingPreview = true
@@ -570,9 +557,8 @@ fun SwaaraJamRoomDialog(
         Box(
             modifier = Modifier
                 .padding(24.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(SwaaraDeepSurface)
-                .border(1.dp, SwaaraViolet.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -588,23 +574,15 @@ fun SwaaraJamRoomDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(SwaaraViolet.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.radio),
-                                contentDescription = null,
-                                tint = SwaaraViolet,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(R.drawable.radio),
+                            contentDescription = null,
+                            tint = SwaaraMagenta,
+                            modifier = Modifier.size(24.dp)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Jamming Studio",
+                            text = "Jam Sessions",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color = SwaaraPrimaryText
@@ -650,7 +628,6 @@ fun SwaaraJamRoomDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
                             .background(SwaaraElevatedSurface)
-                            .border(1.dp, SwaaraViolet.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
                             .clickable(enabled = !isCreating && !isJoining) {
                                 scope.launch {
                                     isCreating = true
@@ -687,7 +664,7 @@ fun SwaaraJamRoomDialog(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("— OR ENTER A ROOM CODE —", fontSize = 11.sp, color = SwaaraSecondaryText, letterSpacing = 1.sp)
+                    Text("Or enter a room code", fontSize = 12.sp, color = SwaaraSecondaryText)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
@@ -711,7 +688,6 @@ fun SwaaraJamRoomDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraElevatedSurface)
-                            .border(1.dp, SwaaraCyan.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                             .clickable(enabled = !isCreating && !isJoining && joinCodeInput.length >= 4) {
                                 scope.launch {
                                     isJoining = true
@@ -810,7 +786,6 @@ fun SwaaraJamRoomDialog(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFF8B0000).copy(alpha = 0.35f))
-                                .border(1.dp, Color.Red.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                                 .clickable {
                                     scope.launch {
                                         SwaaraJamEngine.leaveRoom(context)

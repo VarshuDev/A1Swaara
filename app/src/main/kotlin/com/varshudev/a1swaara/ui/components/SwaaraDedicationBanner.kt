@@ -49,61 +49,44 @@ fun SwaaraDedicationBanner(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                SwaaraColors.Violet.copy(alpha = 0.85f),
-                                SwaaraColors.Magenta.copy(alpha = 0.85f)
-                            )
-                        )
-                    )
-                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SwaaraColors.ElevatedSurface)
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.musical_notes),
-                            contentDescription = "Dedication",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(id = R.drawable.musical_notes),
+                        contentDescription = "Dedication",
+                        tint = SwaaraColors.Magenta,
+                        modifier = Modifier.size(20.dp)
+                    )
 
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "DEDICATION",
-                                color = SwaaraColors.Gold,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp
+                                text = "Dedication",
+                                color = SwaaraColors.Magenta,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "from ${dedication.senderName} to ${dedication.dedicatedTo}",
-                                color = Color.White,
+                                text = "•  ${dedication.senderName} to ${dedication.dedicatedTo}",
+                                color = SwaaraColors.SecondaryText,
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Normal,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
                         Text(
                             text = "\"${dedication.message}\"",
-                            color = Color.White.copy(alpha = 0.9f),
+                            color = SwaaraColors.PrimaryText,
                             fontSize = 12.sp,
                             fontStyle = FontStyle.Italic,
                             maxLines = 2,

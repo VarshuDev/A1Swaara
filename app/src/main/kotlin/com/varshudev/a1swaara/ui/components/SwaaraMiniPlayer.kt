@@ -228,7 +228,7 @@ fun SwaaraMiniPlayer(
                     modifier = Modifier
                         .fillMaxWidth(progress.coerceIn(0f, 1f))
                         .height(2.dp)
-                        .background(SwaaraSignatureGradient)
+                        .background(SwaaraMagenta)
                 )
             }
         }

@@ -100,35 +100,25 @@ fun SwaaraEqualizerSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Brush.linearGradient(listOf(SwaaraMagenta, SwaaraViolet)))
-                            .border(1.dp, SwaaraMagenta.copy(alpha = 0.4f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.musical_notes),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(id = R.drawable.musical_notes),
+                        contentDescription = null,
+                        tint = SwaaraMagenta,
+                        modifier = Modifier.size(24.dp)
+                    )
 
                     Column {
                         Text(
                             text = "Studio Equalizer",
                             color = SwaaraPrimaryText,
                             fontSize = 19.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.3.sp
+                            fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "3D Spatial Surround & Swaara Sub-Bass",
+                            text = "Parametric frequency bands & acoustic room acoustics",
                             color = SwaaraSecondaryText,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Normal
                         )
                     }
                 }
@@ -149,11 +139,10 @@ fun SwaaraEqualizerSheet(
 
             // Presets Selector Chips
             Text(
-                text = "ACOUSTIC PRESETS",
-                color = SwaaraSecondaryText.copy(alpha = 0.8f),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
+                text = "Acoustic Presets",
+                color = SwaaraPrimaryText,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -168,15 +157,10 @@ fun SwaaraEqualizerSheet(
                     val isSelected = selectedPresetIndex == idx
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
-                                if (isSelected) Brush.horizontalGradient(listOf(SwaaraMagenta, SwaaraViolet))
-                                else Brush.horizontalGradient(listOf(SwaaraElevatedSurface, SwaaraElevatedSurface))
-                            )
-                            .border(
-                                1.dp,
-                                if (isSelected) SwaaraMagenta.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.08f),
-                                RoundedCornerShape(16.dp)
+                                if (isSelected) SwaaraMagenta
+                                else SwaaraElevatedSurface
                             )
                             .clickable {
                                 SwaaraAudioEngine.setPreset(idx)
@@ -185,24 +169,23 @@ fun SwaaraEqualizerSheet(
                     ) {
                         Text(
                             text = preset.name,
-                            color = if (isSelected) Color.White else SwaaraPrimaryText,
+                            color = if (isSelected) Color.White else SwaaraSecondaryText,
                             fontSize = 12.5.sp,
-                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // 5-Band Slider Visualizer
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(SwaaraDeepSurface)
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(24.dp))
-                    .padding(18.dp)
+                    .padding(16.dp)
             ) {
                 Column {
                     Row(
@@ -211,17 +194,16 @@ fun SwaaraEqualizerSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "PARAMETRIC FREQUENCY BANDS",
-                            color = SwaaraCyan,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.8.sp
+                            text = "Frequency Bands",
+                            color = SwaaraPrimaryText,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = if (isEqEnabled) "LIVE ENGINE ACTIVE" else "BYPASSED",
+                            text = if (isEqEnabled) "Active" else "Bypassed",
                             color = if (isEqEnabled) SwaaraMagenta else SwaaraSecondaryText,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
 
@@ -281,25 +263,23 @@ fun SwaaraEqualizerSheet(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .background(SwaaraDeepSurface)
-                        .border(1.dp, SwaaraMagenta.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
                         .padding(14.dp)
                 ) {
                     Column {
                         Text(
-                            text = "BASS BOOST",
+                            text = "Bass Boost",
                             color = SwaaraMagenta,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.6.sp
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "${(bassBoostLevel / 10).toInt()}%",
                             color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Black
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         Slider(
                             value = bassBoostLevel,
@@ -319,25 +299,23 @@ fun SwaaraEqualizerSheet(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .background(SwaaraDeepSurface)
-                        .border(1.dp, SwaaraCyan.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
                         .padding(14.dp)
                 ) {
                     Column {
                         Text(
-                            text = "3D SPATIAL",
+                            text = "3D Spatial",
                             color = SwaaraCyan,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.6.sp
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "${(virtualizerLevel / 10).toInt()}%",
                             color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Black
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         Slider(
                             value = virtualizerLevel,

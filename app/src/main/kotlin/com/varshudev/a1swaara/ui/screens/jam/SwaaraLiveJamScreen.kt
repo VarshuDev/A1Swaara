@@ -727,7 +727,6 @@ fun SwaaraLiveJamScreen(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(10.dp))
                                         .background(SwaaraColors.DeepSurface)
-                                        .border(1.dp, SwaaraColors.Magenta.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
                                         .clickable {
                                             SwaaraJamEngine.upvoteQueueItem(item.id)
                                         }
@@ -758,7 +757,6 @@ fun SwaaraLiveJamScreen(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(10.dp))
                                             .background(SwaaraColors.Violet.copy(alpha = 0.25f))
-                                            .border(1.dp, SwaaraColors.Violet, RoundedCornerShape(10.dp))
                                             .clickable {
                                                 SwaaraJamEngine.playQueueItemNow(context, item)
                                             }
@@ -813,38 +811,35 @@ fun SwaaraLiveJamScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .background(SwaaraColors.ElevatedSurface.copy(alpha = 0.94f))
-                        .border(1.dp, SwaaraColors.Magenta.copy(alpha = 0.35f), RoundedCornerShape(22.dp))
                         .padding(horizontal = 8.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val vibeList = listOf(
-                        "FIRE" to Color(0xFFFF5722),
-                        "BOOM" to SwaaraColors.Magenta,
-                        "BASS" to SwaaraColors.Cyan,
-                        "VIBE" to SwaaraColors.Violet,
-                        "LOVE" to Color(0xFFFF2A6D)
+                        "Fire" to Color(0xFFFF5722),
+                        "Boom" to SwaaraColors.Magenta,
+                        "Bass" to SwaaraColors.Cyan,
+                        "Vibe" to SwaaraColors.Violet,
+                        "Love" to Color(0xFFFF2A6D)
                     )
 
                     vibeList.forEach { (type, color) ->
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(color.copy(alpha = 0.18f))
-                                .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(color.copy(alpha = 0.15f))
                                 .clickable {
-                                    SwaaraJamEngine.sendVibe(context, type)
+                                    SwaaraJamEngine.sendVibe(context, type.uppercase())
                                 }
-                                .padding(horizontal = 11.dp, vertical = 7.dp)
+                                .padding(horizontal = 12.dp, vertical = 7.dp)
                         ) {
                             Text(
-                                text = "[$type]",
+                                text = type,
                                 color = color,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 0.5.sp
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -924,7 +919,7 @@ fun SwaaraVinylTurntable(
                 .graphicsLayer {
                     rotationZ = if (isPlaying) rotation else 0f
                 }
-                .shadow(20.dp, CircleShape, spotColor = SwaaraColors.Magenta.copy(alpha = 0.45f)),
+                .shadow(16.dp, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -969,8 +964,7 @@ fun SwaaraVinylTurntable(
                 modifier = Modifier
                     .size(102.dp)
                     .clip(CircleShape)
-                    .background(SwaaraColors.ElevatedSurface)
-                    .border(2.dp, SwaaraColors.Magenta.copy(alpha = 0.6f), CircleShape),
+                    .background(SwaaraColors.ElevatedSurface),
                 contentAlignment = Alignment.Center
             ) {
                 if (!artworkUrl.isNullOrBlank()) {
@@ -1150,9 +1144,8 @@ fun FloatingVibeBadge(vibe: JamVibe) {
                         this.scaleX = scale
                         this.scaleY = scale
                     }
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(SwaaraColors.ElevatedSurface.copy(alpha = 0.94f))
-                    .border(1.5.dp, accentColor, RoundedCornerShape(16.dp))
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1164,10 +1157,10 @@ fun FloatingVibeBadge(vibe: JamVibe) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "[$label] ${vibe.senderName}",
+                        text = "$label • ${vibe.senderName}",
                         color = SwaaraColors.PrimaryText,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }

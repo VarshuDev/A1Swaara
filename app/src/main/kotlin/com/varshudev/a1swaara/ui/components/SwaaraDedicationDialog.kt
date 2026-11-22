@@ -65,39 +65,29 @@ fun SwaaraDedicationDialog(
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(SwaaraColors.DeepSurface)
-                .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(24.dp))
                 .padding(22.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header Badge
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta))),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.musical_notes),
-                        contentDescription = "Dedication Icon",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                // Header Icon
+                Icon(
+                    painter = painterResource(id = R.drawable.musical_notes),
+                    contentDescription = "Dedication",
+                    tint = SwaaraColors.Magenta,
+                    modifier = Modifier.size(32.dp)
+                )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "DEDICATE THIS SONG",
+                    text = "Dedicate Song",
                     color = SwaaraColors.PrimaryText,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -115,11 +105,10 @@ fun SwaaraDedicationDialog(
                 // Input: Dedicated To
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "DEDICATED TO",
+                        text = "Dedicated to",
                         color = SwaaraColors.SecondaryText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.5.sp
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Box(
@@ -127,7 +116,6 @@ fun SwaaraDedicationDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(12.dp))
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                     ) {
                         BasicTextField(
@@ -156,11 +144,10 @@ fun SwaaraDedicationDialog(
                 // Input: Personal Message
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "DEDICATION MESSAGE",
+                        text = "Dedication message",
                         color = SwaaraColors.SecondaryText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.5.sp
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Box(
@@ -169,7 +156,6 @@ fun SwaaraDedicationDialog(
                             .height(84.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(12.dp))
                             .padding(14.dp)
                     ) {
                         BasicTextField(
@@ -181,7 +167,7 @@ fun SwaaraDedicationDialog(
                             decorationBox = { innerTextField ->
                                 if (message.isEmpty()) {
                                     Text(
-                                        text = "Write your heartfelt message here...",
+                                        text = "Write your message here...",
                                         color = SwaaraColors.TertiaryText,
                                         fontSize = 14.sp
                                     )
@@ -203,10 +189,9 @@ fun SwaaraDedicationDialog(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
                             .clickable { onDismiss() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -222,9 +207,9 @@ fun SwaaraDedicationDialog(
                     Box(
                         modifier = Modifier
                             .weight(1.5f)
-                            .height(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(SwaaraColors.Magenta)
                             .clickable(enabled = !isSending && dedicatedTo.isNotBlank() && message.isNotBlank()) {
                                 isSending = true
                                 coroutineScope.launch {

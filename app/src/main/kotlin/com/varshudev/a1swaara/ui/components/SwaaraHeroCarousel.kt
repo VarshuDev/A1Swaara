@@ -125,7 +125,6 @@ fun SwaaraHeroCarousel(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color.White.copy(alpha = 0.18f))
-                            .border(0.8.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Icon(
@@ -135,11 +134,10 @@ fun SwaaraHeroCarousel(
                             modifier = Modifier.size(11.dp)
                         )
                         Text(
-                            text = "SPOTLIGHT RELEASE",
+                            text = "Spotlight Release",
                             color = Color(0xFFFFE066),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 0.8.sp
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
 

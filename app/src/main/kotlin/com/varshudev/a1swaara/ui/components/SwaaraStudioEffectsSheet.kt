@@ -176,9 +176,8 @@ fun SwaaraStudioEffectsSheet(
                 // Reset Button
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(16.dp))
                         .clickable {
                             applyPreset(STUDIO_PRESETS.first())
                         }
@@ -188,7 +187,7 @@ fun SwaaraStudioEffectsSheet(
                         text = "Reset",
                         color = SwaaraCyan,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -217,24 +216,10 @@ fun SwaaraStudioEffectsSheet(
 
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (isSelected) Brush.horizontalGradient(
-                                    listOf(
-                                        SwaaraMagenta.copy(alpha = 0.28f),
-                                        SwaaraViolet.copy(alpha = 0.22f)
-                                    )
-                                ) else Brush.linearGradient(
-                                    listOf(
-                                        SwaaraElevatedSurface,
-                                        SwaaraElevatedSurface
-                                    )
-                                )
-                            )
-                            .border(
-                                width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) SwaaraMagenta.copy(alpha = 0.75f) else Color.White.copy(alpha = 0.08f),
-                                shape = RoundedCornerShape(16.dp)
+                                if (isSelected) SwaaraMagenta
+                                else SwaaraElevatedSurface
                             )
                             .clickable { applyPreset(preset) }
                             .padding(horizontal = 16.dp, vertical = 10.dp)
@@ -249,7 +234,7 @@ fun SwaaraStudioEffectsSheet(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = preset.description,
-                                color = if (isSelected) SwaaraCyan else SwaaraSecondaryText,
+                                color = if (isSelected) Color.White.copy(alpha = 0.85f) else SwaaraSecondaryText,
                                 fontSize = 10.5.sp
                             )
                         }
@@ -355,16 +340,10 @@ fun SwaaraStudioEffectsSheet(
 
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
-                                if (isSelected) SwaaraCyan.copy(alpha = 0.22f)
+                                if (isSelected) SwaaraMagenta
                                 else SwaaraElevatedSurface
-                            )
-                            .border(
-                                1.dp,
-                                if (isSelected) SwaaraCyan.copy(alpha = 0.70f)
-                                else Color.White.copy(alpha = 0.08f),
-                                RoundedCornerShape(14.dp)
                             )
                             .clickable { updateReverb(option) }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -373,7 +352,7 @@ fun SwaaraStudioEffectsSheet(
                             text = label,
                             color = if (isSelected) Color.White else SwaaraSecondaryText,
                             fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                         )
                     }
                 }

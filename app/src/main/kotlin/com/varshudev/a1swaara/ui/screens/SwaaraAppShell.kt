@@ -73,6 +73,7 @@ import com.varshudev.a1swaara.bugreport.SwaaraBugReportSheet
 import com.varshudev.a1swaara.bugreport.SwaaraCrashRecovery
 import com.varshudev.a1swaara.ui.components.SwaaraBorderSubtle
 import com.varshudev.a1swaara.ui.components.SwaaraDeepSurface
+import com.varshudev.a1swaara.ui.components.SwaaraElevatedSurface
 import com.varshudev.a1swaara.ui.components.SwaaraErrorRed
 import com.varshudev.a1swaara.ui.components.SwaaraMagenta
 import com.varshudev.a1swaara.ui.components.SwaaraMiniPlayer
@@ -351,8 +352,7 @@ fun SwaaraAppShell() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(SwaaraDeepSurface.copy(alpha = 0.96f))
-                            .border(1.dp, SwaaraErrorRed.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                            .background(SwaaraElevatedSurface)
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween

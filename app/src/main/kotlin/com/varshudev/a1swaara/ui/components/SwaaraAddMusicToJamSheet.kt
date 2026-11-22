@@ -176,25 +176,22 @@ fun SwaaraAddMusicToJamSheet(
             ) {
                 Column {
                     Text(
-                        text = "ADD MUSIC TO JAM",
+                        text = "Add Music to Jam",
                         color = SwaaraColors.PrimaryText,
                         fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Collaborative queue with live listener upvoting",
                         color = SwaaraColors.SecondaryText,
-                        fontSize = 11.sp
+                        fontSize = 12.sp
                     )
                 }
 
                 Box(
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(SwaaraColors.ElevatedSurface)
-                        .border(1.dp, SwaaraColors.CardBorder, CircleShape)
                         .clickable { onDismiss() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -202,7 +199,7 @@ fun SwaaraAddMusicToJamSheet(
                         painter = painterResource(id = R.drawable.close),
                         contentDescription = "Close",
                         tint = SwaaraColors.SecondaryText,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -213,9 +210,8 @@ fun SwaaraAddMusicToJamSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(SwaaraColors.ElevatedSurface)
-                    .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -225,10 +221,10 @@ fun SwaaraAddMusicToJamSheet(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .then(
                                 if (isSelected) {
-                                    Modifier.background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                                    Modifier.background(SwaaraColors.Magenta)
                                 } else {
                                     Modifier.background(Color.Transparent)
                                 }
@@ -241,7 +237,7 @@ fun SwaaraAddMusicToJamSheet(
                             text = label,
                             color = if (isSelected) Color.White else SwaaraColors.SecondaryText,
                             fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                         )
                     }
                 }
@@ -256,9 +252,8 @@ fun SwaaraAddMusicToJamSheet(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.Cyan.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
                             .padding(horizontal = 14.dp, vertical = 11.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -425,9 +420,8 @@ private fun JamTrackRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(SwaaraColors.ElevatedSurface)
-            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
             .padding(10.dp)
     ) {
         Row(
@@ -437,7 +431,7 @@ private fun JamTrackRow(
             Box(
                 modifier = Modifier
                     .size(46.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(SwaaraColors.DeepSurface),
                 contentAlignment = Alignment.Center
             ) {
@@ -483,8 +477,8 @@ private fun JamTrackRow(
             // Add Button
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(SwaaraColors.Magenta)
                     .clickable { onAdd() }
                     .padding(horizontal = 12.dp, vertical = 7.dp),
                 contentAlignment = Alignment.Center
