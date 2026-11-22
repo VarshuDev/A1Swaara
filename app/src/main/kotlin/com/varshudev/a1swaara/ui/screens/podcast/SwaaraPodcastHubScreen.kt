@@ -70,26 +70,10 @@ fun SwaaraPodcastHubScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val backInteractionSource = remember { MutableInteractionSource() }
-                    val isBackPressed by backInteractionSource.collectIsPressedAsState()
-                    val backScale by animateFloatAsState(
-                        targetValue = if (isBackPressed) 0.88f else 1f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                        label = "back_scale"
-                    )
-
                     Box(
                         modifier = Modifier
-                            .scale(backScale)
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraElevatedSurface)
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
-                            .clickable(
-                                interactionSource = backInteractionSource,
-                                indication = null,
-                                onClick = onDismiss
-                            ),
+                            .size(36.dp)
+                            .clickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -121,33 +105,17 @@ fun SwaaraPodcastHubScreen(
                     }
                 }
 
-                val searchInteractionSource = remember { MutableInteractionSource() }
-                val isSearchPressed by searchInteractionSource.collectIsPressedAsState()
-                val searchScale by animateFloatAsState(
-                    targetValue = if (isSearchPressed) 0.88f else 1f,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                    label = "search_scale"
-                )
-
                 Box(
                     modifier = Modifier
-                        .scale(searchScale)
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(SwaaraElevatedSurface)
-                        .border(1.dp, SwaaraCyan.copy(alpha = 0.35f), CircleShape)
-                        .clickable(
-                            interactionSource = searchInteractionSource,
-                            indication = null,
-                            onClick = { searchRoute.global("podcast") }
-                        ),
+                        .size(36.dp)
+                        .clickable(onClick = { searchRoute.global("podcast") }),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.search),
                         contentDescription = "Search Podcasts",
-                        tint = SwaaraCyan,
-                        modifier = Modifier.size(18.dp)
+                        tint = SwaaraPrimaryText,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

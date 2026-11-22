@@ -166,11 +166,10 @@ fun SwaaraCarModeScreen(
                 // Exit Car Mode Pill Button
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(1.5.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(24.dp))
                         .clickable { onExitCarMode() }
-                        .padding(horizontal = 18.dp, vertical = 10.dp)
+                        .padding(horizontal = 16.dp, vertical = 9.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -186,7 +185,7 @@ fun SwaaraCarModeScreen(
                             text = "Exit Car Mode",
                             color = Color.White,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -194,17 +193,15 @@ fun SwaaraCarModeScreen(
                 // Car Mode Active Badge
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(SwaaraMagenta.copy(alpha = 0.18f))
-                        .border(1.dp, SwaaraMagenta.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SwaaraElevatedSurface)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "DRIVE MODE",
+                        text = "Drive Mode",
                         color = SwaaraMagenta,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -221,15 +218,8 @@ fun SwaaraCarModeScreen(
                 Box(
                     modifier = Modifier
                         .size(if (isLandscape) 160.dp else 220.dp)
-                        .shadow(
-                            elevation = 24.dp,
-                            shape = RoundedCornerShape(24.dp),
-                            ambientColor = Color.Black,
-                            spotColor = SwaaraViolet.copy(alpha = 0.4f)
-                        )
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(2.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(24.dp))
                         .clickable {
                             if (player.shouldBePlaying) player.pause() else player.play()
                         },
@@ -311,11 +301,7 @@ fun SwaaraCarModeScreen(
                             .fillMaxWidth(fraction = progressFraction)
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(SwaaraMagenta, SwaaraViolet, SwaaraCyan)
-                                )
-                            )
+                            .background(SwaaraMagenta)
                     )
                 }
 
@@ -333,7 +319,6 @@ fun SwaaraCarModeScreen(
                             .size(64.dp)
                             .clip(CircleShape)
                             .background(SwaaraElevatedSurface)
-                            .border(1.5.dp, Color.White.copy(alpha = 0.12f), CircleShape)
                             .clickable {
                                 player.forceSeekToPrevious()
                                 context.toast("Previous track")
@@ -352,18 +337,8 @@ fun SwaaraCarModeScreen(
                     Box(
                         modifier = Modifier
                             .size(86.dp)
-                            .shadow(
-                                elevation = 16.dp,
-                                shape = CircleShape,
-                                ambientColor = Color.Black,
-                                spotColor = SwaaraMagenta.copy(alpha = 0.6f)
-                            )
                             .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(SwaaraMagenta, SwaaraViolet)
-                                )
-                            )
+                            .background(SwaaraMagenta)
                             .clickable {
                                 if (player.shouldBePlaying) player.pause() else player.play()
                             },
@@ -385,7 +360,6 @@ fun SwaaraCarModeScreen(
                             .size(64.dp)
                             .clip(CircleShape)
                             .background(SwaaraElevatedSurface)
-                            .border(1.5.dp, Color.White.copy(alpha = 0.12f), CircleShape)
                             .clickable {
                                 player.forceSeekToNext()
                                 context.toast("Next track")

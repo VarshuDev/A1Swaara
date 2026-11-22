@@ -159,20 +159,16 @@ fun SwaaraSettingsScreen(
                         if (onDismiss != null) {
                             IconButton(
                                 onClick = onDismiss,
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(SwaaraElevatedSurface)
-                                    .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.chevron_back),
                                     contentDescription = "Back",
                                     tint = SwaaraPrimaryText,
-                                    modifier = Modifier.size(17.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
 
                         Column(modifier = Modifier.weight(1f)) {
@@ -196,16 +192,15 @@ fun SwaaraSettingsScreen(
 
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(SwaaraMagenta.copy(alpha = 0.15f))
-                            .border(1.dp, SwaaraMagenta.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SwaaraElevatedSurface)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = "v${BuildConfig.VERSION_NAME}",
-                            color = SwaaraMagenta,
+                            color = SwaaraSecondaryText,
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.Black
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -216,56 +211,42 @@ fun SwaaraSettingsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(
-                                    SwaaraMagenta.copy(alpha = 0.20f),
-                                    SwaaraViolet.copy(alpha = 0.12f),
-                                    SwaaraDeepSurface
-                                )
-                            )
-                        )
-                        .border(
-                            1.dp,
-                            Brush.linearGradient(listOf(SwaaraMagenta.copy(alpha = 0.45f), SwaaraCyan.copy(alpha = 0.25f))),
-                            RoundedCornerShape(22.dp)
-                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(SwaaraDeepSurface)
                         .padding(18.dp)
                 ) {
                     Column {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(8.dp)
+                                    .size(6.dp)
                                     .clip(CircleShape)
                                     .background(SwaaraCyan)
                             )
                             Text(
-                                text = "A1 SWAARA SOVEREIGN ENGINE",
+                                text = "Sovereign Engine",
                                 color = SwaaraCyan,
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "Studio Master Acoustics & Zero Ad Telemetry",
-                            color = Color.White,
-                            fontSize = 15.sp,
+                            text = "Studio Master Acoustics",
+                            color = SwaaraPrimaryText,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = "100% sovereign audio streaming with 320 kbps bitrates and gapless looping playback.",
+                            text = "High-fidelity 320 kbps streaming with gapless playback.",
                             color = SwaaraSecondaryText,
                             fontSize = 12.sp,
                             lineHeight = 16.sp
@@ -279,13 +260,8 @@ fun SwaaraSettingsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .background(SwaaraElevatedSurface)
-                        .border(
-                            1.dp,
-                            Brush.horizontalGradient(listOf(SwaaraMagenta.copy(alpha = 0.5f), SwaaraCyan.copy(alpha = 0.5f))),
-                            RoundedCornerShape(20.dp)
-                        )
                         .clickable { showTourOverlay = true }
                         .padding(16.dp)
                 ) {
@@ -293,20 +269,12 @@ fun SwaaraSettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(Brush.linearGradient(listOf(SwaaraMagenta, SwaaraViolet))),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.hand_gesture),
-                                contentDescription = "Feature Tour",
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(id = R.drawable.hand_gesture),
+                            contentDescription = "Feature Tour",
+                            tint = SwaaraMagenta,
+                            modifier = Modifier.size(24.dp)
+                        )
 
                         Spacer(modifier = Modifier.width(14.dp))
 
@@ -314,23 +282,22 @@ fun SwaaraSettingsScreen(
                             Text(
                                 text = "Feature Walkthrough & Tour",
                                 color = SwaaraPrimaryText,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Animated gesture guide showing what we did & how to use A1 Swaara",
+                                text = "Animated gesture guide to explore all features",
                                 color = SwaaraSecondaryText,
-                                fontSize = 12.sp,
-                                lineHeight = 16.sp
+                                fontSize = 12.sp
                             )
                         }
 
                         Icon(
                             painter = painterResource(id = R.drawable.chevron_forward),
                             contentDescription = null,
-                            tint = SwaaraCyan,
-                            modifier = Modifier.size(18.dp)
+                            tint = SwaaraSecondaryText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
@@ -342,10 +309,9 @@ fun SwaaraSettingsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 5.dp)
-                            .clip(RoundedCornerShape(18.dp))
+                            .padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(SwaaraDeepSurface)
-                            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(18.dp))
                             .clickable { activeSubpageId = cat.id }
                             .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
@@ -353,31 +319,21 @@ fun SwaaraSettingsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Color-Coded Icon Container
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(CircleShape)
-                                    .background(cat.accentColor.copy(alpha = 0.14f))
-                                    .border(1.dp, cat.accentColor.copy(alpha = 0.30f), CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = cat.iconId),
-                                    contentDescription = cat.title,
-                                    tint = cat.accentColor,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                            Icon(
+                                painter = painterResource(id = cat.iconId),
+                                contentDescription = cat.title,
+                                tint = cat.accentColor,
+                                modifier = Modifier.size(22.dp)
+                            )
 
-                            Spacer(modifier = Modifier.width(14.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = cat.title,
                                     color = SwaaraPrimaryText,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
@@ -394,7 +350,7 @@ fun SwaaraSettingsScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.chevron_forward),
                                 contentDescription = null,
-                                tint = SwaaraSecondaryText.copy(alpha = 0.50f),
+                                tint = SwaaraSecondaryText.copy(alpha = 0.40f),
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -413,21 +369,17 @@ fun SwaaraSettingsScreen(
                 ) {
                     IconButton(
                         onClick = { activeSubpageId = -1 },
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraElevatedSurface)
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.chevron_back),
                             contentDescription = "Back",
                             tint = SwaaraPrimaryText,
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
                         text = categories.find { it.id == activeSubpageId }?.title ?: "Settings",
@@ -479,44 +431,34 @@ private fun AccountsAndSyncSubpage() {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(12.dp.roundedShape)
-                    .background(if (selectedTab == 0) SwaaraMagenta.copy(alpha = 0.20f) else SwaaraDeepSurface)
-                    .border(
-                        1.dp,
-                        if (selectedTab == 0) SwaaraMagenta.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.08f),
-                        12.dp.roundedShape
-                    )
+                    .clip(10.dp.roundedShape)
+                    .background(if (selectedTab == 0) SwaaraMagenta else SwaaraElevatedSurface)
                     .clickable { selectedTab = 0 }
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "Swaara Cloud & Jam",
-                    color = if (selectedTab == 0) SwaaraMagenta else SwaaraSecondaryText,
+                    color = if (selectedTab == 0) Color.White else SwaaraSecondaryText,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(12.dp.roundedShape)
-                    .background(if (selectedTab == 1) SwaaraViolet.copy(alpha = 0.20f) else SwaaraDeepSurface)
-                    .border(
-                        1.dp,
-                        if (selectedTab == 1) SwaaraViolet.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.08f),
-                        12.dp.roundedShape
-                    )
+                    .clip(10.dp.roundedShape)
+                    .background(if (selectedTab == 1) SwaaraMagenta else SwaaraElevatedSurface)
                     .clickable { selectedTab = 1 }
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "Piped Account",
-                    color = if (selectedTab == 1) SwaaraViolet else SwaaraSecondaryText,
+                    color = if (selectedTab == 1) Color.White else SwaaraSecondaryText,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

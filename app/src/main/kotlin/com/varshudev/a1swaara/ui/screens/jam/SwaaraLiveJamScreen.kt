@@ -189,17 +189,16 @@ fun SwaaraLiveJamScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(56.dp)
                         .clip(CircleShape)
-                        .background(SwaaraColors.ElevatedSurface)
-                        .border(1.dp, SwaaraColors.CardBorder, CircleShape),
+                        .background(SwaaraColors.DeepSurface),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.musical_notes),
                         contentDescription = null,
                         tint = SwaaraColors.Magenta,
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -219,8 +218,8 @@ fun SwaaraLiveJamScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SwaaraColors.Magenta)
                         .clickable { onDismiss() }
                         .padding(horizontal = 24.dp, vertical = 12.dp)
                 ) {
@@ -245,10 +244,7 @@ fun SwaaraLiveJamScreen(
                         // Dismiss/Back
                         Box(
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(SwaaraColors.ElevatedSurface)
-                                .border(1.dp, SwaaraColors.CardBorder, CircleShape)
+                                .size(36.dp)
                                 .clickable { onDismiss() },
                             contentAlignment = Alignment.Center
                         ) {
@@ -256,68 +252,71 @@ fun SwaaraLiveJamScreen(
                                 painter = painterResource(id = R.drawable.chevron_down),
                                 contentDescription = "Dismiss",
                                 tint = SwaaraColors.PrimaryText,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
 
                         // Room Code & Live Pill
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
-                                    .padding(horizontal = 9.dp, vertical = 5.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(SwaaraColors.Magenta)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Text(
-                                    text = "LIVE JAM",
-                                    color = Color.White,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 1.sp
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White)
+                                    )
+                                    Text(
+                                        text = "LIVE",
+                                        color = Color.White,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
 
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(SwaaraColors.ElevatedSurface)
-                                    .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(10.dp))
                                     .clickable {
                                         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                         cm.setPrimaryClip(ClipData.newPlainText("Jam Room Code", room.roomCode))
                                         Toast.makeText(context, "Room Code ${room.roomCode} copied!", Toast.LENGTH_SHORT).show()
                                     }
-                                    .padding(horizontal = 9.dp, vertical = 5.dp)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = room.roomCode,
                                     color = SwaaraColors.Cyan,
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
 
                             // Role Badge
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (room.isHost) Color(0xFFFFB300).copy(alpha = 0.2f) else SwaaraColors.Cyan.copy(alpha = 0.15f))
-                                    .border(
-                                        1.dp,
-                                        if (room.isHost) Color(0xFFFFB300) else SwaaraColors.Cyan,
-                                        RoundedCornerShape(10.dp)
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(SwaaraColors.ElevatedSurface)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = if (room.isHost) "[HOST]" else "[LISTENER]",
-                                    color = if (room.isHost) Color(0xFFFFB300) else SwaaraColors.Cyan,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Black
+                                    text = if (room.isHost) "Host" else "Listener",
+                                    color = if (room.isHost) Color(0xFFFFB300) else SwaaraColors.SecondaryText,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
@@ -330,9 +329,6 @@ fun SwaaraLiveJamScreen(
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(SwaaraColors.ElevatedSurface)
-                                    .border(1.dp, SwaaraColors.CardBorder, CircleShape)
                                     .clickable {
                                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                             type = "text/plain"
@@ -349,29 +345,28 @@ fun SwaaraLiveJamScreen(
                                 Icon(
                                     painter = painterResource(id = R.drawable.share_social),
                                     contentDescription = "Invite",
-                                    tint = SwaaraColors.Cyan,
-                                    modifier = Modifier.size(16.dp)
+                                    tint = SwaaraColors.PrimaryText,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
 
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.Red.copy(alpha = 0.15f))
-                                    .border(1.dp, Color.Red.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFE53935))
                                     .clickable {
                                         coroutineScope.launch {
                                             SwaaraJamEngine.leaveRoom(context)
                                             onDismiss()
                                         }
                                     }
-                                    .padding(horizontal = 11.dp, vertical = 8.dp)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
                                 Text(
                                     text = if (room.isHost) "End" else "Leave",
-                                    color = Color(0xFFFF5555),
+                                    color = Color.White,
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
@@ -503,10 +498,9 @@ fun SwaaraLiveJamScreen(
 
                                 Box(
                                     modifier = Modifier
-                                        .size(62.dp)
+                                        .size(60.dp)
                                         .clip(CircleShape)
-                                        .background(Brush.linearGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
-                                        .shadow(16.dp, CircleShape, spotColor = SwaaraColors.Magenta)
+                                        .background(SwaaraColors.Magenta)
                                         .clickable {
                                             if (player?.isPlaying == true) player.pause() else player?.play()
                                         },
@@ -516,7 +510,7 @@ fun SwaaraLiveJamScreen(
                                         painter = painterResource(id = if (room.isPlaying) R.drawable.pause else R.drawable.play),
                                         contentDescription = "Play/Pause",
                                         tint = Color.White,
-                                        modifier = Modifier.size(28.dp)
+                                        modifier = Modifier.size(26.dp)
                                     )
                                 }
 
@@ -542,10 +536,9 @@ fun SwaaraLiveJamScreen(
                             // Listener View: In-Sync Indicator
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .clip(RoundedCornerShape(12.dp))
                                     .background(SwaaraColors.ElevatedSurface)
-                                    .border(1.dp, SwaaraColors.Cyan.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
-                                    .padding(horizontal = 18.dp, vertical = 10.dp)
+                                    .padding(horizontal = 16.dp, vertical = 10.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
@@ -581,9 +574,8 @@ fun SwaaraLiveJamScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(44.dp)
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .clip(RoundedCornerShape(12.dp))
                                     .background(SwaaraColors.ElevatedSurface)
-                                    .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
                                     .clickable { showDedicationDialog = true },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -609,7 +601,7 @@ fun SwaaraLiveJamScreen(
 
                 // 8. Collaborative Up Next Queue & Add Songs Header
                 item {
-                    Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -618,18 +610,17 @@ fun SwaaraLiveJamScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "UP NEXT IN JAM (${queue.size})",
-                            color = SwaaraColors.SecondaryText,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
+                            text = "Up Next (${queue.size})",
+                            color = SwaaraColors.PrimaryText,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
                         )
 
                         // + Add Songs Button
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(SwaaraColors.Magenta)
                                 .clickable { showAddMusicSheet = true }
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
@@ -678,10 +669,9 @@ fun SwaaraLiveJamScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 4.dp)
-                                .clip(RoundedCornerShape(14.dp))
+                                .padding(horizontal = 24.dp, vertical = 3.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(SwaaraColors.ElevatedSurface)
-                                .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
                                 .padding(12.dp)
                         ) {
                             Row(

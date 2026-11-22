@@ -123,10 +123,7 @@ fun SwaaraLeaderboardScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, CircleShape)
+                            .size(36.dp)
                             .clickable { onDismiss() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -134,24 +131,20 @@ fun SwaaraLeaderboardScreen(
                             painter = painterResource(id = R.drawable.chevron_down),
                             contentDescription = "Back",
                             tint = SwaaraColors.PrimaryText,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
                     Text(
-                        text = "LEADERBOARD",
+                        text = "Leaderboard",
                         color = SwaaraColors.PrimaryText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
 
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, CircleShape)
+                            .size(36.dp)
                             .clickable { loadLeaderboards(force = true) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -159,7 +152,7 @@ fun SwaaraLeaderboardScreen(
                             painter = painterResource(id = R.drawable.sync),
                             contentDescription = "Refresh",
                             tint = SwaaraColors.PrimaryText,
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -177,18 +170,18 @@ fun SwaaraLeaderboardScreen(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(42.dp)
+                            .height(40.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (selectedTab == 0) Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta))
-                                else SolidColor(SwaaraColors.ElevatedSurface)
+                                if (selectedTab == 0) SwaaraColors.Magenta
+                                else SwaaraColors.ElevatedSurface
                             )
                             .clickable { selectedTab = 0 },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "Global Hall of Fame",
-                            color = Color.White,
+                            color = if (selectedTab == 0) Color.White else SwaaraColors.SecondaryText,
                             fontSize = 13.sp,
                             fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium
                         )
@@ -198,18 +191,18 @@ fun SwaaraLeaderboardScreen(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(42.dp)
+                            .height(40.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (selectedTab == 1) Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta))
-                                else SolidColor(SwaaraColors.ElevatedSurface)
+                                if (selectedTab == 1) SwaaraColors.Magenta
+                                else SwaaraColors.ElevatedSurface
                             )
                             .clickable { selectedTab = 1 },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "Artist Superfans",
-                            color = Color.White,
+                            color = if (selectedTab == 1) Color.White else SwaaraColors.SecondaryText,
                             fontSize = 13.sp,
                             fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium
                         )
@@ -227,8 +220,7 @@ fun SwaaraLeaderboardScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp, vertical = 8.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(Brush.horizontalGradient(listOf(SwaaraColors.ElevatedSurface, SwaaraColors.DeepSurface)))
-                            .border(1.dp, SwaaraColors.Cyan.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                            .background(SwaaraColors.ElevatedSurface)
                             .padding(12.dp)
                     ) {
                         Row(
@@ -239,7 +231,7 @@ fun SwaaraLeaderboardScreen(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(SwaaraColors.Cyan.copy(alpha = 0.2f)),
+                                    .background(SwaaraColors.Cyan.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -272,8 +264,7 @@ fun SwaaraLeaderboardScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp, vertical = 8.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(SwaaraColors.ElevatedSurface.copy(alpha = 0.7f))
-                            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
+                            .background(SwaaraColors.ElevatedSurface)
                             .padding(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -306,7 +297,6 @@ fun SwaaraLeaderboardScreen(
                             .padding(horizontal = 20.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -360,13 +350,8 @@ fun SwaaraLeaderboardScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
-                                        if (isChipSelected) SwaaraColors.Magenta.copy(alpha = 0.25f)
+                                        if (isChipSelected) SwaaraColors.Magenta
                                         else SwaaraColors.ElevatedSurface
-                                    )
-                                    .border(
-                                        1.dp,
-                                        if (isChipSelected) SwaaraColors.Magenta else SwaaraColors.CardBorder,
-                                        RoundedCornerShape(10.dp)
                                     )
                                     .clickable {
                                         artistQuery = if (chip == "All Artists") "" else chip
@@ -375,7 +360,7 @@ fun SwaaraLeaderboardScreen(
                             ) {
                                 Text(
                                     text = chip,
-                                    color = if (isChipSelected) SwaaraColors.PrimaryText else SwaaraColors.SecondaryText,
+                                    color = if (isChipSelected) Color.White else SwaaraColors.SecondaryText,
                                     fontSize = 11.sp,
                                     fontWeight = if (isChipSelected) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -474,29 +459,13 @@ private fun LeaderboardRow(
         else -> SwaaraColors.SecondaryText
     }
 
-    val borderColor = when {
-        isCurrentUser -> SwaaraColors.Cyan.copy(alpha = 0.8f)
-        rank == 1 -> SwaaraColors.Gold.copy(alpha = 0.5f)
-        rank == 2 -> Color(0xFFC0C0C0).copy(alpha = 0.4f)
-        rank == 3 -> Color(0xFFCD7F32).copy(alpha = 0.4f)
-        else -> SwaaraColors.CardBorder
-    }
-
-    val backgroundBrush = when (rank) {
-        1 -> Brush.horizontalGradient(listOf(SwaaraColors.Gold.copy(alpha = 0.12f), SwaaraColors.ElevatedSurface))
-        2 -> Brush.horizontalGradient(listOf(Color(0xFFC0C0C0).copy(alpha = 0.08f), SwaaraColors.ElevatedSurface))
-        3 -> Brush.horizontalGradient(listOf(Color(0xFFCD7F32).copy(alpha = 0.08f), SwaaraColors.ElevatedSurface))
-        else -> Brush.horizontalGradient(listOf(SwaaraColors.ElevatedSurface, SwaaraColors.ElevatedSurface))
-    }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(backgroundBrush)
-            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
-            .padding(14.dp)
+            .padding(horizontal = 20.dp, vertical = 3.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(SwaaraColors.ElevatedSurface)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -505,33 +474,27 @@ private fun LeaderboardRow(
             // Rank Number or Podium Indicator
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
-                    .background(rankColor.copy(alpha = 0.18f))
-                    .border(1.dp, rankColor.copy(alpha = 0.4f), CircleShape),
+                    .background(rankColor.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "#$rank",
                     color = rankColor,
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Black
+                    fontWeight = FontWeight.Bold
                 )
             }
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Avatar with Podium Ring
+            // Avatar
             Box(
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(SwaaraColors.DeepSurface)
-                    .border(
-                        if (rank in 1..3) 1.5.dp else 1.dp,
-                        if (rank in 1..3) rankColor.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.1f),
-                        CircleShape
-                    ),
+                    .background(SwaaraColors.DeepSurface),
                 contentAlignment = Alignment.Center
             ) {
                 if (!avatarUrl.isNullOrBlank()) {
@@ -560,7 +523,7 @@ private fun LeaderboardRow(
                         text = title,
                         color = SwaaraColors.PrimaryText,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -568,19 +531,20 @@ private fun LeaderboardRow(
                         Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(SwaaraColors.Cyan.copy(alpha = 0.2f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(SwaaraColors.Cyan.copy(alpha = 0.15f))
+                                .padding(horizontal = 5.dp, vertical = 1.dp)
                         ) {
                             Text(
-                                text = "YOU",
+                                text = "You",
                                 color = SwaaraColors.Cyan,
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Black
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     color = SwaaraColors.SecondaryText,
@@ -592,9 +556,9 @@ private fun LeaderboardRow(
 
             // Badge / Podium Tag
             val podiumTag = when (rank) {
-                1 -> "GOLD"
-                2 -> "SILVER"
-                3 -> "BRONZE"
+                1 -> "Gold"
+                2 -> "Silver"
+                3 -> "Bronze"
                 else -> null
             }
             val displayTag = badge ?: podiumTag
@@ -603,26 +567,16 @@ private fun LeaderboardRow(
                 Spacer(modifier = Modifier.width(8.dp))
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(6.dp))
                         .background(
                             when (rank) {
-                                1 -> SwaaraColors.Gold.copy(alpha = 0.2f)
-                                2 -> Color(0xFFC0C0C0).copy(alpha = 0.2f)
-                                3 -> Color(0xFFCD7F32).copy(alpha = 0.2f)
-                                else -> SwaaraColors.Cyan.copy(alpha = 0.15f)
+                                1 -> SwaaraColors.Gold.copy(alpha = 0.15f)
+                                2 -> Color(0xFFC0C0C0).copy(alpha = 0.15f)
+                                3 -> Color(0xFFCD7F32).copy(alpha = 0.15f)
+                                else -> SwaaraColors.Cyan.copy(alpha = 0.12f)
                             }
                         )
-                        .border(
-                            1.dp,
-                            when (rank) {
-                                1 -> SwaaraColors.Gold.copy(alpha = 0.4f)
-                                2 -> Color(0xFFC0C0C0).copy(alpha = 0.4f)
-                                3 -> Color(0xFFCD7F32).copy(alpha = 0.4f)
-                                else -> SwaaraColors.Cyan.copy(alpha = 0.3f)
-                            },
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = displayTag,
@@ -632,9 +586,8 @@ private fun LeaderboardRow(
                             3 -> Color(0xFFCD7F32)
                             else -> SwaaraColors.Cyan
                         },
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.5.sp
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }

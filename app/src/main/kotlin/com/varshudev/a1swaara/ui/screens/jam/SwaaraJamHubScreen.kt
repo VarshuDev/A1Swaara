@@ -123,10 +123,7 @@ fun SwaaraJamHubScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, CircleShape)
+                            .size(36.dp)
                             .clickable { onDismiss() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -134,24 +131,20 @@ fun SwaaraJamHubScreen(
                             painter = painterResource(id = R.drawable.chevron_down),
                             contentDescription = "Back",
                             tint = SwaaraColors.PrimaryText,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
                     Text(
-                        text = "JAMMING HUB",
+                        text = "Jam Sessions",
                         color = SwaaraColors.PrimaryText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
 
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, CircleShape)
+                            .size(36.dp)
                             .clickable { refreshRooms() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -159,7 +152,7 @@ fun SwaaraJamHubScreen(
                             painter = painterResource(id = R.drawable.sync),
                             contentDescription = "Refresh",
                             tint = SwaaraColors.PrimaryText,
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -173,8 +166,8 @@ fun SwaaraJamHubScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp, vertical = 8.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SwaaraColors.DeepSurface)
                             .clickable { onEnterLiveRoom() }
                             .padding(16.dp)
                     ) {
@@ -183,25 +176,36 @@ fun SwaaraJamHubScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
-                                Text(
-                                    text = "YOU ARE IN A LIVE SESSION",
-                                    color = SwaaraColors.Gold,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 1.sp
-                                )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(SwaaraColors.Magenta)
+                                    )
+                                    Text(
+                                        text = "Live Session Active",
+                                        color = SwaaraColors.Magenta,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "${room.roomName} (${room.roomCode})",
-                                    color = Color.White,
-                                    fontSize = 16.sp,
+                                    color = SwaaraColors.PrimaryText,
+                                    fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(Color.White.copy(alpha = 0.2f))
+                                    .background(SwaaraColors.Magenta)
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Text(text = "Open Room", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -220,76 +224,39 @@ fun SwaaraJamHubScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        SwaaraColors.DeepSurface,
-                                        SwaaraColors.ElevatedSurface
-                                    )
-                                )
-                            )
-                            .border(
-                                1.dp,
-                                Brush.horizontalGradient(
-                                    listOf(SwaaraColors.Cyan.copy(alpha = 0.5f), SwaaraColors.Magenta.copy(alpha = 0.5f))
-                                ),
-                                RoundedCornerShape(20.dp)
-                            )
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SwaaraColors.DeepSurface)
                             .padding(20.dp)
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(54.dp)
-                                    .clip(CircleShape)
-                                    .background(SwaaraColors.Magenta.copy(alpha = 0.15f))
-                                    .border(1.dp, SwaaraColors.Magenta.copy(alpha = 0.4f), CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.musical_notes),
-                                    contentDescription = null,
-                                    tint = SwaaraColors.Magenta,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
                             Text(
-                                text = "SIGN IN TO JOIN THE JAM",
-                                color = SwaaraColors.Gold,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.5.sp
+                                text = "Sign in to join Live Jam",
+                                color = SwaaraColors.PrimaryText,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
                             )
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
 
                             Text(
-                                text = "Real-time collaborative listening requires a verified Google account to host rooms, sync queues, and drop dedications.",
+                                text = "Collaborate in real time, queue tracks together, and listen with friends.",
                                 color = SwaaraColors.SecondaryText,
                                 fontSize = 13.sp,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 18.sp
                             )
 
-                            Spacer(modifier = Modifier.height(18.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(
-                                        Brush.horizontalGradient(
-                                            listOf(SwaaraColors.Violet, SwaaraColors.Magenta)
-                                        )
-                                    )
+                                    .height(46.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White)
                                     .clickable {
                                         coroutineScope.launch {
                                             val res = SwaaraGoogleAuthManager.launchGoogleSignIn(context)
@@ -304,15 +271,15 @@ fun SwaaraJamHubScreen(
                                     Icon(
                                         painter = painterResource(id = R.drawable.person),
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = Color.Black,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "Continue with Google",
-                                        color = Color.White,
+                                        color = Color.Black,
                                         fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }
@@ -331,9 +298,9 @@ fun SwaaraJamHubScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                                .height(50.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SwaaraColors.Magenta)
                                 .clickable { showCreateDialog = true },
                             contentAlignment = Alignment.Center
                         ) {
@@ -342,13 +309,13 @@ fun SwaaraJamHubScreen(
                                     painter = painterResource(id = R.drawable.musical_notes),
                                     contentDescription = null,
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Create a Live Jam Session",
                                     color = Color.White,
-                                    fontSize = 15.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -365,10 +332,9 @@ fun SwaaraJamHubScreen(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp)
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .height(46.dp)
+                                    .clip(RoundedCornerShape(12.dp))
                                     .background(SwaaraColors.ElevatedSurface)
-                                    .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(14.dp))
                                     .padding(horizontal = 14.dp),
                                 contentAlignment = Alignment.CenterStart
                             ) {
@@ -376,7 +342,7 @@ fun SwaaraJamHubScreen(
                                     value = joinCodeInput,
                                     onValueChange = { if (it.length <= 6) joinCodeInput = it.uppercase() },
                                     textStyle = TextStyle(
-                                        color = SwaaraColors.Cyan,
+                                        color = SwaaraColors.PrimaryText,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = 2.sp
@@ -387,11 +353,10 @@ fun SwaaraJamHubScreen(
                                     decorationBox = { innerTextField ->
                                         if (joinCodeInput.isEmpty()) {
                                             Text(
-                                                text = "ENTER 6-DIGIT CODE",
-                                                color = SwaaraColors.TertiaryText,
+                                                text = "Enter 6-digit code",
+                                                color = SwaaraColors.SecondaryText,
                                                 fontSize = 13.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                letterSpacing = 1.sp
+                                                fontWeight = FontWeight.Normal
                                             )
                                         }
                                         innerTextField()
@@ -401,10 +366,9 @@ fun SwaaraJamHubScreen(
 
                             Box(
                                 modifier = Modifier
-                                    .height(48.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(SwaaraColors.DeepSurface)
-                                    .border(1.dp, SwaaraColors.Cyan.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                                    .height(46.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (joinCodeInput.length >= 4) SwaaraColors.Magenta else SwaaraColors.ElevatedSurface)
                                     .clickable(enabled = !isJoining && joinCodeInput.length >= 4) {
                                         isJoining = true
                                         coroutineScope.launch {
@@ -423,15 +387,15 @@ fun SwaaraJamHubScreen(
                                 if (isJoining) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(16.dp),
-                                        color = SwaaraColors.Cyan,
+                                        color = Color.White,
                                         strokeWidth = 2.dp
                                     )
                                 } else {
                                     Text(
                                         text = "Join",
-                                        color = SwaaraColors.Cyan,
+                                        color = if (joinCodeInput.length >= 4) Color.White else SwaaraColors.SecondaryText,
                                         fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }
@@ -451,11 +415,10 @@ fun SwaaraJamHubScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "LIVE PUBLIC JAMS",
-                        color = SwaaraColors.SecondaryText,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        text = "Live Public Jams",
+                        color = SwaaraColors.PrimaryText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
                     if (isLoadingRooms) {
                         CircularProgressIndicator(
@@ -501,10 +464,9 @@ fun SwaaraJamHubScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 5.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .padding(horizontal = 20.dp, vertical = 4.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(16.dp))
                             .clickable {
                                 coroutineScope.launch {
                                     val ok = SwaaraJamEngine.joinRoom(context, r.roomCode)
@@ -541,16 +503,15 @@ fun SwaaraJamHubScreen(
 
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(SwaaraColors.DeepSurface)
-                                    .border(1.dp, SwaaraColors.Cyan.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 Text(
                                     text = "${r.activeListeners} Listeners",
                                     color = SwaaraColors.Cyan,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
@@ -590,18 +551,16 @@ private fun CreateJamRoomDialog(
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(SwaaraColors.DeepSurface)
-                .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(24.dp))
                 .padding(22.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "CREATE JAM ROOM",
+                    text = "Create Jam Session",
                     color = SwaaraColors.PrimaryText,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -611,9 +570,8 @@ private fun CreateJamRoomDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.Magenta.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
                             .padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -643,11 +601,10 @@ private fun CreateJamRoomDialog(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Kicking off with:",
+                                text = "Kicking off with",
                                 color = SwaaraColors.Cyan,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = activeTitle,
@@ -672,10 +629,10 @@ private fun CreateJamRoomDialog(
                 // Room Name
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "ROOM NAME",
+                        text = "Room Name",
                         color = SwaaraColors.SecondaryText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Box(
@@ -683,7 +640,6 @@ private fun CreateJamRoomDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraColors.ElevatedSurface)
-                            .border(1.dp, SwaaraColors.CardBorder, RoundedCornerShape(12.dp))
                             .padding(14.dp)
                     ) {
                         BasicTextField(
@@ -746,7 +702,7 @@ private fun CreateJamRoomDialog(
                         modifier = Modifier
                             .weight(1f)
                             .height(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(SwaaraColors.ElevatedSurface)
                             .clickable { onDismiss() },
                         contentAlignment = Alignment.Center
@@ -758,8 +714,8 @@ private fun CreateJamRoomDialog(
                         modifier = Modifier
                             .weight(1.5f)
                             .height(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Brush.horizontalGradient(listOf(SwaaraColors.Violet, SwaaraColors.Magenta)))
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(SwaaraColors.Magenta)
                             .clickable(enabled = !isCreating && roomName.isNotBlank()) {
                                 isCreating = true
                                 coroutineScope.launch {
