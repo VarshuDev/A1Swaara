@@ -16,6 +16,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.varshudev.a1swaara.BuildConfig
 import com.varshudev.a1swaara.utils.toast
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -92,8 +93,6 @@ object SwaaraGoogleAuthManager {
 
                 var idToken: String? = null
                 var credEmail: String? = null
-                var credDisplayName: String? = null
-                var credPhotoUri: String? = null
 
                 if (credential is CustomCredential &&
                     credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
@@ -101,65 +100,20 @@ object SwaaraGoogleAuthManager {
                     val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                     idToken = googleIdTokenCredential.idToken
                     credEmail = googleIdTokenCredential.id
-                    credDisplayName = googleIdTokenCredential.displayName
-                    credPhotoUri = googleIdTokenCredential.profilePictureUri?.toString()
                 }
 
                 if (!idToken.isNullOrBlank()) {
                     Log.i(TAG, "Native Google ID token retrieved successfully for $credEmail")
 
-                    val parsedJwtUser = parseUserFromJwt(idToken)
-                    val finalUserId = parsedJwtUser?.id?.ifBlank { null }
-                        ?: credEmail
-                        ?: "swaara_${System.currentTimeMillis()}"
-                    val finalEmail = parsedJwtUser?.email ?: credEmail
-                    val finalDisplayName = parsedJwtUser?.displayName
-                        ?: credDisplayName
-                        ?: credEmail?.substringBefore('@')
-                        ?: "Swaara Listener"
-                    val finalAvatar = parsedJwtUser?.avatarUrl ?: credPhotoUri
-
-                    // 1. Attempt token exchange with Supabase Auth
-                    var session = SwaaraSupabaseClient.signInWithGoogleIdToken(idToken)
-
-                    // 2. If Supabase token exchange fails, establish direct sovereign session using verified Google identity
+                    val session = SwaaraSupabaseClient.signInWithGoogleIdToken(idToken)
                     if (session == null) {
-                        Log.i(TAG, "Supabase exchange returned null; establishing direct sovereign Google session.")
-                        val sovereignUser = SupabaseUser(
-                            id = finalUserId,
-                            email = finalEmail,
-                            displayName = finalDisplayName,
-                            avatarUrl = finalAvatar
-                        )
-                        session = SupabaseSession(
-                            accessToken = idToken,
-                            refreshToken = "",
-                            expiresIn = 3600L * 24 * 30, // 30-day sovereign session
-                            user = sovereignUser
-                        )
+                        lastException = IllegalStateException("Could not authenticate with Supabase. Please try again.")
+                        break
                     }
 
                     // 3. Save session in local auth manager
                     val auth = SwaaraCloudAuth.getInstance(activity)
                     auth.saveSession(session)
-
-                    // 4. Sync user profile to Supabase database in background
-                    try {
-                        val profileObj = JSONObject().apply {
-                            put("id", session.user.id)
-                            put("display_name", session.user.displayName)
-                            put("avatar_url", session.user.avatarUrl ?: "")
-                            put("email", session.user.email ?: "")
-                        }
-                        SwaaraSupabaseClient.upsert(
-                            "profiles",
-                            org.json.JSONArray().put(profileObj).toString(),
-                            "id",
-                            session.accessToken
-                        )
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Profile upsert notice: ${e.message}")
-                    }
 
                     // 5. Trigger cloud sync (playlists, favorites, top listener)
                     SwaaraAccountSyncEngine.triggerSync(activity)
@@ -169,6 +123,8 @@ object SwaaraGoogleAuthManager {
                     }
                     return@withContext Result.success(session.user)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: GetCredentialCancellationException) {
                 Log.d(TAG, "User dismissed Google Sign-In account picker.")
                 return@withContext Result.failure(e)
@@ -244,7 +200,7 @@ object SwaaraGoogleAuthManager {
 
             return Triple(accessToken, refreshToken, expiresIn)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse tokens from URL: $url", e)
+            Log.e(TAG, "Failed to parse OAuth callback", e)
             return null
         }
     }
@@ -300,34 +256,21 @@ object SwaaraGoogleAuthManager {
         expiresIn: Long
     ): Boolean = withContext(Dispatchers.IO) {
         try {
-            var user = parseUserFromJwt(accessToken)
-
-            val userJson = SwaaraSupabaseClient.getUser(accessToken)
-            if (userJson != null) {
-                val userId = userJson.optString("id", user?.id ?: "")
-                val email = if (userJson.has("email") && !userJson.isNull("email")) userJson.getString("email") else user?.email
-                val metaObj = userJson.optJSONObject("user_metadata")
-                val displayName = metaObj?.optString("full_name")
-                    ?: metaObj?.optString("name")
-                    ?: user?.displayName
-                    ?: email?.substringBefore('@')
-                    ?: "Swaara Listener"
-                val avatarUrl = metaObj?.optString("avatar_url")
-                    ?: metaObj?.optString("picture")
-                    ?: user?.avatarUrl
-
-                user = SupabaseUser(
-                    id = userId,
-                    email = email,
-                    displayName = displayName,
-                    avatarUrl = avatarUrl
-                )
-            }
-
-            if (user == null || user.id.isBlank()) {
-                Log.e(TAG, "Failed to resolve authenticated user")
-                return@withContext false
-            }
+            // A decoded JWT is not proof of authentication. Validate with Supabase.
+            val userJson = SwaaraSupabaseClient.getUser(accessToken) ?: return@withContext false
+            val userId = userJson.optString("id")
+            if (userId.isBlank()) return@withContext false
+            val email = if (userJson.has("email") && !userJson.isNull("email")) userJson.getString("email") else null
+            val meta = userJson.optJSONObject("user_metadata")
+            val user = SupabaseUser(
+                id = userId,
+                email = email,
+                displayName = meta?.optString("full_name")?.takeIf { it.isNotBlank() }
+                    ?: meta?.optString("name")?.takeIf { it.isNotBlank() }
+                    ?: email?.substringBefore('@') ?: "Swaara Listener",
+                avatarUrl = meta?.optString("avatar_url")?.takeIf { it.isNotBlank() }
+                    ?: meta?.optString("picture")?.takeIf { it.isNotBlank() }
+            )
 
             val session = SupabaseSession(
                 accessToken = accessToken,
@@ -341,6 +284,8 @@ object SwaaraGoogleAuthManager {
             SwaaraAccountSyncEngine.triggerSync(context)
             Log.i(TAG, "Successfully authenticated user ${user.displayName} (${user.id})")
             true
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "OAuth token processing failed", e)
             false

@@ -65,7 +65,7 @@ android {
         targetSdk = 36
 
         versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 6
-        versionName = "1.0.5"
+        versionName = providers.gradleProperty("version").get()
 
         multiDexEnabled = true
 
@@ -129,7 +129,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
 
         create("nightly") {
@@ -237,6 +237,7 @@ dependencies {
     implementation(libs.workmanager)
     implementation(libs.workmanager.ktx)
 
+    implementation("androidx.security:security-crypto:1.1.0")
     implementation(libs.credentials)
     implementation(libs.credentials.play)
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
@@ -288,8 +289,8 @@ tasks.register("verifyDebug16kZipAlignment") {
             .resolve("build-tools/${android.buildToolsVersion}/zipalign")
         check(zipalign.isFile) { "zipalign was not found: $zipalign" }
 
-        val apks = layout.buildDirectory.dir("outputs/apk/debug").get().asFileTree
-            .matching { include("*.apk") }
+        val apks = layout.buildDirectory.dir("outputs/apk").get().asFileTree
+            .matching { include("*/debug/*.apk") }
             .files
             .sorted()
         check(apks.isNotEmpty()) { "No debug APK was produced." }

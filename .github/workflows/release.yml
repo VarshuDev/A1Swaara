@@ -66,6 +66,7 @@ jobs:
 
       - name: Verify and prepare release assets
         env:
+          EXPECTED_CERT_SHA256: ${{ secrets.SWAARA_RELEASE_CERT_SHA256 }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           http3_apk="app/build/outputs/apk/http3/release/app-http3-release.apk"
@@ -75,8 +76,20 @@ jobs:
 
           apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           test -n "$apksigner"
-          "$apksigner" verify --verbose --print-certs "$http3_apk"
-          "$apksigner" verify --verbose --print-certs "$http2_apk"
+          test -n "$EXPECTED_CERT_SHA256" || {
+            echo "SWAARA_RELEASE_CERT_SHA256 is not configured" >&2
+            exit 1
+          }
+          expected="$(echo "$EXPECTED_CERT_SHA256" | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')"
+          for apk in "$http3_apk" "$http2_apk"; do
+            output="$("$apksigner" verify --verbose --print-certs "$apk")"
+            echo "$output"
+            actual="$(printf '%s\n' "$output" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')"
+            test -n "$actual" && test "$actual" = "$expected" || {
+              echo "Unexpected signing certificate for $apk" >&2
+              exit 1
+            }
+          done
 
           unzip -Z1 "$http3_apk" | grep '/libkathttp3.so$' >/dev/null
           if unzip -Z1 "$http2_apk" | grep '/libkathttp3.so$' >/dev/null; then

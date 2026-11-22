@@ -3,3 +3,9 @@ sdk.dir=/home/youruser/.android-sdk
 # Optional Cloud & Community Sync Credentials
 # SWAARA_CLOUD_API_KEY=your_api_key_here
 # SWAARA_CLOUD_PROJECT_ID=your_project_id_here
+
+# Supabase and Google Sign-In (use a dedicated development project)
+# SWAARA_SUPABASE_URL=https://example.supabase.co
+# SWAARA_SUPABASE_ANON_KEY=your_public_anon_key
+# SWAARA_GOOGLE_WEB_CLIENT_ID=your_web_client_id
+# SWAARA_GOOGLE_ANDROID_CLIENT_ID=your_android_client_id

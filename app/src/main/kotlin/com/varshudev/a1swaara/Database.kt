@@ -1011,7 +1011,7 @@ interface Database {
     ],
     views = [SortedSongPlaylistMap::class],
     version = 2,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
@@ -1051,7 +1051,6 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
                 name = "swaara.db"
             )
             .addMigrations(MIGRATION_1_2)
-            .fallbackToDestructiveMigration()
             .build()
 
         operator fun invoke(context: Context) {

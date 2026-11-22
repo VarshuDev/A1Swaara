@@ -77,7 +77,8 @@ data class JamRoomSummary(
 
 /**
  * Real-time collaborative audio synchronization, democratic queueing, and song dedication engine.
- * Implements 10-minute inactivity auto-purging and lockstep host-to-listener synchronization.
+ * Filters inactive rooms and provides host-to-listener playback synchronization.
+ * Server-side cleanup and authenticated private-room membership are still required.
  */
 object SwaaraJamEngine {
     private const val TAG = "SwaaraJamEngine"
@@ -97,6 +98,7 @@ object SwaaraJamEngine {
     private val _activeVibes = MutableStateFlow<List<JamVibe>>(emptyList())
     val activeVibes: StateFlow<List<JamVibe>> = _activeVibes.asStateFlow()
 
+    private var sessionAuth: SwaaraCloudAuth? = null
     private var syncJob: Job? = null
     private val engineScope = CoroutineScope(Dispatchers.IO)
 
@@ -128,7 +130,8 @@ object SwaaraJamEngine {
                         put("message", "[VIBE:$vibeType]")
                         put("is_active", true)
                     }
-                    SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), auth.accessToken)
+                    val token = auth.validAccessToken() ?: return@launch
+                    SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), token)
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to broadcast vibe: ${e.message}")
                 }
@@ -145,10 +148,13 @@ object SwaaraJamEngine {
     }
 
     fun removeQueueItem(itemId: Long) {
-        _activeQueue.value = _activeQueue.value.filter { it.id != itemId }
+        if (_currentRoom.value?.isHost != true) return
         engineScope.launch {
             try {
-                SwaaraSupabaseClient.delete("jam_queue", "id=eq.$itemId")
+                val token = sessionAuth?.validAccessToken() ?: return@launch
+                if (SwaaraSupabaseClient.delete("jam_queue", "id=eq.$itemId", token)) {
+                    _activeQueue.value = _activeQueue.value.filter { it.id != itemId }
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to delete queue item: ${e.message}")
             }
@@ -197,18 +203,6 @@ object SwaaraJamEngine {
         return sb.toString()
     }
 
-    /**
-     * Purges rooms where no activity or heartbeat has been reported for 10 minutes.
-     */
-    suspend fun purgeInactiveRooms() = withContext(Dispatchers.IO) {
-        try {
-            val cutoffIso = Instant.ofEpochMilli(System.currentTimeMillis() - INACTIVITY_TIMEOUT_MS).toString()
-            SwaaraSupabaseClient.delete("jam_rooms", "playback_updated_at=lt.$cutoffIso")
-        } catch (e: Exception) {
-            Log.w(TAG, "Error purging inactive rooms: ${e.message}")
-        }
-    }
-
     suspend fun createRoom(
         context: Context,
         roomName: String = "Swaara Live Session",
@@ -227,6 +221,12 @@ object SwaaraJamEngine {
             return@withContext null
         }
 
+        val token = auth.validAccessToken() ?: return@withContext null
+        if (!isPublic) {
+            Log.w(TAG, "Private Jam rooms require a secure invitation system and are not available yet.")
+            return@withContext null
+        }
+        sessionAuth = auth
         val roomCode = generateRoomCode()
         val nowMs = System.currentTimeMillis()
         val nowIso = Instant.ofEpochMilli(nowMs).toString()
@@ -248,7 +248,7 @@ object SwaaraJamEngine {
             put("active_listeners_count", 1)
         }
 
-        val success = SwaaraSupabaseClient.insert("jam_rooms", payload.toString(), auth.accessToken)
+        val success = SwaaraSupabaseClient.insert("jam_rooms", payload.toString(), token)
         if (success) {
             val state = JamRoomState(
                 roomCode = roomCode,
@@ -282,8 +282,10 @@ object SwaaraJamEngine {
             return@withContext false
         }
 
+        val token = auth.validAccessToken() ?: return@withContext false
         val cleanCode = roomCode.trim().uppercase()
-        val json = SwaaraSupabaseClient.get("jam_rooms", "room_code=eq.$cleanCode")
+        if (!cleanCode.matches(Regex("JAM[A-Z2-9]{3}"))) return@withContext false
+        val json = SwaaraSupabaseClient.get("jam_rooms", "room_code=eq.$cleanCode", token)
         if (json == null || json.length() == 0) return@withContext false
 
         val row = json.getJSONObject(0)
@@ -299,8 +301,7 @@ object SwaaraJamEngine {
         }
 
         if (System.currentTimeMillis() - updatedAtMs > INACTIVITY_TIMEOUT_MS) {
-            Log.i(TAG, "Room $cleanCode is inactive (>10 mins). Purging.")
-            SwaaraSupabaseClient.delete("jam_rooms", "room_code=eq.$cleanCode")
+            Log.i(TAG, "Room $cleanCode is inactive (>10 mins).")
             return@withContext false
         }
 
@@ -322,13 +323,8 @@ object SwaaraJamEngine {
             isHost = isHost
         )
 
-        if (!isHost) {
-            val updatePayload = JSONObject().apply {
-                put("active_listeners_count", state.activeListenersCount)
-            }
-            SwaaraSupabaseClient.patch("jam_rooms", updatePayload.toString(), "room_code=eq.$cleanCode")
-        }
-
+        // Listener count is not client-writable; it needs a server-side presence system.
+        sessionAuth = auth
         _currentRoom.value = state
         startSyncLoop(cleanCode, isHost)
         true
@@ -340,14 +336,10 @@ object SwaaraJamEngine {
         syncJob = null
 
         if (room.isHost) {
-            SwaaraSupabaseClient.delete("jam_rooms", "room_code=eq.${room.roomCode}")
-        } else {
-            val newCount = (room.activeListenersCount - 1).coerceAtLeast(1)
-            val updatePayload = JSONObject().apply {
-                put("active_listeners_count", newCount)
-            }
-            SwaaraSupabaseClient.patch("jam_rooms", updatePayload.toString(), "room_code=eq.${room.roomCode}")
+            val token = sessionAuth?.validAccessToken()
+            if (token != null) SwaaraSupabaseClient.delete("jam_rooms", "room_code=eq.${room.roomCode}", token)
         }
+        sessionAuth = null
 
         _currentRoom.value = null
         _activeDedications.value = emptyList()
@@ -378,7 +370,8 @@ object SwaaraJamEngine {
             put("playback_updated_at", nowIso)
         }
 
-        SwaaraSupabaseClient.patch("jam_rooms", payload.toString(), "room_code=eq.${room.roomCode}")
+        val token = sessionAuth?.validAccessToken() ?: return@withContext
+        if (!SwaaraSupabaseClient.patch("jam_rooms", payload.toString(), "room_code=eq.${room.roomCode}", token)) return@withContext
 
         _currentRoom.value = room.copy(
             currentSongId = songId,
@@ -411,7 +404,8 @@ object SwaaraJamEngine {
             put("is_active", true)
         }
 
-        val success = SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), auth.accessToken)
+        val token = auth.validAccessToken() ?: return@withContext false
+        val success = SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), token)
         if (success) {
             refreshDedications(room.roomCode)
         }
@@ -437,7 +431,8 @@ object SwaaraJamEngine {
             put("added_by_name", auth.displayName)
         }
 
-        val success = SwaaraSupabaseClient.insert("jam_queue", payload.toString(), auth.accessToken)
+        val token = auth.validAccessToken() ?: return@withContext false
+        val success = SwaaraSupabaseClient.insert("jam_queue", payload.toString(), token)
         if (success) {
             refreshQueue(room.roomCode)
         }
@@ -446,9 +441,9 @@ object SwaaraJamEngine {
 
     suspend fun listPublicRooms(): List<JamRoomSummary> = withContext(Dispatchers.IO) {
         try {
-            purgeInactiveRooms()
-
-            val json = SwaaraSupabaseClient.get("jam_rooms", "is_public=eq.true&order=created_at.desc&limit=25")
+            // Filter before applying the limit so stale rooms cannot hide active ones.
+            val cutoff = Instant.ofEpochMilli(System.currentTimeMillis() - INACTIVITY_TIMEOUT_MS).toString()
+            val json = SwaaraSupabaseClient.get("jam_rooms", "is_public=eq.true&playback_updated_at=gte.$cutoff&order=created_at.desc&limit=25")
                 ?: return@withContext emptyList()
 
             val list = mutableListOf<JamRoomSummary>()
@@ -500,11 +495,12 @@ object SwaaraJamEngine {
                             val pulsePayload = JSONObject().apply {
                                 put("playback_updated_at", Instant.now().toString())
                             }
-                            SwaaraSupabaseClient.patch("jam_rooms", pulsePayload.toString(), "room_code=eq.$roomCode")
+                            val token = sessionAuth?.validAccessToken()
+                            if (token != null) SwaaraSupabaseClient.patch("jam_rooms", pulsePayload.toString(), "room_code=eq.$roomCode", token)
                         }
                     } else {
                         // Listener sync
-                        val json = SwaaraSupabaseClient.get("jam_rooms", "room_code=eq.$roomCode")
+                        val json = SwaaraSupabaseClient.get("jam_rooms", "room_code=eq.$roomCode", sessionAuth?.validAccessToken())
                         if (json != null && json.length() > 0) {
                             val row = json.getJSONObject(0)
                             val updatedAtStr = row.optString("playback_updated_at")
@@ -532,9 +528,11 @@ object SwaaraJamEngine {
                                 activeListenersCount = row.optInt("active_listeners_count", 1)
                             )
                         } else {
-                            // Room was ended by host
-                            _currentRoom.value = null
-                            break
+                            // A failed request does not prove the room was ended.
+                            if (json != null) {
+                                _currentRoom.value = null
+                                break
+                            }
                         }
                     }
 
@@ -552,7 +550,7 @@ object SwaaraJamEngine {
     private suspend fun refreshDedications(roomCode: String) {
         val dedJson = SwaaraSupabaseClient.get(
             "jam_dedications",
-            "room_code=eq.$roomCode&is_active=eq.true&order=created_at.desc&limit=15"
+            "room_code=eq.$roomCode&is_active=eq.true&order=created_at.desc&limit=15", sessionAuth?.validAccessToken()
         ) ?: return
 
         val dedications = mutableListOf<JamDedication>()
@@ -605,7 +603,7 @@ object SwaaraJamEngine {
     private suspend fun refreshQueue(roomCode: String) {
         val qJson = SwaaraSupabaseClient.get(
             "jam_queue",
-            "room_code=eq.$roomCode&order=created_at.asc&limit=30"
+            "room_code=eq.$roomCode&order=created_at.asc&limit=30", sessionAuth?.validAccessToken()
         ) ?: return
 
         val queue = mutableListOf<JamQueueItem>()

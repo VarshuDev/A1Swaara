@@ -4,23 +4,35 @@ on:
   push:
     paths-ignore:
       - "README.md"
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: set up JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
           cache: gradle
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-      - name: Build with Makefile
-        run: make build
+      - name: Prepare patched extractor
+        run: make setup
+      - name: Build and test both transport flavors
+        env:
+          NEWPIPE_EXTRACTOR_DIR: build/newpipeextractor
+        run: ./gradlew :app:assembleHttp3Debug :app:assembleHttp2OnlyDebug :app:testHttp3DebugUnitTest :app:testHttp2OnlyDebugUnitTest
+      - name: Android lint
+        env:
+          NEWPIPE_EXTRACTOR_DIR: build/newpipeextractor
+        run: ./gradlew :app:lintHttp3Debug :app:lintHttp2OnlyDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: app/build/outputs/apk/http3/debug/app-http3-debug.apk
+          name: debug-apks
+          path: app/build/outputs/apk/*/debug/*.apk
+          if-no-files-found: error

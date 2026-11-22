@@ -31,7 +31,7 @@ BEGIN
         updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -161,7 +161,12 @@ ALTER TABLE public.jam_queue ENABLE ROW LEVEL SECURITY;
 
 -- 7. RLS POLICIES
 
--- Profiles: Anyone authenticated or anon can read profile names/avatars; only owner can update
+-- RLS filters rows, not columns. Never grant API roles access to email.
+-- PostgreSQL table-level SELECT overrides column-level grants, so revoke it first.
+REVOKE SELECT ON public.profiles FROM PUBLIC, anon, authenticated;
+GRANT SELECT (id, display_name, avatar_url, created_at, updated_at) ON public.profiles TO anon, authenticated;
+
+-- Profiles: public fields are readable; only the owner can update.
 DROP POLICY IF EXISTS "Public profiles read" ON public.profiles;
 CREATE POLICY "Public profiles read" ON public.profiles FOR SELECT USING (true);
 
@@ -197,33 +202,38 @@ CREATE POLICY "Global stats owner" ON public.global_listening_stats FOR ALL USIN
 DROP POLICY IF EXISTS "Global stats read" ON public.global_listening_stats;
 CREATE POLICY "Global stats read" ON public.global_listening_stats FOR SELECT USING (true);
 
--- Jamming & Dedications: Open to all listeners (both signed in and guest rooms)
+-- Public rooms are discoverable. Private rooms are host-only until a secure
+-- membership/invite system exists; a short room code is not an access control.
+-- Existing guest rooms (host_id IS NULL) are not writable by API clients.
 DROP POLICY IF EXISTS "Jam rooms open select" ON public.jam_rooms;
-CREATE POLICY "Jam rooms open select" ON public.jam_rooms FOR SELECT USING (true);
-
+CREATE POLICY "Jam rooms open select" ON public.jam_rooms FOR SELECT USING (is_public OR auth.uid() = host_id);
 DROP POLICY IF EXISTS "Jam rooms open insert" ON public.jam_rooms;
-CREATE POLICY "Jam rooms open insert" ON public.jam_rooms FOR INSERT WITH CHECK (true);
-
+CREATE POLICY "Jam rooms open insert" ON public.jam_rooms FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = host_id);
 DROP POLICY IF EXISTS "Jam rooms open update" ON public.jam_rooms;
-CREATE POLICY "Jam rooms open update" ON public.jam_rooms FOR UPDATE USING (true);
-
+CREATE POLICY "Jam rooms open update" ON public.jam_rooms FOR UPDATE USING (auth.uid() IS NOT NULL AND auth.uid() = host_id) WITH CHECK (auth.uid() = host_id);
 DROP POLICY IF EXISTS "Jam rooms open delete" ON public.jam_rooms;
-CREATE POLICY "Jam rooms open delete" ON public.jam_rooms FOR DELETE USING (auth.uid() = host_id OR host_id IS NULL);
+CREATE POLICY "Jam rooms open delete" ON public.jam_rooms FOR DELETE USING (auth.uid() IS NOT NULL AND auth.uid() = host_id);
 
 DROP POLICY IF EXISTS "Jam dedications open select" ON public.jam_dedications;
-CREATE POLICY "Jam dedications open select" ON public.jam_dedications FOR SELECT USING (true);
-
+CREATE POLICY "Jam dedications open select" ON public.jam_dedications FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.jam_rooms r WHERE r.room_code = jam_dedications.room_code AND (r.is_public OR r.host_id = auth.uid()))
+);
 DROP POLICY IF EXISTS "Jam dedications open insert" ON public.jam_dedications;
-CREATE POLICY "Jam dedications open insert" ON public.jam_dedications FOR INSERT WITH CHECK (true);
-
+CREATE POLICY "Jam dedications open insert" ON public.jam_dedications FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL AND EXISTS (SELECT 1 FROM public.jam_rooms r WHERE r.room_code = jam_dedications.room_code AND r.allow_dedications AND (r.is_public OR r.host_id = auth.uid()))
+);
 DROP POLICY IF EXISTS "Jam queue open select" ON public.jam_queue;
-CREATE POLICY "Jam queue open select" ON public.jam_queue FOR SELECT USING (true);
-
+CREATE POLICY "Jam queue open select" ON public.jam_queue FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.jam_rooms r WHERE r.room_code = jam_queue.room_code AND (r.is_public OR r.host_id = auth.uid()))
+);
 DROP POLICY IF EXISTS "Jam queue open insert" ON public.jam_queue;
-CREATE POLICY "Jam queue open insert" ON public.jam_queue FOR INSERT WITH CHECK (true);
-
+CREATE POLICY "Jam queue open insert" ON public.jam_queue FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL AND EXISTS (SELECT 1 FROM public.jam_rooms r WHERE r.room_code = jam_queue.room_code AND (r.is_public OR r.host_id = auth.uid()))
+);
 DROP POLICY IF EXISTS "Jam queue open delete" ON public.jam_queue;
-CREATE POLICY "Jam queue open delete" ON public.jam_queue FOR DELETE USING (true);
+CREATE POLICY "Jam queue open delete" ON public.jam_queue FOR DELETE USING (
+    auth.uid() IS NOT NULL AND EXISTS (SELECT 1 FROM public.jam_rooms r WHERE r.room_code = jam_queue.room_code AND r.host_id = auth.uid())
+);
 
 -- 8. ENABLE REALTIME BROADCASTING
 DO $$

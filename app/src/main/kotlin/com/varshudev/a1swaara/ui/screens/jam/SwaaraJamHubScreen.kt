@@ -540,7 +540,7 @@ private fun CreateJamRoomDialog(
     var roomName by remember {
         mutableStateOf(if (!activeTitle.isNullOrBlank()) "${activeTitle.take(18)} Jam" else "My Swaara Jam")
     }
-    var isPublic by remember { mutableStateOf(true) }
+    val isPublic = true
     var allowDedications by remember { mutableStateOf(true) }
     var isCreating by remember { mutableStateOf(false) }
 
@@ -663,11 +663,12 @@ private fun CreateJamRoomDialog(
                 ) {
                     Column {
                         Text(text = "Public Session", color = SwaaraColors.PrimaryText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = "Show in public Jamming Hub", color = SwaaraColors.SecondaryText, fontSize = 11.sp)
+                        Text(text = "Private sessions are temporarily unavailable", color = SwaaraColors.SecondaryText, fontSize = 11.sp)
                     }
                     Switch(
                         checked = isPublic,
-                        onCheckedChange = { isPublic = it },
+                        onCheckedChange = null,
+                        enabled = false,
                         colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = SwaaraColors.Magenta)
                     )
                 }

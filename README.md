@@ -132,29 +132,51 @@ app/src/main/kotlin/com/varshudev/a1swaara/
 ## <img src="assets/icons/terminal-build.svg" width="22" height="22" align="center" /> Building From Source
 
 ### Prerequisites
-- **JDK 17** or **JDK 21**
-- **Android SDK** with `compileSdk = 37` and `minSdk = 24` (Android 7.0+)
-- **Git**
+- JDK 17 (or JDK 21), Git, and `make`
+- Android SDK platform 37 and the build tools required by the Android Gradle plugin; the app supports API 23 and above.
 
-### Build Commands
+### Build and test
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/VarshuDev/A1Swaara.git
 cd A1Swaara
-
-# 2. Setup local properties (optional keys)
-cp local.properties.example local.properties
-
-# 3. Build debug APK
-./gradlew assembleDebug
-
-# 4. Install directly to a connected device via ADB
-./gradlew installDebug
+cp local.properties.example local.properties  # set sdk.dir for your machine
+make build              # prepares the pinned, patched extractor and builds HTTP/3 debug
+make test               # JVM unit tests for both transport flavors
+make adbinstall         # installs HTTP/3 debug on a connected device
 ```
 
-> **Build Output**: The compiled APK will be located at:  
-> `app/build/outputs/apk/debug/app-debug.apk`
+The debug APK is at `app/build/outputs/apk/http3/debug/app-http3-debug.apk`.
+After `make setup`, run a direct Gradle command with
+`NEWPIPE_EXTRACTOR_DIR=build/newpipeextractor`, for example
+`NEWPIPE_EXTRACTOR_DIR=build/newpipeextractor ./gradlew :app:assembleHttp2OnlyDebug`.
+The Makefile verifies the extractor commit and fails if its patches cannot be applied.
+
+For releases, `gradle.properties` is the version-name source. CI needs the release
+keystore, passwords, alias, and `SWAARA_RELEASE_CERT_SHA256` repository secrets;
+the certificate fingerprint must match the key used for already-installed releases.
+Never publish an APK signed with an unrelated key.
+
+### Cloud safety and current limitations
+
+The checked-in Supabase policy is not automatically deployed. Test it against a
+**disposable** Supabase project before applying it; see `tests/supabase_rls.sql`.
+It limits profile columns and restricts Jam mutations to the host. Private Jam
+creation is temporarily disabled until authenticated invitations and membership
+are implemented; listener counts and stale-room cleanup need server-side services.
+Public queue submissions still need abuse controls and rate limiting.
+
+Legacy Firestore library backup/restore is disabled because it did not use user
+authentication. Existing cloud data is not deleted. `firestore.rules` is a proposed
+fail-closed baseline, **not a deployed configuration**; deploying it as-is will
+also disable legacy Firestore features. Audit existing data and migrate those
+features to authenticated access first. Supabase library sync currently merges
+items by name; it does not fully reconcile playlist edits or deletions and should
+not be relied on as a complete backup. Offline listening-stat upload is paused
+until it can be made idempotent. Keep an independent local backup.
+
+Room schema export is enabled and missing migration paths fail rather than delete
+user data. Commit generated schemas and add migration tests for every version change.
 
 ---
 
@@ -166,9 +188,9 @@ cp local.properties.example local.properties
 | **UI Framework** | Jetpack Compose M3 | Declarative reactive UI with Material You theming |
 | **Audio Engine** | AndroidX Media3 ExoPlayer | Audio pipeline, foreground service, floating PCM |
 | **Local Database** | Room SQLite + KSP | Offline music library, favorites, and listening history |
-| **Networking** | OkHttp 4 / HTTP/3 QUIC | Resilient media streaming and API extraction |
-| **Cloud Services** | Supabase Kotlin Client | Account backup, leaderboard stats, and realtime Jam |
-| **Image Pipeline** | Coil 2.x | High-performance asynchronous album art loading |
+| **Networking** | OkHttp 5 / HTTP/3 QUIC | Resilient media streaming and API extraction |
+| **Cloud Services** | Supabase REST / Firestore REST | Account merge, leaderboard stats, and community features |
+| **Image Pipeline** | Coil 3.x | High-performance asynchronous album art loading |
 | **Stream Extraction**| NewPipeExtractor | Open-source streaming protocol resolution |
 | **Background Sync** | AndroidX WorkManager | Idempotent daily stats sync and background updates |
 

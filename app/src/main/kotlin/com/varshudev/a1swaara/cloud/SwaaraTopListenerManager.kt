@@ -104,7 +104,7 @@ object SwaaraTopListenerManager {
         if (artistName.isBlank() || listenSeconds < 5) return@withContext
         val auth = SwaaraCloudAuth.getInstance(context)
         val userId = auth.userId
-        val token = auth.accessToken
+        val token = auth.validAccessToken()
 
         // Always record locally so hours accumulate even before signing in
         recordLocalListen(context, artistName, listenSeconds)
@@ -120,7 +120,7 @@ object SwaaraTopListenerManager {
 
             // 1. Fetch current artist stat for user
             val query = "user_id=eq.$userId&artist_name=eq.$encodedArtist"
-            val existing = SwaaraSupabaseClient.get("user_artist_stats", query, token)
+            val existing = SwaaraSupabaseClient.get("user_artist_stats", query, token) ?: return@withContext
             var currentSec = 0L
             var currentPlays = 0
 
@@ -148,7 +148,7 @@ object SwaaraTopListenerManager {
             )
 
             // 2. Fetch current global stat for user
-            val globalExisting = SwaaraSupabaseClient.get("global_listening_stats", "user_id=eq.$userId", token)
+            val globalExisting = SwaaraSupabaseClient.get("global_listening_stats", "user_id=eq.$userId", token) ?: return@withContext
             var gSec = 0L
             var gTracks = 0L
 

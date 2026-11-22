@@ -223,37 +223,50 @@ object SwaaraSupabaseClient {
                     return null
                 }
 
-                val json = JSONObject(bodyStr)
-                val accessToken = json.getString("access_token")
-                val refreshToken = json.optString("refresh_token", "")
-                val expiresIn = json.optLong("expires_in", 3600L)
-
-                val userObj = json.getJSONObject("user")
-                val userId = userObj.getString("id")
-                val email = if (userObj.has("email") && !userObj.isNull("email")) userObj.getString("email") else null
-
-                val metaObj = userObj.optJSONObject("user_metadata")
-                val displayName = metaObj?.optString("full_name")
-                    ?: metaObj?.optString("name")
-                    ?: email?.substringBefore('@')
-                    ?: "Swaara Listener"
-                val avatarUrl = metaObj?.optString("avatar_url")
-                    ?: metaObj?.optString("picture")
-
-                SupabaseSession(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken,
-                    expiresIn = expiresIn,
-                    user = SupabaseUser(
-                        id = userId,
-                        email = email,
-                        displayName = displayName,
-                        avatarUrl = avatarUrl
-                    )
-                )
+                parseSession(JSONObject(bodyStr))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error during Supabase Google ID token sign-in", e)
+            null
+        }
+    }
+
+    private fun parseSession(json: JSONObject): SupabaseSession {
+        val userObj = json.getJSONObject("user")
+        val email = if (userObj.has("email") && !userObj.isNull("email")) userObj.getString("email") else null
+        val meta = userObj.optJSONObject("user_metadata")
+        val displayName = meta?.optString("full_name")?.takeIf { it.isNotBlank() }
+            ?: meta?.optString("name")?.takeIf { it.isNotBlank() }
+            ?: email?.substringBefore('@') ?: "Swaara Listener"
+        return SupabaseSession(
+            accessToken = json.getString("access_token"),
+            refreshToken = json.optString("refresh_token", ""),
+            expiresIn = json.optLong("expires_in", 3600L),
+            user = SupabaseUser(userObj.getString("id"), email, displayName,
+                meta?.optString("avatar_url")?.takeIf { it.isNotBlank() }
+                    ?: meta?.optString("picture")?.takeIf { it.isNotBlank() })
+        )
+    }
+
+    /** Exchange a refresh token for a new Supabase session. */
+    fun refreshSession(refreshToken: String): SupabaseSession? {
+        val payload = JSONObject().put("refresh_token", refreshToken)
+        val request = Request.Builder()
+            .url("$BASE_URL/auth/v1/token?grant_type=refresh_token")
+            .addHeader("apikey", ANON_KEY)
+            .post(payload.toString().toRequestBody(JSON_MEDIA_TYPE))
+            .build()
+        return try {
+            httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    Log.w(TAG, "Session refresh failed: HTTP ${response.code}")
+                    null
+                } else {
+                    response.body?.string()?.let { parseSession(JSONObject(it)) }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Session refresh failed", e)
             null
         }
     }

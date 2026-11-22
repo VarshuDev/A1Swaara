@@ -26,26 +26,26 @@ When developing for A1 Swaara, adhere strictly to the following principles:
 ## 3. Development Setup
 
 ### Prerequisites
-* JDK 17 or higher
-* Android SDK (API 34+, Build Tools 34+)
-* Git
-* Android Studio Ladybug (or newer)
+* JDK 17 or 21, Git, and Make
+* Android SDK platform 37 and the build tools required by the Android Gradle plugin
+* Android Studio with support for the configured Android Gradle plugin
 
-### Cloning the Repository
+### Cloning and building
 ```bash
 git clone https://github.com/VarshuDev/A1Swaara.git
 cd A1Swaara
-git submodule update --init --recursive
+cp local.properties.example local.properties  # update sdk.dir
+make build
+make test
+make lint
 ```
 
-### Compiling & Assembling
-```bash
-# Debug build
-./gradlew :app:assembleHttp3Debug
-
-# Release build
-./gradlew :app:assembleHttp3Release
-```
+`make setup` clones the pinned extractor and applies required patches into `build/`.
+For direct Gradle commands, first run `make setup` and set
+`NEWPIPE_EXTRACTOR_DIR=build/newpipeextractor`. Release builds require the signing
+credentials described in the README. Review the cloud safety notes there before
+using or deploying any backend configuration. Run the RLS script with `psql` only
+against a disposable Supabase database after applying the checked-in schema.
 
 ---
 
@@ -72,7 +72,7 @@ docs(readme): update build instructions for windows and linux
 
 1. Fork the repository and create your branch from `main`.
 2. Ensure your changes compile cleanly without warnings or lint errors.
-3. Test your changes on an Android device or emulator (Android 7.0+ / API 24+).
+3. Test your changes on an Android device or emulator (Android 6.0+ / API 23+).
 4. Verify that offline downloads, player controls, and background playback remain fully operational.
 5. Submit a pull request to `main` with a clear explanation of what was changed, why, and how to verify it.
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="a1swaara_cloud_auth_prefs.xml" />
+        <exclude domain="sharedpref" path="a1swaara_cloud_tokens.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="a1swaara_cloud_auth_prefs.xml" />
+        <exclude domain="sharedpref" path="a1swaara_cloud_tokens.xml" />
+    </device-transfer>
+</data-extraction-rules>
