@@ -129,7 +129,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            val releaseSigning = signingConfigs.findByName("release")
+            signingConfig = if (releaseSigning?.storeFile?.isFile == true) releaseSigning else signingConfigs.getByName("debug")
         }
 
         create("nightly") {
@@ -237,7 +238,7 @@ dependencies {
     implementation(libs.workmanager)
     implementation(libs.workmanager.ktx)
 
-    implementation("androidx.security:security-crypto:1.1.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation(libs.credentials)
     implementation(libs.credentials.play)
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
