@@ -214,73 +214,49 @@ fun SwaaraLeaderboardScreen(
             item {
                 val currentUserId = auth.userId
                 val myRank = globalLeaders.find { it.userId == currentUserId }
-                if (auth.isSignedIn) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(SwaaraColors.ElevatedSurface)
-                            .padding(12.dp)
+                val localStats = remember { SwaaraTopListenerManager.getLocalUserStats(context) }
+                val displayHours = myRank?.totalHours ?: localStats.totalHours
+                val displayTracks = myRank?.totalTracks ?: localStats.totalTracks
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SwaaraColors.ElevatedSurface)
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(SwaaraColors.Cyan.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(SwaaraColors.Cyan.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (myRank != null) "#${myRank.rank}" else "-",
-                                    color = SwaaraColors.Cyan,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = auth.displayName,
-                                    color = SwaaraColors.PrimaryText,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = if (myRank != null) "${myRank.totalHours} hrs • ${myRank.totalTracks} tracks streamed"
-                                    else "Listening stats active • Stream tracks to climb ranks",
-                                    color = SwaaraColors.SecondaryText,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(SwaaraColors.ElevatedSurface)
-                            .padding(12.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.person),
-                                contentDescription = null,
-                                tint = SwaaraColors.Magenta,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Sign in via Account tab to link your streams, claim your rank, and earn fan tier badges.",
+                                text = if (myRank != null) "#${myRank.rank}" else (if (displayTracks > 0) "#1" else "-"),
+                                color = SwaaraColors.Cyan,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = auth.displayName,
+                                color = SwaaraColors.PrimaryText,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (displayTracks > 0 || displayHours > 0.0) "$displayHours hrs • $displayTracks tracks streamed"
+                                else "Stream tracks to climb ranks and claim badges",
                                 color = SwaaraColors.SecondaryText,
-                                fontSize = 11.sp,
-                                lineHeight = 15.sp,
-                                modifier = Modifier.weight(1f)
+                                fontSize = 11.sp
                             )
                         }
                     }

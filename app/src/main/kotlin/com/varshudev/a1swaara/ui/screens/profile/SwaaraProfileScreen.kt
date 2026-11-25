@@ -61,6 +61,7 @@ import com.varshudev.a1swaara.cloud.SwaaraAccountSyncEngine
 import com.varshudev.a1swaara.cloud.SwaaraCloudAuth
 import com.varshudev.a1swaara.cloud.SwaaraGoogleAuthManager
 import com.varshudev.a1swaara.cloud.SwaaraSupabaseClient
+import com.varshudev.a1swaara.cloud.SwaaraTopListenerManager
 import com.varshudev.a1swaara.cloud.SyncStatus
 import com.varshudev.a1swaara.ui.components.SwaaraColors
 import kotlinx.coroutines.Dispatchers
@@ -87,12 +88,14 @@ fun SwaaraProfileScreen(
     var userEmail by remember { mutableStateOf(auth.userEmail) }
     var avatarUrl by remember { mutableStateOf(auth.avatarUrl) }
 
-    var totalHours by remember { mutableDoubleStateOf(0.0) }
-    var totalTracks by remember { mutableLongStateOf(0L) }
-    var streakDays by remember { mutableIntStateOf(1) }
+    val initialLocalStats = remember { SwaaraTopListenerManager.getLocalUserStats(context) }
+    var totalHours by remember { mutableDoubleStateOf(initialLocalStats.totalHours) }
+    var totalTracks by remember { mutableLongStateOf(initialLocalStats.totalTracks) }
+    var streakDays by remember { mutableIntStateOf(initialLocalStats.streakDays) }
 
     val syncStatus by SwaaraAccountSyncEngine.syncStatus.collectAsState()
     val favorites by Database.favorites().collectAsState(initial = emptyList())
+    val eventsCount by Database.eventsCount().collectAsState(initial = 0)
 
     var showEditNameDialog by remember { mutableStateOf(false) }
     var editNameInput by remember { mutableStateOf("") }
@@ -101,19 +104,30 @@ fun SwaaraProfileScreen(
     var showSignOutConfirmDialog by remember { mutableStateOf(false) }
 
     fun refreshStats() {
+        // 1. Immediately read latest local stats on main thread so UI is instant
+        val local = SwaaraTopListenerManager.getLocalUserStats(context)
+        totalHours = local.totalHours
+        totalTracks = local.totalTracks
+        streakDays = local.streakDays
+
+        // 2. Fetch and reconcile cloud-merged stats on IO coroutine
         coroutineScope.launch(Dispatchers.IO) {
-            val stats = SwaaraSupabaseClient.get("global_listening_stats", "user_id=eq.${auth.userId}", auth.accessToken)
-            if (stats != null && stats.length() > 0) {
-                val row = stats.getJSONObject(0)
-                val sec = row.optLong("total_seconds", 0L)
-                val tracks = row.optLong("total_tracks_played", 0L)
-                val streak = row.optInt("current_streak_days", 1)
-                withContext(Dispatchers.Main) {
-                    totalHours = Math.round((sec / 3600.0) * 10.0) / 10.0
-                    totalTracks = tracks
-                    streakDays = streak
-                }
+            val stats = SwaaraTopListenerManager.getUserStats(context)
+            withContext(Dispatchers.Main) {
+                totalHours = stats.totalHours
+                totalTracks = stats.totalTracks
+                streakDays = stats.streakDays
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        refreshStats()
+    }
+
+    LaunchedEffect(eventsCount) {
+        if (eventsCount > 0) {
+            refreshStats()
         }
     }
 
@@ -344,7 +358,10 @@ fun SwaaraProfileScreen(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
-                            .clickable { refreshStats() },
+                            .clickable {
+                                refreshStats()
+                                Toast.makeText(context, "Telemetry updated", Toast.LENGTH_SHORT).show()
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

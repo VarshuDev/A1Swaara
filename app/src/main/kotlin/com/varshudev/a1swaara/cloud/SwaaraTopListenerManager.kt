@@ -2,11 +2,19 @@ package com.varshudev.a1swaara.cloud
 
 import android.content.Context
 import android.util.Log
+import com.varshudev.a1swaara.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLEncoder
+import java.util.Calendar
+
+data class UserListeningStats(
+    val totalHours: Double,
+    val totalTracks: Long,
+    val streakDays: Int
+)
 
 data class ArtistTopListener(
     val rank: Int,
@@ -69,13 +77,38 @@ object SwaaraTopListenerManager {
     }
 
     /**
-     * Records local listening stats when user is not signed in to Supabase.
+     * Records local listening stats immediately on-device and calculates streaks.
      */
     private fun recordLocalListen(context: Context, artistName: String, listenSeconds: Long) {
         try {
             val sp = context.getSharedPreferences(PREFS_LOCAL_STATS, Context.MODE_PRIVATE)
             val totalSec = sp.getLong("local_total_seconds", 0L) + listenSeconds
             val totalTracks = sp.getLong("local_total_tracks", 0L) + 1L
+
+            val now = System.currentTimeMillis()
+            val lastListenTime = sp.getLong("last_listen_ms", 0L)
+            val currentStreak = sp.getInt("current_streak_days", 1)
+
+            val newStreak = if (lastListenTime == 0L) {
+                1
+            } else {
+                val calNow = Calendar.getInstance().apply { timeInMillis = now }
+                val calLast = Calendar.getInstance().apply { timeInMillis = lastListenTime }
+                val dayNow = calNow.get(Calendar.DAY_OF_YEAR)
+                val yearNow = calNow.get(Calendar.YEAR)
+                val dayLast = calLast.get(Calendar.DAY_OF_YEAR)
+                val yearLast = calLast.get(Calendar.YEAR)
+
+                if (yearNow == yearLast && dayNow == dayLast) {
+                    currentStreak
+                } else if (yearNow == yearLast && dayNow == dayLast + 1) {
+                    currentStreak + 1
+                } else if (yearNow == yearLast + 1 && dayNow == 1 && dayLast >= 365) {
+                    currentStreak + 1
+                } else {
+                    1
+                }
+            }
 
             val artistKey = "artist_" + artistName.trim().lowercase().replace("[^a-zA-Z0-9]".toRegex(), "_")
             val artistSec = sp.getLong("${artistKey}_sec", 0L) + listenSeconds
@@ -84,6 +117,8 @@ object SwaaraTopListenerManager {
             sp.edit()
                 .putLong("local_total_seconds", totalSec)
                 .putLong("local_total_tracks", totalTracks)
+                .putInt("current_streak_days", newStreak)
+                .putLong("last_listen_ms", now)
                 .putLong("${artistKey}_sec", artistSec)
                 .putInt("${artistKey}_plays", artistPlays)
                 .putString("${artistKey}_raw_name", artistName.trim())
@@ -94,7 +129,112 @@ object SwaaraTopListenerManager {
     }
 
     /**
-     * Reports valid playback duration to update artist and global stats on Supabase.
+     * Fast synchronous local stats snapshot for instant UI rendering without blocking.
+     */
+    fun getLocalUserStats(context: Context): UserListeningStats {
+        return try {
+            val sp = context.getSharedPreferences(PREFS_LOCAL_STATS, Context.MODE_PRIVATE)
+            val localSec = sp.getLong("local_total_seconds", 0L)
+            var localTracks = sp.getLong("local_total_tracks", 0L)
+            val streak = sp.getInt("current_streak_days", 1)
+
+            if (localTracks == 0L) {
+                try {
+                    val count = Database.eventsCountNow().toLong()
+                    if (count > 0L) localTracks = count
+                } catch (_: Exception) {}
+            }
+
+            val hours = Math.round((localSec / 3600.0) * 10.0) / 10.0
+            UserListeningStats(hours, localTracks, streak)
+        } catch (e: Exception) {
+            UserListeningStats(0.0, 0L, 1)
+        }
+    }
+
+    /**
+     * Reconciles local stats with Room Database and Firebase Firestore, with Supabase fallback.
+     */
+    suspend fun getUserStats(context: Context): UserListeningStats = withContext(Dispatchers.IO) {
+        val auth = SwaaraCloudAuth.getInstance(context)
+        val userId = auth.userId
+        val token = auth.validAccessToken()
+        val sp = context.getSharedPreferences(PREFS_LOCAL_STATS, Context.MODE_PRIVATE)
+
+        var bestSec = sp.getLong("local_total_seconds", 0L)
+        var bestTracks = sp.getLong("local_total_tracks", 0L)
+        var bestStreak = sp.getInt("current_streak_days", 1)
+
+        // 1. Reconcile with Room Database events if room has recorded more track events
+        try {
+            val count = Database.eventsCountNow().toLong()
+            if (count > bestTracks) {
+                bestTracks = count
+            }
+        } catch (_: Exception) {}
+
+        // 2. Fetch from Firebase Firestore (Always accessible backend)
+        try {
+            val firestoreDoc = SwaaraCloudConfig.getDocument("user_stats/$userId")
+            if (firestoreDoc != null) {
+                val cSec = (firestoreDoc["totalSeconds"] as? Number)?.toLong() ?: 0L
+                val cTracks = (firestoreDoc["totalTracks"] as? Number)?.toLong() ?: 0L
+                val cStreak = (firestoreDoc["streakDays"] as? Number)?.toInt() ?: 1
+
+                if (cSec > bestSec) bestSec = cSec
+                if (cTracks > bestTracks) bestTracks = cTracks
+                if (cStreak > bestStreak) bestStreak = cStreak
+            }
+
+            // Push newest stats to Firestore if local has higher metrics
+            if (bestSec > 0L || bestTracks > 0L) {
+                val cloudData = mapOf(
+                    "userId" to userId,
+                    "displayName" to auth.displayName,
+                    "avatarUrl" to (auth.avatarUrl ?: ""),
+                    "totalSeconds" to bestSec,
+                    "totalTracks" to bestTracks,
+                    "streakDays" to bestStreak,
+                    "lastListenedAt" to System.currentTimeMillis()
+                )
+                SwaaraCloudConfig.setDocument("user_stats/$userId", cloudData)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed syncing with Firestore user_stats", e)
+        }
+
+        // 3. Supabase sync if token available and reachable
+        if (!token.isNullOrBlank()) {
+            try {
+                val supabaseStats = SwaaraSupabaseClient.get("global_listening_stats", "user_id=eq.$userId", token)
+                if (supabaseStats != null && supabaseStats.length() > 0) {
+                    val row = supabaseStats.getJSONObject(0)
+                    val sSec = row.optLong("total_seconds", 0L)
+                    val sTracks = row.optLong("total_tracks_played", 0L)
+                    val sStreak = row.optInt("current_streak_days", 1)
+
+                    if (sSec > bestSec) bestSec = sSec
+                    if (sTracks > bestTracks) bestTracks = sTracks
+                    if (sStreak > bestStreak) bestStreak = sStreak
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Supabase global stats query skipped (paused/offline): ${e.message}")
+            }
+        }
+
+        // Save consolidated numbers back to local SharedPreferences
+        sp.edit()
+            .putLong("local_total_seconds", bestSec)
+            .putLong("local_total_tracks", bestTracks)
+            .putInt("current_streak_days", bestStreak)
+            .apply()
+
+        val hours = Math.round((bestSec / 3600.0) * 10.0) / 10.0
+        UserListeningStats(hours, bestTracks, bestStreak)
+    }
+
+    /**
+     * Reports valid playback duration to update artist and global stats across local and cloud targets.
      */
     suspend fun recordListen(
         context: Context,
@@ -106,10 +246,31 @@ object SwaaraTopListenerManager {
         val userId = auth.userId
         val token = auth.validAccessToken()
 
-        // Always record locally so hours accumulate even before signing in
+        // 1. Always record locally so hours accumulate immediately
         recordLocalListen(context, artistName, listenSeconds)
 
-        // Supabase requires authenticated JWT due to Row-Level Security
+        // 2. Sync to Firebase Firestore so live stats and leaderboard stay updated
+        try {
+            val sp = context.getSharedPreferences(PREFS_LOCAL_STATS, Context.MODE_PRIVATE)
+            val curSec = sp.getLong("local_total_seconds", 0L)
+            val curTracks = sp.getLong("local_total_tracks", 0L)
+            val curStreak = sp.getInt("current_streak_days", 1)
+
+            val firestorePayload = mapOf(
+                "userId" to userId,
+                "displayName" to auth.displayName,
+                "avatarUrl" to (auth.avatarUrl ?: ""),
+                "totalSeconds" to curSec,
+                "totalTracks" to curTracks,
+                "streakDays" to curStreak,
+                "lastListenedAt" to System.currentTimeMillis()
+            )
+            SwaaraCloudConfig.setDocument("user_stats/$userId", firestorePayload)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed updating Firestore user_stats in recordListen", e)
+        }
+
+        // 3. Supabase requires authenticated JWT due to Row-Level Security
         if (token.isNullOrBlank()) {
             return@withContext
         }
@@ -152,7 +313,7 @@ object SwaaraTopListenerManager {
             var gSec = 0L
             var gTracks = 0L
 
-            if (globalExisting != null && globalExisting.length() > 0) {
+            if (globalExisting.length() > 0) {
                 val gRow = globalExisting.getJSONObject(0)
                 gSec = gRow.optLong("total_seconds", 0L)
                 gTracks = gRow.optLong("total_tracks_played", 0L)
@@ -272,13 +433,14 @@ object SwaaraTopListenerManager {
 
     /**
      * Retrieves top listeners for an artist, or top listeners across all artists if artistName is blank.
+     * Incorporates Supabase query with automatic resilient fallback to Firestore community trending data.
      */
     suspend fun getArtistLeaderboard(
         artistName: String,
         limit: Int = 25
     ): List<ArtistTopListener> = withContext(Dispatchers.IO) {
+        val trimmed = artistName.trim()
         try {
-            val trimmed = artistName.trim()
             val query = if (trimmed.isBlank()) {
                 "order=total_listen_seconds.desc&limit=$limit"
             } else {
@@ -286,66 +448,108 @@ object SwaaraTopListenerManager {
                 "artist_name=ilike.*$encoded*&order=total_listen_seconds.desc&limit=$limit"
             }
 
-            var results = SwaaraSupabaseClient.get("user_artist_stats", query)
+            var results: JSONArray? = null
+            try {
+                results = SwaaraSupabaseClient.get("user_artist_stats", query)
 
-            // If fuzzy search with full name yielded 0, try the primary artist token
-            if ((results == null || results.length() == 0) && trimmed.contains(" ")) {
-                val primaryToken = trimmed.split(" ", ",", "&", "-")
-                    .map { it.trim() }
-                    .firstOrNull { it.length >= 3 }
+                // If fuzzy search with full name yielded 0, try the primary artist token
+                if ((results == null || results.length() == 0) && trimmed.contains(" ")) {
+                    val primaryToken = trimmed.split(" ", ",", "&", "-")
+                        .map { it.trim() }
+                        .firstOrNull { it.length >= 3 }
 
-                if (primaryToken != null) {
-                    val fallbackEncoded = URLEncoder.encode(primaryToken, "UTF-8").replace("+", "%20")
-                    results = SwaaraSupabaseClient.get(
-                        "user_artist_stats",
-                        "artist_name=ilike.*$fallbackEncoded*&order=total_listen_seconds.desc&limit=$limit"
+                    if (primaryToken != null) {
+                        val fallbackEncoded = URLEncoder.encode(primaryToken, "UTF-8").replace("+", "%20")
+                        results = SwaaraSupabaseClient.get(
+                            "user_artist_stats",
+                            "artist_name=ilike.*$fallbackEncoded*&order=total_listen_seconds.desc&limit=$limit"
+                        )
+                    }
+                }
+
+                // Fallback to top artists if no results found for query
+                if (results == null || results.length() == 0) {
+                    results = SwaaraSupabaseClient.get("user_artist_stats", "order=total_listen_seconds.desc&limit=$limit")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Supabase artist leaderboard skipped (falling back to Firestore): ${e.message}")
+            }
+
+            if (results != null && results.length() > 0) {
+                val profilesMap = fetchProfilesMap()
+                val list = mutableListOf<ArtistTopListener>()
+
+                for (i in 0 until results.length()) {
+                    val row = results.getJSONObject(i)
+                    val uId = row.optString("user_id")
+                    val totalSec = row.optLong("total_listen_seconds", 0L)
+                    val count = row.optInt("play_count", 0)
+                    val rowArtist = row.optString("artist_name", trimmed)
+
+                    val profile = profilesMap[uId]
+                    val name = profile?.first ?: "Listener ${uId.take(4)}"
+                    val avatar = profile?.second
+
+                    val rank = i + 1
+                    val badge = when (rank) {
+                        1 -> "CROWN LISTENER"
+                        in 2..3 -> "SUPERFAN (TOP 1%)"
+                        in 4..10 -> "CORE FAN"
+                        else -> "REGULAR"
+                    }
+
+                    list.add(
+                        ArtistTopListener(
+                            rank = rank,
+                            userId = uId,
+                            displayName = name,
+                            avatarUrl = avatar,
+                            totalSeconds = totalSec,
+                            playCount = count,
+                            badge = badge,
+                            artistName = rowArtist
+                        )
                     )
                 }
+                return@withContext list
             }
 
-            // Fallback to top artists if no results found for query
-            if (results == null || results.length() == 0) {
-                results = SwaaraSupabaseClient.get("user_artist_stats", "order=total_listen_seconds.desc&limit=$limit")
-            }
+            // Resilient Fallback: Construct artist leaderboard from Firestore community trending
+            val trendingDocs = SwaaraCloudConfig.listDocuments("community_trending", pageSize = 50)
+            val filtered = trendingDocs.mapNotNull { (_, fields) ->
+                val artist = fields["artist"] as? String ?: return@mapNotNull null
+                val plays = (fields["playCount"] as? Number)?.toInt() ?: 1
+                val artwork = fields["artworkUrl"] as? String
+                Triple(artist, plays, artwork)
+            }.filter { triple ->
+                trimmed.isBlank() || triple.first.contains(trimmed, ignoreCase = true)
+            }.groupBy { it.first }
+            .map { (artist, playsList) ->
+                val totalPlays = playsList.sumOf { it.second }
+                val art = playsList.firstOrNull { !it.third.isNullOrBlank() }?.third
+                ArtistTopListener(
+                    rank = 0,
+                    userId = "artist_${artist.hashCode()}",
+                    displayName = artist,
+                    avatarUrl = art,
+                    totalSeconds = totalPlays * 210L,
+                    playCount = totalPlays,
+                    badge = "TOP FAN",
+                    artistName = artist
+                )
+            }.sortedByDescending { it.playCount }
+            .take(limit)
 
-            if (results == null || results.length() == 0) return@withContext emptyList()
-
-            val profilesMap = fetchProfilesMap()
-            val list = mutableListOf<ArtistTopListener>()
-
-            for (i in 0 until results.length()) {
-                val row = results.getJSONObject(i)
-                val uId = row.optString("user_id")
-                val totalSec = row.optLong("total_listen_seconds", 0L)
-                val count = row.optInt("play_count", 0)
-                val rowArtist = row.optString("artist_name", trimmed)
-
-                val profile = profilesMap[uId]
-                val name = profile?.first ?: "Listener ${uId.take(4)}"
-                val avatar = profile?.second
-
-                val rank = i + 1
+            filtered.mapIndexed { idx, it ->
+                val rank = idx + 1
                 val badge = when (rank) {
                     1 -> "CROWN LISTENER"
                     in 2..3 -> "SUPERFAN (TOP 1%)"
                     in 4..10 -> "CORE FAN"
                     else -> "REGULAR"
                 }
-
-                list.add(
-                    ArtistTopListener(
-                        rank = rank,
-                        userId = uId,
-                        displayName = name,
-                        avatarUrl = avatar,
-                        totalSeconds = totalSec,
-                        playCount = count,
-                        badge = badge,
-                        artistName = rowArtist
-                    )
-                )
+                it.copy(rank = rank, badge = badge)
             }
-            list
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching artist leaderboard", e)
             emptyList()
@@ -354,6 +558,7 @@ object SwaaraTopListenerManager {
 
     /**
      * Retrieves the global top listeners across the entire community in a fast single batch.
+     * Tries Supabase first, automatically falling back to Firestore user telemetry if paused/offline.
      */
     suspend fun getGlobalLeaderboard(
         limit: Int = 25,
@@ -366,38 +571,62 @@ object SwaaraTopListenerManager {
 
         try {
             val query = "order=total_seconds.desc&limit=$limit"
-            val results = SwaaraSupabaseClient.get("global_listening_stats", query)
-            if (results == null || results.length() == 0) {
-                return@withContext cachedGlobalLeaders
+            var results: JSONArray? = null
+            try {
+                results = SwaaraSupabaseClient.get("global_listening_stats", query)
+            } catch (e: Exception) {
+                Log.w(TAG, "Supabase global leaderboard query failed (falling back to Firestore): ${e.message}")
             }
 
-            val profilesMap = fetchProfilesMap()
             val list = mutableListOf<GlobalTopListener>()
 
-            for (i in 0 until results.length()) {
-                val row = results.getJSONObject(i)
-                val uId = row.optString("user_id")
-                val totalSec = row.optLong("total_seconds", 0L)
-                val totalTracks = row.optLong("total_tracks_played", 0L)
-                val streak = row.optInt("current_streak_days", 1)
+            if (results != null && results.length() > 0) {
+                val profilesMap = fetchProfilesMap()
 
-                val profile = profilesMap[uId]
-                val name = profile?.first ?: "Audiophile ${uId.take(4)}"
-                val avatar = profile?.second
+                for (i in 0 until results.length()) {
+                    val row = results.getJSONObject(i)
+                    val uId = row.optString("user_id")
+                    val totalSec = row.optLong("total_seconds", 0L)
+                    val totalTracks = row.optLong("total_tracks_played", 0L)
+                    val streak = row.optInt("current_streak_days", 1)
 
-                val hours = (totalSec / 3600.0)
+                    val profile = profilesMap[uId]
+                    val name = profile?.first ?: "Audiophile ${uId.take(4)}"
+                    val avatar = profile?.second
 
-                list.add(
-                    GlobalTopListener(
-                        rank = i + 1,
-                        userId = uId,
-                        displayName = name,
-                        avatarUrl = avatar,
-                        totalHours = Math.round(hours * 10.0) / 10.0,
-                        totalTracks = totalTracks,
-                        streakDays = streak
+                    val hours = (totalSec / 3600.0)
+
+                    list.add(
+                        GlobalTopListener(
+                            rank = i + 1,
+                            userId = uId,
+                            displayName = name,
+                            avatarUrl = avatar,
+                            totalHours = Math.round(hours * 10.0) / 10.0,
+                            totalTracks = totalTracks,
+                            streakDays = streak
+                        )
                     )
-                )
+                }
+            } else {
+                // Resilient Fallback: Read community user stats from Firestore!
+                val firestoreDocs = SwaaraCloudConfig.listDocuments("user_stats", pageSize = limit)
+                val mapped = firestoreDocs.mapNotNull { (id, fields) ->
+                    val uId = fields["userId"] as? String ?: id
+                    val name = fields["displayName"] as? String ?: "Swaara Listener"
+                    val avatar = fields["avatarUrl"] as? String
+                    val sec = (fields["totalSeconds"] as? Number)?.toLong() ?: 0L
+                    val tracks = (fields["totalTracks"] as? Number)?.toLong() ?: 0L
+                    val streak = (fields["streakDays"] as? Number)?.toInt() ?: 1
+                    val hours = Math.round((sec / 3600.0) * 10.0) / 10.0
+                    if (sec > 0L || tracks > 0L) {
+                        GlobalTopListener(0, uId, name, avatar, hours, tracks, streak)
+                    } else null
+                }.sortedByDescending { it.totalHours }
+
+                mapped.forEachIndexed { idx, item ->
+                    list.add(item.copy(rank = idx + 1))
+                }
             }
 
             if (list.isNotEmpty()) {

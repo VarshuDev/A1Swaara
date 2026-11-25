@@ -193,9 +193,9 @@ fun SwaaraHomeScreen(
     val remoteConfigState by SwaaraRemoteConfig.configState.collectAsState()
 
     LaunchedEffect(Unit) {
-        if (communitySongs.isEmpty()) {
-            coroutineScope.launch(Dispatchers.IO) {
-                val trending = SwaaraCommunityCharts.getTrendingSongs(limit = 20)
+        coroutineScope.launch(Dispatchers.IO) {
+            val trending = SwaaraCommunityCharts.getTrendingSongs(limit = 20, forceRefresh = communitySongs.isEmpty())
+            if (trending.isNotEmpty()) {
                 withContext(Dispatchers.Main) {
                     communitySongs = trending
                     SwaaraHomeFeedCache.communitySongs = trending
@@ -373,6 +373,17 @@ fun SwaaraHomeScreen(
             if (!silent) {
                 isLoadingFeed = true
                 feedError = null
+            }
+            if (forceRefresh) {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val freshCommunity = SwaaraCommunityCharts.getTrendingSongs(limit = 20, forceRefresh = true)
+                    if (freshCommunity.isNotEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            communitySongs = freshCommunity
+                            SwaaraHomeFeedCache.communitySongs = freshCommunity
+                        }
+                    }
+                }
             }
             coroutineScope.launch(Dispatchers.IO) {
                 // Fast disk cache hydrate before network fetch when switching languages or cold starting
