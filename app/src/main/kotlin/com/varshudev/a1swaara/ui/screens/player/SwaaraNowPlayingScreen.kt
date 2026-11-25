@@ -375,7 +375,7 @@ fun SwaaraNowPlayingScreen(
     }
 
     // Realtime Live Jam Host Playback Sync to SwaaraJamEngine
-    LaunchedEffect(activeJamRoom, videoId, isPlaying, (currentPosition / 3000)) {
+    LaunchedEffect(activeJamRoom?.roomCode, activeJamRoom?.isHost, videoId, isPlaying, (currentPosition / 2500)) {
         activeJamRoom?.let { room ->
             if (room.isHost && !videoId.isNullOrBlank()) {
                 coroutineScope.launch {
@@ -393,7 +393,7 @@ fun SwaaraNowPlayingScreen(
     }
 
     // Realtime Live Jam Listener Playback Sync from SwaaraJamEngine
-    LaunchedEffect(activeJamRoom, activeJamRoom?.currentSongId, activeJamRoom?.isPlaying) {
+    LaunchedEffect(activeJamRoom?.currentSongId, activeJamRoom?.isPlaying, activeJamRoom?.playbackUpdatedAt) {
         val room = activeJamRoom
         if (room != null && !room.isHost && room.currentSongId.isNotBlank()) {
             if (videoId != room.currentSongId) {
@@ -406,7 +406,7 @@ fun SwaaraNowPlayingScreen(
             }
             val elapsed = if (room.isPlaying) (System.currentTimeMillis() - room.playbackUpdatedAt).coerceAtLeast(0) else 0L
             val targetPos = room.playbackPositionMs + elapsed
-            if (kotlin.math.abs(currentPosition - targetPos) > 3000) {
+            if (kotlin.math.abs(currentPosition - targetPos) > 2000) {
                 player.seekTo(targetPos)
             }
             if (room.isPlaying && !player.shouldBePlaying) {

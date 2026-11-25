@@ -85,6 +85,8 @@ import com.varshudev.a1swaara.utils.forceSeekToNext
 import com.varshudev.a1swaara.utils.forceSeekToPrevious
 import com.varshudev.a1swaara.utils.playTrack
 import com.varshudev.a1swaara.utils.shouldBePlaying
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @Composable
@@ -125,8 +127,29 @@ fun SwaaraLiveJamScreen(
         }
     }
 
-    // Listener Playback Synchronization (lockstep)
-    LaunchedEffect(currentRoom?.currentSongId, currentRoom?.isPlaying) {
+    // Host Playback Periodic Sync to SwaaraJamEngine
+    LaunchedEffect(currentRoom?.isHost, currentRoom?.roomCode, player?.isPlaying) {
+        val room = currentRoom
+        if (room != null && room.isHost && player != null) {
+            while (isActive) {
+                val curItem = player.currentMediaItem
+                if (curItem != null) {
+                    SwaaraJamEngine.updatePlayback(
+                        songId = curItem.mediaId,
+                        title = curItem.mediaMetadata.title?.toString() ?: "",
+                        artist = curItem.mediaMetadata.artist?.toString() ?: "",
+                        artworkUrl = curItem.mediaMetadata.artworkUri?.toString(),
+                        isPlaying = player.isPlaying,
+                        positionMs = player.currentPosition
+                    )
+                }
+                delay(2500)
+            }
+        }
+    }
+
+    // Listener Playback Synchronization (lockstep with position & seek sync)
+    LaunchedEffect(currentRoom?.currentSongId, currentRoom?.isPlaying, currentRoom?.playbackUpdatedAt) {
         val room = currentRoom
         if (room != null && !room.isHost && room.currentSongId.isNotBlank()) {
             val curId = player?.currentMediaItem?.mediaId
@@ -140,7 +163,7 @@ fun SwaaraLiveJamScreen(
             }
             val elapsed = if (room.isPlaying) (System.currentTimeMillis() - room.playbackUpdatedAt).coerceAtLeast(0) else 0L
             val targetPos = room.playbackPositionMs + elapsed
-            if (player != null && kotlin.math.abs(player.currentPosition - targetPos) > 3000) {
+            if (player != null && kotlin.math.abs(player.currentPosition - targetPos) > 2000) {
                 player.seekTo(targetPos)
             }
             if (player != null) {

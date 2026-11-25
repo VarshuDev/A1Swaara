@@ -101,8 +101,6 @@ import androidx.compose.ui.text.style.TextAlign
 import java.util.Calendar
 import com.varshudev.a1swaara.cloud.SwaaraCommunityCharts
 import com.varshudev.a1swaara.cloud.TrendingSong
-import com.varshudev.a1swaara.cloud.SwaaraListenTogether
-import com.varshudev.a1swaara.cloud.RoomState
 import com.varshudev.a1swaara.cloud.SwaaraJamEngine
 import com.varshudev.a1swaara.cloud.JamRoomState
 import com.varshudev.a1swaara.cloud.SwaaraCloudAuth
@@ -189,7 +187,7 @@ fun SwaaraHomeScreen(
         }
     }
 
-    val currentJamRoom by SwaaraListenTogether.currentRoom.collectAsState()
+    val currentJamRoom by SwaaraJamEngine.currentRoom.collectAsState()
     val remoteConfigState by SwaaraRemoteConfig.configState.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -631,8 +629,6 @@ fun SwaaraHomeScreen(
             .padding(bottom = 130.dp)
     ) {
         // 1. Top Header Area
-        val engineRoom by SwaaraJamEngine.currentRoom.collectAsState()
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -863,8 +859,8 @@ fun SwaaraHomeScreen(
         }
 
         // Active Live Jam Room Banner (if user is in a session)
-        if (engineRoom != null) {
-            val r = engineRoom!!
+        if (currentJamRoom != null) {
+            val r = currentJamRoom!!
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -901,59 +897,6 @@ fun SwaaraHomeScreen(
                             )
                             Text(
                                 text = if (r.isHost) "Hosting (${r.roomCode})" else "With ${r.hostName} · ${r.activeListenersCount} listening",
-                                fontSize = 11.sp,
-                                color = SwaaraSecondaryText
-                            )
-                        }
-                    }
-                    Text(
-                        text = "Open",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SwaaraMagenta,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-        } else if (currentJamRoom != null) {
-            val activeRoom = currentJamRoom!!
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(SwaaraDeepSurface)
-                    .clickable { liveJamRoute.global() }
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(SwaaraMagenta)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Live Jam · ${activeRoom.roomName}",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = SwaaraPrimaryText,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = if (activeRoom.isHost) "Hosting (${activeRoom.roomCode})" else "Listening with ${activeRoom.hostName}",
                                 fontSize = 11.sp,
                                 color = SwaaraSecondaryText
                             )

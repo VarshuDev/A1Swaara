@@ -64,7 +64,7 @@ android {
         minSdk = 23
         targetSdk = 36
 
-        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 6
+        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 7
         versionName = providers.gradleProperty("version").get()
 
         multiDexEnabled = true

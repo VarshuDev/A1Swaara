@@ -77,8 +77,8 @@ data class JamRoomSummary(
 
 /**
  * Real-time collaborative audio synchronization, democratic queueing, and song dedication engine.
- * Filters inactive rooms and provides host-to-listener playback synchronization.
- * Server-side cleanup and authenticated private-room membership are still required.
+ * Backed primarily by Firebase Firestore for zero-downtime resilient synchronization,
+ * with best-effort secondary mirroring to Supabase.
  */
 object SwaaraJamEngine {
     private const val TAG = "SwaaraJamEngine"
@@ -104,8 +104,51 @@ object SwaaraJamEngine {
 
     private val localVotes = mutableMapOf<Long, Int>()
 
+    // Helper extensions for flexible Map reading across formats
+    private fun Map<String, Any?>.optStr(vararg keys: String, default: String = ""): String {
+        for (k in keys) {
+            val v = this[k]
+            if (v is String && v.isNotBlank()) return v
+        }
+        return default
+    }
+
+    private fun Map<String, Any?>.optLong(vararg keys: String, default: Long = 0L): Long {
+        for (k in keys) {
+            val v = this[k]
+            if (v is Number) return v.toLong()
+            if (v is String) {
+                val parsed = v.toLongOrNull()
+                if (parsed != null) return parsed
+                try {
+                    return Instant.parse(v).toEpochMilli()
+                } catch (_: Exception) {}
+            }
+        }
+        return default
+    }
+
+    private fun Map<String, Any?>.optBool(vararg keys: String, default: Boolean = false): Boolean {
+        for (k in keys) {
+            val v = this[k]
+            if (v is Boolean) return v
+            if (v is String) return v.toBoolean()
+        }
+        return default
+    }
+
+    private fun Map<String, Any?>.optInt(vararg keys: String, default: Int = 1): Int {
+        for (k in keys) {
+            val v = this[k]
+            if (v is Number) return v.toInt()
+            if (v is String) v.toIntOrNull()?.let { return it }
+        }
+        return default
+    }
+
     fun sendVibe(context: Context, vibeType: String) {
         val auth = SwaaraCloudAuth.getInstance(context)
+        val room = _currentRoom.value ?: return
         val vibe = JamVibe(
             senderName = auth.displayName,
             vibeType = vibeType
@@ -117,10 +160,22 @@ object SwaaraJamEngine {
         }
         _activeVibes.value = list
 
-        val room = _currentRoom.value
-        if (room != null) {
-            engineScope.launch {
-                try {
+        engineScope.launch {
+            try {
+                // Update Firestore embedded vibes
+                val serializedVibes = list.map { v ->
+                    mapOf(
+                        "id" to v.id,
+                        "senderName" to v.senderName,
+                        "vibeType" to v.vibeType,
+                        "timestamp" to v.timestamp
+                    )
+                }
+                SwaaraCloudConfig.setDocument("jam_rooms/${room.roomCode}", mapOf("vibes" to serializedVibes))
+
+                // Best-effort Supabase insert
+                val token = auth.validAccessToken()
+                if (token != null) {
                     val payload = JSONObject().apply {
                         put("room_code", room.roomCode)
                         put("sender_name", auth.displayName)
@@ -130,11 +185,12 @@ object SwaaraJamEngine {
                         put("message", "[VIBE:$vibeType]")
                         put("is_active", true)
                     }
-                    val token = auth.validAccessToken() ?: return@launch
-                    SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), token)
-                } catch (e: Exception) {
-                    Log.w(TAG, "Failed to broadcast vibe: ${e.message}")
+                    runCatching {
+                        SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), token)
+                    }
                 }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to broadcast vibe: ${e.message}")
             }
         }
     }
@@ -142,18 +198,37 @@ object SwaaraJamEngine {
     fun upvoteQueueItem(itemId: Long) {
         val cur = localVotes[itemId] ?: 1
         localVotes[itemId] = cur + 1
-        _activeQueue.value = _activeQueue.value.map { item ->
+        val updated = _activeQueue.value.map { item ->
             if (item.id == itemId) item.copy(votes = item.votes + 1) else item
         }.sortedByDescending { it.votes }
+        _activeQueue.value = updated
+
+        val room = _currentRoom.value ?: return
+        engineScope.launch {
+            try {
+                val serializedQueue = serializeQueue(updated)
+                SwaaraCloudConfig.setDocument("jam_rooms/${room.roomCode}", mapOf("queue" to serializedQueue))
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to persist queue upvote: ${e.message}")
+            }
+        }
     }
 
     fun removeQueueItem(itemId: Long) {
-        if (_currentRoom.value?.isHost != true) return
+        val room = _currentRoom.value ?: return
+        if (!room.isHost) return
+        val updated = _activeQueue.value.filter { it.id != itemId }
+        _activeQueue.value = updated
+
         engineScope.launch {
             try {
-                val token = sessionAuth?.validAccessToken() ?: return@launch
-                if (SwaaraSupabaseClient.delete("jam_queue", "id=eq.$itemId", token)) {
-                    _activeQueue.value = _activeQueue.value.filter { it.id != itemId }
+                val serializedQueue = serializeQueue(updated)
+                SwaaraCloudConfig.setDocument("jam_rooms/${room.roomCode}", mapOf("queue" to serializedQueue))
+                val token = sessionAuth?.validAccessToken()
+                if (token != null) {
+                    runCatching {
+                        SwaaraSupabaseClient.delete("jam_queue", "id=eq.$itemId", token)
+                    }
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to delete queue item: ${e.message}")
@@ -216,115 +291,177 @@ object SwaaraJamEngine {
         positionMs: Long = 0L
     ): String? = withContext(Dispatchers.IO) {
         val auth = SwaaraCloudAuth.getInstance(context)
-        if (!auth.isSignedIn) {
-            Log.w(TAG, "Google Sign-In is required to host a Jam session.")
-            return@withContext null
-        }
-
-        val token = auth.validAccessToken() ?: return@withContext null
-        if (!isPublic) {
-            Log.w(TAG, "Private Jam rooms require a secure invitation system and are not available yet.")
-            return@withContext null
-        }
         sessionAuth = auth
+
         val roomCode = generateRoomCode()
         val nowMs = System.currentTimeMillis()
-        val nowIso = Instant.ofEpochMilli(nowMs).toString()
+        val cleanRoomName = roomName.trim().ifBlank { "Swaara Live Session" }
 
-        val payload = JSONObject().apply {
-            put("room_code", roomCode)
-            put("host_id", auth.userId)
-            put("host_name", auth.displayName)
-            put("room_name", roomName.trim().ifBlank { "Swaara Live Session" })
-            put("current_song_id", initialSongId)
-            put("current_title", initialTitle)
-            put("current_artist", initialArtist)
-            put("current_artwork_url", initialArtworkUrl ?: "")
-            put("is_playing", isPlaying)
-            put("playback_position_ms", positionMs)
-            put("playback_updated_at", nowIso)
-            put("is_public", isPublic)
-            put("allow_dedications", allowDedications)
-            put("active_listeners_count", 1)
+        val docData = mutableMapOf<String, Any?>(
+            "roomCode" to roomCode,
+            "room_code" to roomCode,
+            "hostId" to auth.userId,
+            "host_id" to auth.userId,
+            "hostName" to auth.displayName,
+            "host_name" to auth.displayName,
+            "roomName" to cleanRoomName,
+            "room_name" to cleanRoomName,
+            "currentSongId" to initialSongId,
+            "current_song_id" to initialSongId,
+            "songId" to initialSongId,
+            "currentTitle" to initialTitle,
+            "current_title" to initialTitle,
+            "title" to initialTitle,
+            "currentArtist" to initialArtist,
+            "current_artist" to initialArtist,
+            "artist" to initialArtist,
+            "currentArtworkUrl" to (initialArtworkUrl ?: ""),
+            "current_artwork_url" to (initialArtworkUrl ?: ""),
+            "artworkUrl" to (initialArtworkUrl ?: ""),
+            "isPlaying" to isPlaying,
+            "is_playing" to isPlaying,
+            "playbackPositionMs" to positionMs,
+            "playback_position_ms" to positionMs,
+            "positionMs" to positionMs,
+            "playbackUpdatedAt" to nowMs,
+            "playback_updated_at" to nowMs,
+            "updatedAt" to nowMs,
+            "isPublic" to isPublic,
+            "is_public" to isPublic,
+            "allowDedications" to allowDedications,
+            "allow_dedications" to allowDedications,
+            "activeListenersCount" to 1,
+            "active_listeners_count" to 1,
+            "queue" to emptyList<Map<String, Any?>>(),
+            "dedications" to emptyList<Map<String, Any?>>(),
+            "vibes" to emptyList<Map<String, Any?>>()
+        )
+
+        val firestoreSuccess = SwaaraCloudConfig.setDocument("jam_rooms/$roomCode", docData)
+        if (!firestoreSuccess) {
+            Log.e(TAG, "Failed to create Jam room document in Firestore.")
+            return@withContext null
         }
 
-        val success = SwaaraSupabaseClient.insert("jam_rooms", payload.toString(), token)
-        if (success) {
-            val state = JamRoomState(
-                roomCode = roomCode,
-                hostId = auth.userId,
-                hostName = auth.displayName,
-                roomName = roomName.trim().ifBlank { "Swaara Live Session" },
-                currentSongId = initialSongId,
-                currentTitle = initialTitle,
-                currentArtist = initialArtist,
-                currentArtworkUrl = initialArtworkUrl,
-                isPlaying = isPlaying,
-                playbackPositionMs = positionMs,
-                playbackUpdatedAt = nowMs,
-                isPublic = isPublic,
-                allowDedications = allowDedications,
-                activeListenersCount = 1,
-                isHost = true
-            )
-            _currentRoom.value = state
-            startSyncLoop(roomCode, isHost = true)
-            roomCode
-        } else {
-            null
+        // Secondary best-effort Supabase insert
+        val token = auth.validAccessToken()
+        if (token != null) {
+            engineScope.launch {
+                try {
+                    val payload = JSONObject().apply {
+                        put("room_code", roomCode)
+                        put("host_id", auth.userId)
+                        put("host_name", auth.displayName)
+                        put("room_name", cleanRoomName)
+                        put("current_song_id", initialSongId)
+                        put("current_title", initialTitle)
+                        put("current_artist", initialArtist)
+                        put("current_artwork_url", initialArtworkUrl ?: "")
+                        put("is_playing", isPlaying)
+                        put("playback_position_ms", positionMs)
+                        put("playback_updated_at", Instant.ofEpochMilli(nowMs).toString())
+                        put("is_public", isPublic)
+                        put("allow_dedications", allowDedications)
+                        put("active_listeners_count", 1)
+                    }
+                    SwaaraSupabaseClient.insert("jam_rooms", payload.toString(), token)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Secondary Supabase insert skipped: ${e.message}")
+                }
+            }
         }
+
+        val state = JamRoomState(
+            roomCode = roomCode,
+            hostId = auth.userId,
+            hostName = auth.displayName,
+            roomName = cleanRoomName,
+            currentSongId = initialSongId,
+            currentTitle = initialTitle,
+            currentArtist = initialArtist,
+            currentArtworkUrl = initialArtworkUrl,
+            isPlaying = isPlaying,
+            playbackPositionMs = positionMs,
+            playbackUpdatedAt = nowMs,
+            isPublic = isPublic,
+            allowDedications = allowDedications,
+            activeListenersCount = 1,
+            isHost = true
+        )
+        _currentRoom.value = state
+        _activeQueue.value = emptyList()
+        _activeDedications.value = emptyList()
+        _activeVibes.value = emptyList()
+        startSyncLoop(roomCode, isHost = true)
+        roomCode
     }
 
     suspend fun joinRoom(context: Context, roomCode: String): Boolean = withContext(Dispatchers.IO) {
         val auth = SwaaraCloudAuth.getInstance(context)
-        if (!auth.isSignedIn) {
-            Log.w(TAG, "Google Sign-In is required to join a Jam session.")
+        sessionAuth = auth
+
+        var cleanCode = roomCode.trim().uppercase()
+        if (!cleanCode.startsWith("JAM") && cleanCode.length == 3) {
+            cleanCode = "JAM$cleanCode"
+        }
+        if (cleanCode.length < 4) return@withContext false
+
+        // Fetch from Firestore
+        var doc = SwaaraCloudConfig.getDocument("jam_rooms/$cleanCode")
+        if (doc == null && cleanCode.startsWith("JAM")) {
+            // Also try raw code in case it was stored without JAM prefix
+            doc = SwaaraCloudConfig.getDocument("jam_rooms/${cleanCode.removePrefix("JAM")}")
+        }
+        if (doc == null) {
+            Log.w(TAG, "Room $cleanCode not found in Firestore.")
             return@withContext false
         }
 
-        val token = auth.validAccessToken() ?: return@withContext false
-        val cleanCode = roomCode.trim().uppercase()
-        if (!cleanCode.matches(Regex("JAM[A-Z2-9]{3}"))) return@withContext false
-        val json = SwaaraSupabaseClient.get("jam_rooms", "room_code=eq.$cleanCode", token)
-        if (json == null || json.length() == 0) return@withContext false
+        val now = System.currentTimeMillis()
+        val updatedAtMs = doc.optLong("playbackUpdatedAt", "playback_updated_at", "updatedAt", default = now)
 
-        val row = json.getJSONObject(0)
-        val hostId = row.optString("host_id")
-        val isHost = (hostId == auth.userId)
-
-        // Validate 10-minute inactivity TTL
-        val updatedAtStr = row.optString("playback_updated_at")
-        val updatedAtMs = try {
-            Instant.parse(updatedAtStr).toEpochMilli()
-        } catch (_: Exception) {
-            System.currentTimeMillis()
-        }
-
-        if (System.currentTimeMillis() - updatedAtMs > INACTIVITY_TIMEOUT_MS) {
+        if (now - updatedAtMs > INACTIVITY_TIMEOUT_MS) {
             Log.i(TAG, "Room $cleanCode is inactive (>10 mins).")
             return@withContext false
         }
 
+        val hostId = doc.optStr("hostId", "host_id")
+        val isHost = (hostId.isNotBlank() && hostId == auth.userId)
+        val currentListeners = doc.optInt("activeListenersCount", "active_listeners_count", default = 1)
+        val newListenersCount = if (isHost) currentListeners else currentListeners + 1
+
+        val artwork = doc.optStr("currentArtworkUrl", "current_artwork_url", "artworkUrl").ifBlank { null }
         val state = JamRoomState(
             roomCode = cleanCode,
-            hostId = hostId,
-            hostName = row.optString("host_name", "Host"),
-            roomName = row.optString("room_name", "Jam Room"),
-            currentSongId = row.optString("current_song_id"),
-            currentTitle = row.optString("current_title"),
-            currentArtist = row.optString("current_artist"),
-            currentArtworkUrl = if (row.has("current_artwork_url") && !row.isNull("current_artwork_url")) row.getString("current_artwork_url") else null,
-            isPlaying = row.optBoolean("is_playing", false),
-            playbackPositionMs = row.optLong("playback_position_ms", 0L),
+            hostId = hostId.ifBlank { "Host" },
+            hostName = doc.optStr("hostName", "host_name", default = "Host"),
+            roomName = doc.optStr("roomName", "room_name", default = "Jam Room"),
+            currentSongId = doc.optStr("currentSongId", "current_song_id", "songId"),
+            currentTitle = doc.optStr("currentTitle", "current_title", "title"),
+            currentArtist = doc.optStr("currentArtist", "current_artist", "artist"),
+            currentArtworkUrl = artwork,
+            isPlaying = doc.optBool("isPlaying", "is_playing", default = false),
+            playbackPositionMs = doc.optLong("playbackPositionMs", "playback_position_ms", "positionMs", default = 0L),
             playbackUpdatedAt = updatedAtMs,
-            isPublic = row.optBoolean("is_public", true),
-            allowDedications = row.optBoolean("allow_dedications", true),
-            activeListenersCount = row.optInt("active_listeners_count", 1) + (if (isHost) 0 else 1),
+            isPublic = doc.optBool("isPublic", "is_public", default = true),
+            allowDedications = doc.optBool("allowDedications", "allow_dedications", default = true),
+            activeListenersCount = newListenersCount,
             isHost = isHost
         )
 
-        // Listener count is not client-writable; it needs a server-side presence system.
-        sessionAuth = auth
+        // Parse embedded sub-collections
+        parseEmbeddedCollections(doc, cleanCode)
+
+        // Update listener presence in Firestore if joined as listener
+        if (!isHost) {
+            engineScope.launch {
+                SwaaraCloudConfig.setDocument(
+                    "jam_rooms/$cleanCode",
+                    mapOf("activeListenersCount" to newListenersCount, "active_listeners_count" to newListenersCount)
+                )
+            }
+        }
+
         _currentRoom.value = state
         startSyncLoop(cleanCode, isHost)
         true
@@ -336,14 +473,26 @@ object SwaaraJamEngine {
         syncJob = null
 
         if (room.isHost) {
+            SwaaraCloudConfig.deleteDocument("jam_rooms/${room.roomCode}")
             val token = sessionAuth?.validAccessToken()
-            if (token != null) SwaaraSupabaseClient.delete("jam_rooms", "room_code=eq.${room.roomCode}", token)
+            if (token != null) {
+                runCatching {
+                    SwaaraSupabaseClient.delete("jam_rooms", "room_code=eq.${room.roomCode}", token)
+                }
+            }
+        } else {
+            val decremented = (room.activeListenersCount - 1).coerceAtLeast(1)
+            SwaaraCloudConfig.setDocument(
+                "jam_rooms/${room.roomCode}",
+                mapOf("activeListenersCount" to decremented, "active_listeners_count" to decremented)
+            )
         }
         sessionAuth = null
 
         _currentRoom.value = null
         _activeDedications.value = emptyList()
         _activeQueue.value = emptyList()
+        _activeVibes.value = emptyList()
     }
 
     suspend fun updatePlayback(
@@ -358,20 +507,52 @@ object SwaaraJamEngine {
         if (!room.isHost) return@withContext
 
         val nowMs = System.currentTimeMillis()
-        val nowIso = Instant.ofEpochMilli(nowMs).toString()
 
-        val payload = JSONObject().apply {
-            put("current_song_id", songId)
-            put("current_title", title)
-            put("current_artist", artist)
-            put("current_artwork_url", artworkUrl ?: "")
-            put("is_playing", isPlaying)
-            put("playback_position_ms", positionMs)
-            put("playback_updated_at", nowIso)
+        val updateMap = mapOf<String, Any?>(
+            "currentSongId" to songId,
+            "current_song_id" to songId,
+            "songId" to songId,
+            "currentTitle" to title,
+            "current_title" to title,
+            "title" to title,
+            "currentArtist" to artist,
+            "current_artist" to artist,
+            "artist" to artist,
+            "currentArtworkUrl" to (artworkUrl ?: ""),
+            "current_artwork_url" to (artworkUrl ?: ""),
+            "artworkUrl" to (artworkUrl ?: ""),
+            "isPlaying" to isPlaying,
+            "is_playing" to isPlaying,
+            "playbackPositionMs" to positionMs,
+            "playback_position_ms" to positionMs,
+            "positionMs" to positionMs,
+            "playbackUpdatedAt" to nowMs,
+            "playback_updated_at" to nowMs,
+            "updatedAt" to nowMs
+        )
+
+        SwaaraCloudConfig.setDocument("jam_rooms/${room.roomCode}", updateMap)
+
+        // Best effort Supabase patch
+        val token = sessionAuth?.validAccessToken()
+        if (token != null) {
+            engineScope.launch {
+                try {
+                    val payload = JSONObject().apply {
+                        put("current_song_id", songId)
+                        put("current_title", title)
+                        put("current_artist", artist)
+                        put("current_artwork_url", artworkUrl ?: "")
+                        put("is_playing", isPlaying)
+                        put("playback_position_ms", positionMs)
+                        put("playback_updated_at", Instant.ofEpochMilli(nowMs).toString())
+                    }
+                    SwaaraSupabaseClient.patch("jam_rooms", payload.toString(), "room_code=eq.${room.roomCode}", token)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Secondary Supabase playback patch skipped: ${e.message}")
+                }
+            }
         }
-
-        val token = sessionAuth?.validAccessToken() ?: return@withContext
-        if (!SwaaraSupabaseClient.patch("jam_rooms", payload.toString(), "room_code=eq.${room.roomCode}", token)) return@withContext
 
         _currentRoom.value = room.copy(
             currentSongId = songId,
@@ -394,20 +575,57 @@ object SwaaraJamEngine {
         val room = _currentRoom.value ?: return@withContext false
         val auth = SwaaraCloudAuth.getInstance(context)
 
-        val payload = JSONObject().apply {
-            put("room_code", room.roomCode)
-            put("sender_name", auth.displayName)
-            put("dedicated_to", dedicatedTo.trim())
-            put("song_id", songId)
-            put("song_title", songTitle)
-            put("message", message.trim())
-            put("is_active", true)
-        }
+        val newDedication = JamDedication(
+            id = System.currentTimeMillis(),
+            roomCode = room.roomCode,
+            senderName = auth.displayName,
+            dedicatedTo = dedicatedTo.trim(),
+            songId = songId,
+            songTitle = songTitle,
+            message = message.trim(),
+            createdAt = System.currentTimeMillis()
+        )
 
-        val token = auth.validAccessToken() ?: return@withContext false
-        val success = SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), token)
-        if (success) {
-            refreshDedications(room.roomCode)
+        val list = _activeDedications.value.toMutableList()
+        list.add(0, newDedication)
+        if (list.size > 20) {
+            list.removeAt(list.size - 1)
+        }
+        _activeDedications.value = list
+
+        val serialized = list.map { d ->
+            mapOf(
+                "id" to d.id,
+                "roomCode" to d.roomCode,
+                "senderName" to d.senderName,
+                "dedicatedTo" to d.dedicatedTo,
+                "songId" to d.songId,
+                "songTitle" to d.songTitle,
+                "message" to d.message,
+                "createdAt" to d.createdAt
+            )
+        }
+        val success = SwaaraCloudConfig.setDocument("jam_rooms/${room.roomCode}", mapOf("dedications" to serialized))
+
+        // Best effort Supabase mirror
+        val token = auth.validAccessToken()
+        if (token != null) {
+            engineScope.launch {
+                try {
+                    val payload = JSONObject().apply {
+                        put("room_code", room.roomCode)
+                        put("sender_name", auth.displayName)
+                        put("dedicated_to", dedicatedTo.trim())
+                        put("song_id", songId)
+                        put("song_title", songTitle)
+                        put("message", message.trim())
+                        put("is_active", true)
+                    }
+                    SwaaraSupabaseClient.insert("jam_dedications", payload.toString(), token)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Secondary Supabase dedication skipped: ${e.message}")
+                }
+            }
         }
         success
     }
@@ -422,60 +640,177 @@ object SwaaraJamEngine {
         val room = _currentRoom.value ?: return@withContext false
         val auth = SwaaraCloudAuth.getInstance(context)
 
-        val payload = JSONObject().apply {
-            put("room_code", room.roomCode)
-            put("song_id", songId)
-            put("title", title)
-            put("artist", artist)
-            put("artwork_url", artworkUrl ?: "")
-            put("added_by_name", auth.displayName)
+        val currentList = _activeQueue.value.toMutableList()
+        val existingIndex = currentList.indexOfFirst { it.songId == songId }
+        if (existingIndex >= 0) {
+            val item = currentList[existingIndex]
+            currentList[existingIndex] = item.copy(votes = item.votes + 1)
+        } else {
+            currentList.add(
+                JamQueueItem(
+                    id = System.currentTimeMillis(),
+                    roomCode = room.roomCode,
+                    songId = songId,
+                    title = title,
+                    artist = artist,
+                    artworkUrl = artworkUrl,
+                    addedByName = auth.displayName,
+                    votes = 1
+                )
+            )
         }
+        val sorted = currentList.sortedByDescending { it.votes }
+        _activeQueue.value = sorted
 
-        val token = auth.validAccessToken() ?: return@withContext false
-        val success = SwaaraSupabaseClient.insert("jam_queue", payload.toString(), token)
-        if (success) {
-            refreshQueue(room.roomCode)
+        val serialized = serializeQueue(sorted)
+        val success = SwaaraCloudConfig.setDocument("jam_rooms/${room.roomCode}", mapOf("queue" to serialized))
+
+        // Best effort Supabase mirror
+        val token = auth.validAccessToken()
+        if (token != null) {
+            engineScope.launch {
+                try {
+                    val payload = JSONObject().apply {
+                        put("room_code", room.roomCode)
+                        put("song_id", songId)
+                        put("title", title)
+                        put("artist", artist)
+                        put("artwork_url", artworkUrl ?: "")
+                        put("added_by_name", auth.displayName)
+                    }
+                    SwaaraSupabaseClient.insert("jam_queue", payload.toString(), token)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Secondary Supabase queue skipped: ${e.message}")
+                }
+            }
         }
         success
     }
 
     suspend fun listPublicRooms(): List<JamRoomSummary> = withContext(Dispatchers.IO) {
         try {
-            // Filter before applying the limit so stale rooms cannot hide active ones.
-            val cutoff = Instant.ofEpochMilli(System.currentTimeMillis() - INACTIVITY_TIMEOUT_MS).toString()
-            val json = SwaaraSupabaseClient.get("jam_rooms", "is_public=eq.true&playback_updated_at=gte.$cutoff&order=created_at.desc&limit=25")
-                ?: return@withContext emptyList()
-
-            val list = mutableListOf<JamRoomSummary>()
+            val docs = SwaaraCloudConfig.listDocuments("jam_rooms", pageSize = 30)
             val now = System.currentTimeMillis()
+            val list = mutableListOf<JamRoomSummary>()
 
-            for (i in 0 until json.length()) {
-                val row = json.getJSONObject(i)
-                val updatedAtStr = row.optString("playback_updated_at")
-                val updatedAtMs = try {
-                    Instant.parse(updatedAtStr).toEpochMilli()
-                } catch (_: Exception) {
-                    now
-                }
+            for ((docId, fields) in docs) {
+                val isPublic = fields.optBool("isPublic", "is_public", default = true)
+                if (!isPublic) continue
 
-                // Discard inactive rooms older than 10 minutes
-                if (now - updatedAtMs <= INACTIVITY_TIMEOUT_MS) {
-                    list.add(
-                        JamRoomSummary(
-                            roomCode = row.getString("room_code"),
-                            roomName = row.optString("room_name", "Jam Room"),
-                            hostName = row.optString("host_name", "Host"),
-                            currentTitle = if (row.has("current_title") && !row.isNull("current_title")) row.getString("current_title") else null,
-                            activeListeners = row.optInt("active_listeners_count", 1),
-                            lastActiveMs = updatedAtMs
+                val updatedAtMs = fields.optLong("playbackUpdatedAt", "playback_updated_at", "updatedAt", default = now)
+                if (now - updatedAtMs > INACTIVITY_TIMEOUT_MS) continue
+
+                val code = fields.optStr("roomCode", "room_code", default = docId)
+                val roomName = fields.optStr("roomName", "room_name", default = "Jam Room")
+                val hostName = fields.optStr("hostName", "host_name", default = "Host")
+                val currentTitle = fields.optStr("currentTitle", "current_title", "title").ifBlank { null }
+                val listeners = fields.optInt("activeListenersCount", "active_listeners_count", default = 1)
+
+                list.add(
+                    JamRoomSummary(
+                        roomCode = code,
+                        roomName = roomName,
+                        hostName = hostName,
+                        currentTitle = currentTitle,
+                        activeListeners = listeners,
+                        lastActiveMs = updatedAtMs
+                    )
+                )
+            }
+            list.sortedByDescending { it.lastActiveMs }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error listing public rooms from Firestore", e)
+            emptyList()
+        }
+    }
+
+    private fun serializeQueue(queue: List<JamQueueItem>): List<Map<String, Any?>> {
+        return queue.map { q ->
+            mapOf(
+                "id" to q.id,
+                "roomCode" to q.roomCode,
+                "songId" to q.songId,
+                "title" to q.title,
+                "artist" to q.artist,
+                "artworkUrl" to (q.artworkUrl ?: ""),
+                "addedByName" to q.addedByName,
+                "votes" to q.votes
+            )
+        }
+    }
+
+    private fun parseEmbeddedCollections(doc: Map<String, Any?>, roomCode: String) {
+        // 1. Queue
+        val queueRaw = doc["queue"] as? List<*>
+        if (queueRaw != null) {
+            val parsedQueue = mutableListOf<JamQueueItem>()
+            for (item in queueRaw) {
+                if (item is Map<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    val m = item as Map<String, Any?>
+                    val itemId = m.optLong("id", default = System.currentTimeMillis())
+                    val votes = localVotes[itemId] ?: m.optInt("votes", default = 1)
+                    parsedQueue.add(
+                        JamQueueItem(
+                            id = itemId,
+                            roomCode = m.optStr("roomCode", "room_code", default = roomCode),
+                            songId = m.optStr("songId", "song_id"),
+                            title = m.optStr("title"),
+                            artist = m.optStr("artist"),
+                            artworkUrl = m.optStr("artworkUrl", "artwork_url").ifBlank { null },
+                            addedByName = m.optStr("addedByName", "added_by_name", default = "Listener"),
+                            votes = votes
                         )
                     )
                 }
             }
-            list
-        } catch (e: Exception) {
-            Log.e(TAG, "Error listing public rooms", e)
-            emptyList()
+            _activeQueue.value = parsedQueue.sortedByDescending { it.votes }
+        }
+
+        // 2. Dedications
+        val dedRaw = doc["dedications"] as? List<*>
+        if (dedRaw != null) {
+            val parsedDedications = mutableListOf<JamDedication>()
+            for (item in dedRaw) {
+                if (item is Map<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    val m = item as Map<String, Any?>
+                    parsedDedications.add(
+                        JamDedication(
+                            id = m.optLong("id", default = System.currentTimeMillis()),
+                            roomCode = m.optStr("roomCode", "room_code", default = roomCode),
+                            senderName = m.optStr("senderName", "sender_name", default = "Friend"),
+                            dedicatedTo = m.optStr("dedicatedTo", "dedicated_to", default = "Everyone"),
+                            songId = m.optStr("songId", "song_id"),
+                            songTitle = m.optStr("songTitle", "song_title"),
+                            message = m.optStr("message"),
+                            createdAt = m.optLong("createdAt", "created_at", default = System.currentTimeMillis())
+                        )
+                    )
+                }
+            }
+            _activeDedications.value = parsedDedications
+        }
+
+        // 3. Vibes
+        val vibesRaw = doc["vibes"] as? List<*>
+        if (vibesRaw != null) {
+            val parsedVibes = mutableListOf<JamVibe>()
+            for (item in vibesRaw) {
+                if (item is Map<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    val m = item as Map<String, Any?>
+                    parsedVibes.add(
+                        JamVibe(
+                            id = m.optStr("id", default = java.util.UUID.randomUUID().toString()),
+                            senderName = m.optStr("senderName", "sender_name", default = "Listener"),
+                            vibeType = m.optStr("vibeType", "vibe_type", default = "HEART"),
+                            timestamp = m.optLong("timestamp", default = System.currentTimeMillis())
+                        )
+                    )
+                }
+            }
+            _activeVibes.value = parsedVibes
         }
     }
 
@@ -488,142 +823,62 @@ object SwaaraJamEngine {
                     val now = System.currentTimeMillis()
 
                     if (isHost) {
-                        // Host heartbeat every ~12.5 seconds (every 5 iterations of 2500ms delay)
+                        // Host pulse: sends heartbeat every ~8 seconds to keep room active
                         heartbeatCounter++
-                        if (heartbeatCounter >= 5) {
+                        if (heartbeatCounter >= 4) {
                             heartbeatCounter = 0
-                            val pulsePayload = JSONObject().apply {
-                                put("playback_updated_at", Instant.now().toString())
-                            }
-                            val token = sessionAuth?.validAccessToken()
-                            if (token != null) SwaaraSupabaseClient.patch("jam_rooms", pulsePayload.toString(), "room_code=eq.$roomCode", token)
+                            val pulseMap = mapOf<String, Any?>(
+                                "playbackUpdatedAt" to now,
+                                "playback_updated_at" to now,
+                                "updatedAt" to now
+                            )
+                            SwaaraCloudConfig.setDocument("jam_rooms/$roomCode", pulseMap)
+                        }
+
+                        // Host reads incoming queue items, dedications, and vibes
+                        val doc = SwaaraCloudConfig.getDocument("jam_rooms/$roomCode")
+                        if (doc != null) {
+                            parseEmbeddedCollections(doc, roomCode)
+                            val listeners = doc.optInt("activeListenersCount", "active_listeners_count", default = 1)
+                            _currentRoom.value = _currentRoom.value?.copy(activeListenersCount = listeners)
                         }
                     } else {
-                        // Listener sync
-                        val json = SwaaraSupabaseClient.get("jam_rooms", "room_code=eq.$roomCode", sessionAuth?.validAccessToken())
-                        if (json != null && json.length() > 0) {
-                            val row = json.getJSONObject(0)
-                            val updatedAtStr = row.optString("playback_updated_at")
-                            val updatedAtMs = try {
-                                Instant.parse(updatedAtStr).toEpochMilli()
-                            } catch (_: Exception) {
-                                now
-                            }
+                        // Listener sync: fetch full room state from Firestore
+                        val doc = SwaaraCloudConfig.getDocument("jam_rooms/$roomCode")
+                        if (doc != null) {
+                            val updatedAtMs = doc.optLong("playbackUpdatedAt", "playback_updated_at", "updatedAt", default = now)
 
-                            // If room has been silent for > 10 minutes, session expired
+                            // Expire if host has been inactive > 10 mins
                             if (now - updatedAtMs > INACTIVITY_TIMEOUT_MS) {
                                 Log.i(TAG, "Room $roomCode timed out due to 10 minutes of inactivity.")
                                 _currentRoom.value = null
                                 break
                             }
 
+                            val artwork = doc.optStr("currentArtworkUrl", "current_artwork_url", "artworkUrl").ifBlank { null }
                             _currentRoom.value = _currentRoom.value?.copy(
-                                currentSongId = row.optString("current_song_id"),
-                                currentTitle = row.optString("current_title"),
-                                currentArtist = row.optString("current_artist"),
-                                currentArtworkUrl = if (row.has("current_artwork_url") && !row.isNull("current_artwork_url")) row.getString("current_artwork_url") else null,
-                                isPlaying = row.optBoolean("is_playing", false),
-                                playbackPositionMs = row.optLong("playback_position_ms", 0L),
+                                currentSongId = doc.optStr("currentSongId", "current_song_id", "songId"),
+                                currentTitle = doc.optStr("currentTitle", "current_title", "title"),
+                                currentArtist = doc.optStr("currentArtist", "current_artist", "artist"),
+                                currentArtworkUrl = artwork,
+                                isPlaying = doc.optBool("isPlaying", "is_playing", default = false),
+                                playbackPositionMs = doc.optLong("playbackPositionMs", "playback_position_ms", "positionMs", default = 0L),
                                 playbackUpdatedAt = updatedAtMs,
-                                activeListenersCount = row.optInt("active_listeners_count", 1)
+                                activeListenersCount = doc.optInt("activeListenersCount", "active_listeners_count", default = 1)
                             )
+                            parseEmbeddedCollections(doc, roomCode)
                         } else {
-                            // A failed request does not prove the room was ended.
-                            if (json != null) {
-                                _currentRoom.value = null
-                                break
-                            }
+                            // Document deleted by host -> room ended
+                            Log.i(TAG, "Room $roomCode was ended by the host.")
+                            _currentRoom.value = null
+                            break
                         }
                     }
-
-                    // Refresh Dedications & Queue every pulse
-                    refreshDedications(roomCode)
-                    refreshQueue(roomCode)
                 } catch (e: Exception) {
                     Log.w(TAG, "Sync loop exception: ${e.message}")
                 }
-                delay(2500)
+                delay(2000)
             }
         }
-    }
-
-    private suspend fun refreshDedications(roomCode: String) {
-        val dedJson = SwaaraSupabaseClient.get(
-            "jam_dedications",
-            "room_code=eq.$roomCode&is_active=eq.true&order=created_at.desc&limit=15", sessionAuth?.validAccessToken()
-        ) ?: return
-
-        val dedications = mutableListOf<JamDedication>()
-        val vibesToAdd = mutableListOf<JamVibe>()
-
-        for (i in 0 until dedJson.length()) {
-            val d = dedJson.getJSONObject(i)
-            val msg = d.getString("message")
-            if (msg.startsWith("[VIBE:") && msg.endsWith("]")) {
-                val vType = msg.substring(6, msg.length - 1)
-                val vSender = d.getString("sender_name")
-                val vId = d.optString("id", java.util.UUID.randomUUID().toString())
-                val vTime = d.optLong("created_at", System.currentTimeMillis())
-                vibesToAdd.add(JamVibe(id = vId, senderName = vSender, vibeType = vType, timestamp = vTime))
-            } else {
-                dedications.add(
-                    JamDedication(
-                        id = d.optLong("id", System.currentTimeMillis()),
-                        roomCode = roomCode,
-                        senderName = d.getString("sender_name"),
-                        dedicatedTo = d.getString("dedicated_to"),
-                        songId = d.getString("song_id"),
-                        songTitle = d.getString("song_title"),
-                        message = msg,
-                        createdAt = System.currentTimeMillis()
-                    )
-                )
-            }
-        }
-        _activeDedications.value = dedications
-
-        if (vibesToAdd.isNotEmpty()) {
-            val currentVibes = _activeVibes.value.toMutableList()
-            var changed = false
-            for (newVibe in vibesToAdd) {
-                if (currentVibes.none { it.id == newVibe.id }) {
-                    currentVibes.add(newVibe)
-                    changed = true
-                }
-            }
-            if (changed) {
-                while (currentVibes.size > 25) {
-                    currentVibes.removeAt(0)
-                }
-                _activeVibes.value = currentVibes
-            }
-        }
-    }
-
-    private suspend fun refreshQueue(roomCode: String) {
-        val qJson = SwaaraSupabaseClient.get(
-            "jam_queue",
-            "room_code=eq.$roomCode&order=created_at.asc&limit=30", sessionAuth?.validAccessToken()
-        ) ?: return
-
-        val queue = mutableListOf<JamQueueItem>()
-        for (i in 0 until qJson.length()) {
-            val q = qJson.getJSONObject(i)
-            val itemId = q.optLong("id", (i + 1).toLong())
-            val votes = localVotes[itemId] ?: q.optInt("votes", 1)
-            queue.add(
-                JamQueueItem(
-                    id = itemId,
-                    roomCode = roomCode,
-                    songId = q.getString("song_id"),
-                    title = q.getString("title"),
-                    artist = q.getString("artist"),
-                    artworkUrl = if (q.has("artwork_url") && !q.isNull("artwork_url")) q.getString("artwork_url") else null,
-                    addedByName = q.getString("added_by_name"),
-                    votes = votes
-                )
-            )
-        }
-        _activeQueue.value = queue.sortedByDescending { it.votes }
     }
 }
